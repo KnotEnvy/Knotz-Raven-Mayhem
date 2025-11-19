@@ -3,15 +3,344 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    margin: 0;
+    font-family: 'Impact', sans-serif;
 }
+
 canvas {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    
 }
+
 #collisionCanvas {
     opacity: 0;
+}
+
+/* ==================== LANDING PAGE ==================== */
+.landing-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #1a0033 0%, #2d0052 25%, #4a0080 50%, #2d0052 75%, #1a0033 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 15s ease infinite;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.landing-page.fade-out {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+}
+
+.landing-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.landing-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: white;
+    max-width: 800px;
+    padding: 40px;
+}
+
+/* ==================== TITLE ANIMATIONS ==================== */
+.game-title {
+    font-size: 80px;
+    font-weight: bold;
+    margin: 0 0 20px 0;
+    text-shadow:
+        0 0 10px rgba(255, 0, 255, 0.8),
+        0 0 20px rgba(255, 0, 255, 0.6),
+        0 0 30px rgba(255, 0, 255, 0.4),
+        0 0 40px rgba(138, 43, 226, 0.3),
+        4px 4px 0 rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.title-word {
+    display: block;
+    opacity: 0;
+    transform: translateY(-50px);
+    animation: titleSlideIn 0.8s ease forwards;
+}
+
+.title-word:nth-child(1) {
+    animation-delay: 0.2s;
+    color: #ff00ff;
+}
+
+.title-word:nth-child(2) {
+    animation-delay: 0.5s;
+    color: #ff6600;
+    font-size: 90px;
+}
+
+.title-word:nth-child(3) {
+    animation-delay: 0.8s;
+    color: #00ffff;
+    animation: titleSlideIn 0.8s ease forwards, titleGlow 2s ease-in-out infinite;
+    animation-delay: 0.8s, 1.5s;
+}
+
+@keyframes titleSlideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes titleGlow {
+    0%, 100% {
+        text-shadow:
+            0 0 10px rgba(0, 255, 255, 0.8),
+            0 0 20px rgba(0, 255, 255, 0.6),
+            0 0 30px rgba(0, 255, 255, 0.4),
+            0 0 40px rgba(0, 200, 255, 0.3),
+            4px 4px 0 rgba(0, 0, 0, 0.5);
+    }
+    50% {
+        text-shadow:
+            0 0 20px rgba(0, 255, 255, 1),
+            0 0 30px rgba(0, 255, 255, 0.8),
+            0 0 40px rgba(0, 255, 255, 0.6),
+            0 0 50px rgba(0, 200, 255, 0.5),
+            4px 4px 0 rgba(0, 0, 0, 0.5);
+    }
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* ==================== SUBTITLE ==================== */
+.subtitle {
+    font-size: 24px;
+    color: #ffcc00;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: fadeInUp 1s ease forwards;
+    animation-delay: 1.2s;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    letter-spacing: 2px;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==================== START BUTTON ==================== */
+.start-button {
+    position: relative;
+    font-size: 36px;
+    font-weight: bold;
+    padding: 20px 60px;
+    margin: 30px auto;
+    background: linear-gradient(135deg, #ff0066, #ff6600);
+    border: 4px solid #ffff00;
+    border-radius: 15px;
+    color: white;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    box-shadow:
+        0 0 20px rgba(255, 255, 0, 0.5),
+        0 8px 0 #cc0044,
+        0 12px 20px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease;
+    opacity: 0;
+    animation: fadeInBounce 0.8s ease forwards;
+    animation-delay: 1.5s;
+    overflow: hidden;
+}
+
+.start-button:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow:
+        0 0 30px rgba(255, 255, 0, 0.8),
+        0 10px 0 #cc0044,
+        0 15px 25px rgba(0, 0, 0, 0.6);
+    border-color: #ffff66;
+}
+
+.start-button:active {
+    transform: translateY(2px) scale(0.98);
+    box-shadow:
+        0 0 15px rgba(255, 255, 0, 0.6),
+        0 4px 0 #cc0044,
+        0 6px 15px rgba(0, 0, 0, 0.5);
+}
+
+.button-text {
+    position: relative;
+    z-index: 2;
+}
+
+.button-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transform: rotate(45deg);
+    animation: buttonShine 3s ease-in-out infinite;
+}
+
+@keyframes buttonShine {
+    0%, 100% {
+        transform: translateX(-100%) rotate(45deg);
+    }
+    50% {
+        transform: translateX(100%) rotate(45deg);
+    }
+}
+
+@keyframes fadeInBounce {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(30px);
+    }
+    60% {
+        transform: scale(1.1) translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ==================== FEATURES ==================== */
+.features {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 40px 0;
+    flex-wrap: wrap;
+}
+
+.feature {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+.feature:nth-child(1) {
+    animation-delay: 1.8s;
+}
+
+.feature:nth-child(2) {
+    animation-delay: 2s;
+}
+
+.feature:nth-child(3) {
+    animation-delay: 2.2s;
+}
+
+.feature-icon {
+    font-size: 48px;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 0, 0.8));
+    animation: iconFloat 3s ease-in-out infinite;
+}
+
+.feature:nth-child(1) .feature-icon {
+    animation-delay: 0s;
+}
+
+.feature:nth-child(2) .feature-icon {
+    animation-delay: 1s;
+}
+
+.feature:nth-child(3) .feature-icon {
+    animation-delay: 2s;
+}
+
+@keyframes iconFloat {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-10px) scale(1.1);
+    }
+}
+
+.feature-text {
+    font-size: 18px;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* ==================== INSTRUCTIONS ==================== */
+.instructions {
+    margin-top: 40px;
+    font-size: 20px;
+    color: #cccccc;
+    opacity: 0;
+    animation: fadeInUp 1s ease forwards;
+    animation-delay: 2.4s;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .game-title {
+        font-size: 48px;
+    }
+
+    .title-word:nth-child(2) {
+        font-size: 56px;
+    }
+
+    .subtitle {
+        font-size: 18px;
+    }
+
+    .start-button {
+        font-size: 28px;
+        padding: 15px 40px;
+    }
+
+    .features {
+        gap: 20px;
+    }
+
+    .feature-icon {
+        font-size: 36px;
+    }
+
+    .feature-text {
+        font-size: 14px;
+    }
 }
