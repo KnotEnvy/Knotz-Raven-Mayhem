@@ -1,73 +1,455 @@
-const canvas= document.getElementById('canvas1');
+// ==================== CANVAS SETUP ====================
+const canvas = document.getElementById('canvas1');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-const collisionCanvas= document.getElementById('collisionCanvas');
+const collisionCanvas = document.getElementById('collisionCanvas');
 const collisionCtx = collisionCanvas.getContext('2d');
 collisionCanvas.width = window.innerWidth;
 collisionCanvas.height = window.innerHeight;
-let score = 0;
-gameOver = false
-ctx.font = '50px Impact';
 
+// ==================== GAME CONFIGURATION ====================
+const CONFIG = {
+    INITIAL_LIVES: 3,
+    INITIAL_RAVEN_INTERVAL: 500,
+    INITIAL_RAVEN_SPEED: { min: 3, max: 5 },
+    DIFFICULTY_SCORE_THRESHOLD: 10,
+    COMBO_WINDOW: 2000, // 2 seconds to maintain combo
+    COMBO_MULTIPLIERS: [1, 2, 3, 4, 5], // max 5x multiplier
+    POWERUP_DROP_CHANCE: 0.15, // 15% chance on raven kill
+    POWERUP_DURATION: 5000, // 5 seconds
+    RAVEN_TYPES: {
+        NORMAL: { weight: 0.6, speed: 1, points: 1, health: 1, color: null },
+        FAST: { weight: 0.2, speed: 2, points: 2, health: 1, color: 'cyan' },
+        GOLDEN: { weight: 0.05, speed: 0.8, points: 5, health: 1, color: 'gold' },
+        ARMORED: { weight: 0.1, speed: 0.9, points: 3, health: 2, color: 'silver' },
+        MINI: { weight: 0.05, speed: 1.5, points: 3, health: 1, color: 'purple' }
+    }
+};
+
+// ==================== GAME STATE ====================
+const gameState = {
+    score: 0,
+    lives: CONFIG.INITIAL_LIVES,
+    gameOver: false,
+    difficultyLevel: 1,
+    ravenInterval: CONFIG.INITIAL_RAVEN_INTERVAL,
+    ravenSpeedMultiplier: 1,
+    combo: 0,
+    comboTimer: 0,
+    comboMultiplier: 1,
+    activePowerups: new Map(), // powerup type -> expiry timestamp
+    highScore: 0,
+    isPaused: false
+};
+
+// ==================== ARRAYS ====================
+let ravens = [];
+let explosions = [];
+let particles = [];
+let powerups = [];
+let floatingTexts = [];
+
+// ==================== TIME MANAGEMENT ====================
 let timeToNextRaven = 0;
-let ravenInterval = 500;
 let lastTime = 0;
 
-let ravens = [];
+// ==================== UTILITY FUNCTIONS ====================
+function getRandomRavenType() {
+    const rand = Math.random();
+    let cumulative = 0;
+    for (const [type, props] of Object.entries(CONFIG.RAVEN_TYPES)) {
+        cumulative += props.weight;
+        if (rand < cumulative) return type;
+    }
+    return 'NORMAL';
+}
+
+function loadHighScore() {
+    const saved = localStorage.getItem('ravenMayhemHighScore');
+    gameState.highScore = saved ? parseInt(saved) : 0;
+}
+
+function saveHighScore() {
+    if (gameState.score > gameState.highScore) {
+        gameState.highScore = gameState.score;
+        localStorage.setItem('ravenMayhemHighScore', gameState.highScore);
+    }
+}
+
+function updateCombo(deltatime) {
+    if (gameState.combo > 0) {
+        gameState.comboTimer -= deltatime;
+        if (gameState.comboTimer <= 0) {
+            gameState.combo = 0;
+            gameState.comboMultiplier = 1;
+        }
+    }
+}
+
+function addCombo() {
+    gameState.combo++;
+    gameState.comboTimer = CONFIG.COMBO_WINDOW;
+    const comboIndex = Math.min(gameState.combo - 1, CONFIG.COMBO_MULTIPLIERS.length - 1);
+    gameState.comboMultiplier = CONFIG.COMBO_MULTIPLIERS[comboIndex];
+}
+
+function resetCombo() {
+    gameState.combo = 0;
+    gameState.comboMultiplier = 1;
+    gameState.comboTimer = 0;
+}
+
+function updateDifficulty() {
+    const newLevel = Math.floor(gameState.score / CONFIG.DIFFICULTY_SCORE_THRESHOLD) + 1;
+    if (newLevel > gameState.difficultyLevel) {
+        gameState.difficultyLevel = newLevel;
+        gameState.ravenSpeedMultiplier = 1 + (newLevel - 1) * 0.15;
+        gameState.ravenInterval = Math.max(200, CONFIG.INITIAL_RAVEN_INTERVAL - (newLevel - 1) * 50);
+        floatingTexts.push(new FloatingText(canvas.width / 2, canvas.height / 2, 'DIFFICULTY UP!', 'red', 2000));
+    }
+}
+
+function activatePowerup(type) {
+    const expiryTime = Date.now() + CONFIG.POWERUP_DURATION;
+    gameState.activePowerups.set(type, expiryTime);
+    floatingTexts.push(new FloatingText(canvas.width / 2, 100, type.toUpperCase() + '!', 'yellow', 1500));
+}
+
+function updatePowerups() {
+    const now = Date.now();
+    for (const [type, expiry] of gameState.activePowerups.entries()) {
+        if (now > expiry) {
+            gameState.activePowerups.delete(type);
+        }
+    }
+}
+
+function isPowerupActive(type) {
+    return gameState.activePowerups.has(type);
+}
+
+// ==================== FLOATING TEXT CLASS ====================
+class FloatingText {
+    constructor(x, y, text, color, duration) {
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.color = color;
+        this.duration = duration;
+        this.timer = 0;
+        this.markedForDeletion = false;
+        this.velocityY = -2;
+    }
+    update(deltatime) {
+        this.timer += deltatime;
+        this.y += this.velocityY;
+        if (this.timer > this.duration) {
+            this.markedForDeletion = true;
+        }
+    }
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = 1 - this.timer / this.duration;
+        ctx.font = '40px Impact';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'black';
+        ctx.fillText(this.text, this.x + 2, this.y + 2);
+        ctx.fillStyle = this.color;
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+    }
+}
+
+// ==================== RAVEN CLASS (ENHANCED) ====================
 class Raven {
-    constructor(){
+    constructor() {
         this.spriteWidth = 271;
         this.spriteHeight = 194;
-        this.sizeModifier = Math.random() * 0.6 +0.4;
-        this.width  = this.spriteWidth * this.sizeModifier;
+
+        // Determine raven type
+        this.type = getRandomRavenType();
+        this.typeProps = CONFIG.RAVEN_TYPES[this.type];
+
+        // Size based on type
+        let baseSizeModifier = Math.random() * 0.6 + 0.4;
+        if (this.type === 'MINI') baseSizeModifier *= 0.5;
+        if (this.type === 'ARMORED') baseSizeModifier *= 1.2;
+
+        this.sizeModifier = baseSizeModifier;
+        this.width = this.spriteWidth * this.sizeModifier;
         this.height = this.spriteHeight * this.sizeModifier;
+
+        // Position
         this.x = canvas.width;
         this.y = Math.random() * (canvas.height - this.height);
-        this.directionX = Math.random() * 5 + 3;
-        this.directionY = Math.random() * 5 -2.5;
+
+        // Speed based on type and difficulty
+        const baseSpeed = Math.random() * 2 + 3;
+        this.directionX = baseSpeed * this.typeProps.speed * gameState.ravenSpeedMultiplier;
+        this.directionY = Math.random() * 5 - 2.5;
+
+        // Slow-mo powerup effect
+        if (isPowerupActive('SLOWMO')) {
+            this.directionX *= 0.4;
+            this.directionY *= 0.4;
+        }
+
+        // Health system for armored ravens
+        this.maxHealth = this.typeProps.health;
+        this.health = this.maxHealth;
+
         this.markedForDeletion = false;
-        this.image = new Image()
+        this.image = new Image();
         this.image.src = 'raven.png';
         this.frame = 0;
         this.maxFrame = 4;
         this.timeSinceFlap = 0;
-        this.flapInterval = Math.random() * 50 +100;
-        this.randomColors = [Math.floor(Math.random() * 255), 
-            Math.floor(Math.random() * 255), Math.floor(Math.random() * 255)];
-        this.color = 'rgb(' + this.randomColors[0] + ',' + this.randomColors[1]
-        + ',' + this.randomColors[2] + ')';
+        this.flapInterval = Math.random() * 50 + 100;
+
+        // Collision detection color
+        this.randomColors = [
+            Math.floor(Math.random() * 255),
+            Math.floor(Math.random() * 255),
+            Math.floor(Math.random() * 255)
+        ];
+        this.color = 'rgb(' + this.randomColors[0] + ',' + this.randomColors[1] + ',' + this.randomColors[2] + ')';
+
         this.hasTrail = Math.random() > 0.5;
     }
-    update(detlatime){
-        if (this.y < 0 || this.y > canvas.height - this.height){
+
+    update(deltatime) {
+        // Bounce at screen edges
+        if (this.y < 0 || this.y > canvas.height - this.height) {
             this.directionY = this.directionY * -1;
         }
+
         this.x -= this.directionX;
         this.y += this.directionY;
-        if (this.x < 0 - this.width) this.markedForDeletion = true;
-        this.timeSinceFlap += detlatime;
-        if (this.timeSinceFlap > this.flapInterval){
+
+        // Flapping animation
+        this.timeSinceFlap += deltatime;
+        if (this.timeSinceFlap > this.flapInterval) {
             if (this.frame > this.maxFrame) this.frame = 0;
             else this.frame++;
             this.timeSinceFlap = 0;
-            if (this.hasTrail){
-                for (let i = 0; i < 5; i++){
-                    particles.push(new Particle(this.x,this.y, this.width, this.color));
+
+            // Particle trail
+            if (this.hasTrail) {
+                for (let i = 0; i < 5; i++) {
+                    const trailColor = this.typeProps.color || this.color;
+                    particles.push(new Particle(this.x, this.y, this.width, trailColor));
                 }
             }
         }
-        if (this.x < 0 - this.width) gameOver = true;
+
+        // Check if escaped (lose life)
+        if (this.x < 0 - this.width) {
+            this.markedForDeletion = true;
+            gameState.lives--;
+            resetCombo();
+            floatingTexts.push(new FloatingText(100, canvas.height - 100, 'MISSED!', 'red', 1000));
+            if (gameState.lives <= 0) {
+                gameState.gameOver = true;
+                saveHighScore();
+            }
+        }
     }
-    draw(){
+
+    draw() {
+        // Collision canvas
         collisionCtx.fillStyle = this.color;
         collisionCtx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.drawImage(this.image, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight, this.x, this.y, this.width, this.height);
+
+        // Main canvas - tinted based on type
+        ctx.save();
+        if (this.typeProps.color && this.type !== 'NORMAL') {
+            ctx.globalAlpha = 0.8;
+            // Draw colored overlay for special ravens
+            ctx.fillStyle = this.typeProps.color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.globalAlpha = 1;
+        }
+
+        // Draw raven sprite
+        ctx.drawImage(this.image, this.frame * this.spriteWidth, 0, this.spriteWidth,
+            this.spriteHeight, this.x, this.y, this.width, this.height);
+
+        // Draw health bar for armored ravens
+        if (this.type === 'ARMORED' && this.health < this.maxHealth) {
+            const barWidth = this.width;
+            const barHeight = 5;
+            const barX = this.x;
+            const barY = this.y - 10;
+
+            ctx.fillStyle = 'red';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            ctx.fillStyle = 'lime';
+            ctx.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+        }
+
+        // Type indicator
+        if (this.type !== 'NORMAL') {
+            ctx.font = '12px Impact';
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 3;
+            ctx.textAlign = 'center';
+            const label = this.type === 'GOLDEN' ? '★' :
+                          this.type === 'FAST' ? '»' :
+                          this.type === 'ARMORED' ? '⬛' :
+                          this.type === 'MINI' ? '•' : '';
+            ctx.strokeText(label, this.x + this.width / 2, this.y + this.height / 2);
+            ctx.fillText(label, this.x + this.width / 2, this.y + this.height / 2);
+        }
+
+        ctx.restore();
+    }
+
+    hit() {
+        this.health--;
+        if (this.health <= 0) {
+            this.markedForDeletion = true;
+            const points = this.typeProps.points * gameState.comboMultiplier;
+
+            // Score boost powerup
+            const finalPoints = isPowerupActive('SCOREBOOST') ? points * 2 : points;
+            gameState.score += finalPoints;
+
+            addCombo();
+            updateDifficulty();
+
+            // Floating score text
+            floatingTexts.push(new FloatingText(
+                this.x + this.width / 2,
+                this.y,
+                '+' + finalPoints + (gameState.comboMultiplier > 1 ? ' x' + gameState.comboMultiplier : ''),
+                this.typeProps.color || 'yellow',
+                800
+            ));
+
+            explosions.push(new Explosion(this.x, this.y, this.width));
+
+            // Chance to drop powerup
+            if (Math.random() < CONFIG.POWERUP_DROP_CHANCE) {
+                powerups.push(new PowerUp(this.x + this.width / 2, this.y + this.height / 2));
+            }
+        } else {
+            // Armored raven hit but not destroyed - visual feedback
+            floatingTexts.push(new FloatingText(this.x + this.width / 2, this.y, 'HIT!', 'orange', 500));
+        }
     }
 }
-let explosions = [];
+
+// ==================== POWERUP CLASS ====================
+class PowerUp {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 40;
+        this.height = 40;
+        this.markedForDeletion = false;
+
+        // Random powerup type
+        const types = ['SLOWMO', 'MULTISHOT', 'SCOREBOOST', 'EXTRALIFE'];
+        this.type = types[Math.floor(Math.random() * types.length)];
+
+        // Collision color
+        this.randomColors = [
+            Math.floor(Math.random() * 255),
+            Math.floor(Math.random() * 255),
+            Math.floor(Math.random() * 255)
+        ];
+        this.color = 'rgb(' + this.randomColors[0] + ',' + this.randomColors[1] + ',' + this.randomColors[2] + ')';
+
+        // Movement
+        this.directionY = 2;
+        this.floatOffset = 0;
+        this.floatSpeed = 0.05;
+
+        // Visual
+        this.rotation = 0;
+    }
+
+    update(deltatime) {
+        this.y += this.directionY;
+        this.floatOffset += this.floatSpeed;
+        this.rotation += 0.02;
+
+        // Remove if off screen
+        if (this.y > canvas.height) {
+            this.markedForDeletion = true;
+        }
+    }
+
+    draw() {
+        // Collision canvas
+        collisionCtx.fillStyle = this.color;
+        collisionCtx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+
+        // Main canvas
+        ctx.save();
+        ctx.translate(this.x, this.y + Math.sin(this.floatOffset) * 5);
+        ctx.rotate(this.rotation);
+
+        // Glow effect
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = this.getTypeColor();
+
+        // Draw powerup box
+        ctx.fillStyle = this.getTypeColor();
+        ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+
+        // Draw icon
+        ctx.font = '20px Impact';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.getTypeIcon(), 0, 0);
+
+        ctx.restore();
+    }
+
+    getTypeColor() {
+        switch (this.type) {
+            case 'SLOWMO': return 'cyan';
+            case 'MULTISHOT': return 'orange';
+            case 'SCOREBOOST': return 'gold';
+            case 'EXTRALIFE': return 'lime';
+            default: return 'white';
+        }
+    }
+
+    getTypeIcon() {
+        switch (this.type) {
+            case 'SLOWMO': return '⏱';
+            case 'MULTISHOT': return '✸';
+            case 'SCOREBOOST': return '★';
+            case 'EXTRALIFE': return '♥';
+            default: return '?';
+        }
+    }
+
+    collect() {
+        this.markedForDeletion = true;
+
+        switch (this.type) {
+            case 'SLOWMO':
+            case 'MULTISHOT':
+            case 'SCOREBOOST':
+                activatePowerup(this.type);
+                break;
+            case 'EXTRALIFE':
+                gameState.lives = Math.min(gameState.lives + 1, 5);
+                floatingTexts.push(new FloatingText(canvas.width / 2, 100, '+1 LIFE!', 'lime', 1500));
+                break;
+        }
+    }
+}
+
+// ==================== EXPLOSION CLASS ====================
 class Explosion {
-    constructor(x, y, size){
+    constructor(x, y, size) {
         this.image = new Image();
         this.image.src = 'boom.png';
         this.spriteWidth = 200;
@@ -82,103 +464,328 @@ class Explosion {
         this.frameInterval = 200;
         this.markedForDeletion = false;
     }
-    update(deltatime){
+
+    update(deltatime) {
         if (this.frame === 0) this.sound.play();
         this.timeSinceLastFrame += deltatime;
-        if (this.timeSinceLastFrame > this.frameInterval){
+        if (this.timeSinceLastFrame > this.frameInterval) {
             this.frame++;
             this.timeSinceLastFrame = 0;
             if (this.frame > 5) this.markedForDeletion = true;
         }
     }
-    draw(){
-        ctx.drawImage(this.image, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight, 
-            this.x, this.y - this.size/4, this.size, this.size);
 
+    draw() {
+        ctx.drawImage(this.image, this.frame * this.spriteWidth, 0, this.spriteWidth,
+            this.spriteHeight, this.x, this.y - this.size / 4, this.size, this.size);
     }
 }
-let particles = []
-class Particle{
-    constructor(x,y,size, color){
+
+// ==================== PARTICLE CLASS ====================
+class Particle {
+    constructor(x, y, size, color) {
         this.size = size;
-        this.x =x + this.size/2;
-        this.y = y + this.size/3;
-        this.radius = Math.random() + this.size/10;
+        this.x = x + this.size / 2;
+        this.y = y + this.size / 3;
+        this.radius = Math.random() + this.size / 10;
         this.maxRadius = Math.random() * 20 + 35;
         this.markedForDeletion = false;
-        this.speedX = Math.random()*1 + 0.5;
+        this.speedX = Math.random() * 1 + 0.5;
         this.color = color;
     }
-    update(){
+
+    update() {
         this.x += this.speedX;
         this.radius += 0.5;
-        if (this.radius> this.maxRadius - 5) this.markedForDeletion = true;
+        if (this.radius > this.maxRadius - 5) this.markedForDeletion = true;
     }
-    draw(){
+
+    draw() {
         ctx.save();
-        ctx.globalAlpha = 1 - this.radius/this.maxRadius;
+        ctx.globalAlpha = 1 - this.radius / this.maxRadius;
         ctx.beginPath();
         ctx.fillStyle = this.color;
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI *2)
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
-
 }
 
-function drawScore(){
+// ==================== UI RENDERING ====================
+function drawScore() {
+    ctx.font = '50px Impact';
     ctx.fillStyle = 'black';
-    ctx.fillText('score: '+ score, 50, 83);
+    ctx.fillText('Score: ' + gameState.score, 50, 83);
     ctx.fillStyle = 'white';
-    ctx.fillText('score: '+ score, 53, 78);
+    ctx.fillText('Score: ' + gameState.score, 53, 78);
 }
-function drawGameOver(){
-    ctx.textAlign = 'center';
+
+function drawLives() {
+    const heartSize = 30;
+    const startX = canvas.width - 200;
+    const startY = 50;
+
+    ctx.font = '40px Arial';
+    for (let i = 0; i < gameState.lives; i++) {
+        ctx.fillStyle = 'red';
+        ctx.fillText('♥', startX + i * heartSize, startY);
+    }
+
+    // Empty hearts for lost lives
+    ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+    for (let i = gameState.lives; i < CONFIG.INITIAL_LIVES; i++) {
+        ctx.fillText('♥', startX + i * heartSize, startY);
+    }
+}
+
+function drawCombo() {
+    if (gameState.combo > 1) {
+        const x = canvas.width / 2;
+        const y = 100;
+
+        // Combo background
+        ctx.save();
+        ctx.font = '60px Impact';
+        ctx.textAlign = 'center';
+
+        // Shadow
+        ctx.fillStyle = 'black';
+        ctx.fillText('COMBO x' + gameState.comboMultiplier, x + 3, y + 3);
+
+        // Main text with gradient
+        const gradient = ctx.createLinearGradient(x - 100, y - 30, x + 100, y + 30);
+        gradient.addColorStop(0, 'yellow');
+        gradient.addColorStop(0.5, 'orange');
+        gradient.addColorStop(1, 'red');
+        ctx.fillStyle = gradient;
+        ctx.fillText('COMBO x' + gameState.comboMultiplier, x, y);
+
+        // Timer bar
+        const barWidth = 200;
+        const barHeight = 10;
+        const barX = x - barWidth / 2;
+        const barY = y + 10;
+        const fillWidth = (gameState.comboTimer / CONFIG.COMBO_WINDOW) * barWidth;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        ctx.fillStyle = 'yellow';
+        ctx.fillRect(barX, barY, fillWidth, barHeight);
+
+        ctx.restore();
+    }
+}
+
+function drawDifficulty() {
+    ctx.font = '20px Impact';
     ctx.fillStyle = 'black';
-    ctx.fillText('GAME OVER, your score is ' + score, canvas.width/2, canvas.height/2);
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'white';
-    ctx.fillText('GAME OVER, your score is ' + score, canvas.width/2+3, canvas.height/2 -5);
+    ctx.fillText('Level: ' + gameState.difficultyLevel, 52, 123);
+    ctx.fillStyle = 'cyan';
+    ctx.fillText('Level: ' + gameState.difficultyLevel, 50, 120);
 }
 
+function drawActivePowerups() {
+    const startY = canvas.height - 100;
+    const iconSize = 40;
+    let index = 0;
 
-window.addEventListener('click', function(e){
+    const now = Date.now();
+    for (const [type, expiry] of gameState.activePowerups.entries()) {
+        const x = 50 + index * (iconSize + 10);
+        const timeLeft = expiry - now;
+        const alpha = timeLeft < 1000 ? 0.5 + 0.5 * Math.sin(Date.now() / 100) : 1;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // Powerup icon background
+        let color;
+        switch (type) {
+            case 'SLOWMO': color = 'cyan'; break;
+            case 'MULTISHOT': color = 'orange'; break;
+            case 'SCOREBOOST': color = 'gold'; break;
+            default: color = 'white';
+        }
+
+        ctx.fillStyle = color;
+        ctx.fillRect(x, startY, iconSize, iconSize);
+
+        // Icon
+        ctx.font = '25px Impact';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const icon = type === 'SLOWMO' ? '⏱' : type === 'MULTISHOT' ? '✸' : '★';
+        ctx.fillText(icon, x + iconSize / 2, startY + iconSize / 2);
+
+        // Timer bar
+        const progress = timeLeft / CONFIG.POWERUP_DURATION;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(x, startY + iconSize, iconSize * progress, 5);
+
+        ctx.restore();
+        index++;
+    }
+}
+
+function drawHighScore() {
+    ctx.font = '20px Impact';
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'right';
+    ctx.fillText('Best: ' + gameState.highScore, canvas.width - 52, 123);
+    ctx.fillStyle = 'gold';
+    ctx.fillText('Best: ' + gameState.highScore, canvas.width - 50, 120);
+    ctx.textAlign = 'left';
+}
+
+function drawGameOver() {
+    ctx.textAlign = 'center';
+    ctx.font = '80px Impact';
+
+    // Game Over text
+    ctx.fillStyle = 'black';
+    ctx.fillText('GAME OVER', canvas.width / 2 + 4, canvas.height / 2 - 46);
+    ctx.fillStyle = 'red';
+    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
+
+    // Final score
+    ctx.font = '40px Impact';
+    ctx.fillStyle = 'black';
+    ctx.fillText('Final Score: ' + gameState.score, canvas.width / 2 + 2, canvas.height / 2 + 22);
+    ctx.fillStyle = 'white';
+    ctx.fillText('Final Score: ' + gameState.score, canvas.width / 2, canvas.height / 2 + 20);
+
+    // High score
+    if (gameState.score >= gameState.highScore) {
+        ctx.font = '30px Impact';
+        ctx.fillStyle = 'gold';
+        ctx.fillText('NEW HIGH SCORE!', canvas.width / 2, canvas.height / 2 + 70);
+    } else {
+        ctx.font = '25px Impact';
+        ctx.fillStyle = 'gray';
+        ctx.fillText('High Score: ' + gameState.highScore, canvas.width / 2, canvas.height / 2 + 60);
+    }
+
+    // Restart prompt
+    ctx.font = '20px Impact';
+    ctx.fillStyle = 'white';
+    ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 120);
+}
+
+// ==================== CLICK HANDLER ====================
+window.addEventListener('click', function(e) {
+    if (gameState.gameOver) {
+        // Restart game
+        gameState.score = 0;
+        gameState.lives = CONFIG.INITIAL_LIVES;
+        gameState.gameOver = false;
+        gameState.difficultyLevel = 1;
+        gameState.ravenInterval = CONFIG.INITIAL_RAVEN_INTERVAL;
+        gameState.ravenSpeedMultiplier = 1;
+        resetCombo();
+        gameState.activePowerups.clear();
+        ravens = [];
+        explosions = [];
+        particles = [];
+        powerups = [];
+        floatingTexts = [];
+        animate(0);
+        return;
+    }
+
     const detectPixelColor = collisionCtx.getImageData(e.x, e.y, 1, 1);
-    // console.log(detectPixelColor);
     const pc = detectPixelColor.data;
-    ravens.forEach(object => {
-        if (object.randomColors[0] === pc[0] && object.randomColors[1] === pc[1] && object.randomColors[2] === pc[2]){
-            // collision detected
-            object.markedForDeletion = true;
-            score++;
-            explosions.push(new Explosion(object.x, object.y, object.width));
-            // console.log(explosions);
+    let hitSomething = false;
+
+    // Check raven hits
+    ravens.forEach(raven => {
+        if (raven.randomColors[0] === pc[0] &&
+            raven.randomColors[1] === pc[1] &&
+            raven.randomColors[2] === pc[2]) {
+            raven.hit();
+            hitSomething = true;
+
+            // Multi-shot powerup - hit nearby ravens
+            if (isPowerupActive('MULTISHOT')) {
+                ravens.forEach(otherRaven => {
+                    if (otherRaven !== raven && !otherRaven.markedForDeletion) {
+                        const dx = raven.x - otherRaven.x;
+                        const dy = raven.y - otherRaven.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < 200) {
+                            otherRaven.hit();
+                        }
+                    }
+                });
+            }
         }
     });
+
+    // Check powerup collection
+    powerups.forEach(powerup => {
+        if (powerup.randomColors[0] === pc[0] &&
+            powerup.randomColors[1] === pc[1] &&
+            powerup.randomColors[2] === pc[2]) {
+            powerup.collect();
+            hitSomething = true;
+        }
+    });
+
+    // Reset combo if missed click
+    if (!hitSomething && ravens.length > 0) {
+        resetCombo();
+    }
 });
 
-
-function animate(timestamp){
+// ==================== MAIN GAME LOOP ====================
+function animate(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     collisionCtx.clearRect(0, 0, canvas.width, canvas.height);
+
     let deltatime = timestamp - lastTime;
     lastTime = timestamp;
+
+    // Spawn ravens
     timeToNextRaven += deltatime;
-    if (timeToNextRaven > ravenInterval){
+    if (timeToNextRaven > gameState.ravenInterval) {
         ravens.push(new Raven());
         timeToNextRaven = 0;
-        ravens.sort(function(a, b){
-            return a.width - b.width;
-        });
-    };
-    drawScore();
-    [...particles, ...ravens, ... explosions].forEach(object => object.update(deltatime));
-    [...particles,...ravens, ...explosions].forEach(object => object.draw());
-    ravens = ravens.filter(object => !object.markedForDeletion);
-    explosions = explosions.filter(object => !object.markedForDeletion);
-    particles = particles.filter(object => !object.markedForDeletion);
+        ravens.sort((a, b) => a.width - b.width);
+    }
 
-    if (!gameOver) requestAnimationFrame(animate);
-    else drawGameOver();
+    // Update game state
+    updateCombo(deltatime);
+    updatePowerups();
+
+    // Update all entities
+    [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts].forEach(obj => obj.update(deltatime));
+
+    // Draw all entities
+    [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts].forEach(obj => obj.draw());
+
+    // Clean up deleted entities
+    ravens = ravens.filter(obj => !obj.markedForDeletion);
+    explosions = explosions.filter(obj => !obj.markedForDeletion);
+    particles = particles.filter(obj => !obj.markedForDeletion);
+    powerups = powerups.filter(obj => !obj.markedForDeletion);
+    floatingTexts = floatingTexts.filter(obj => !obj.markedForDeletion);
+
+    // Draw UI
+    drawScore();
+    drawLives();
+    drawCombo();
+    drawDifficulty();
+    drawActivePowerups();
+    drawHighScore();
+
+    if (!gameState.gameOver) {
+        requestAnimationFrame(animate);
+    } else {
+        drawGameOver();
+    }
 }
+
+// ==================== INITIALIZE AND START ====================
+loadHighScore();
+ctx.font = '50px Impact';
 animate(0);
