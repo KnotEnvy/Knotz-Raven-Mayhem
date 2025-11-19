@@ -208,6 +208,34 @@ Pure vanilla JavaScript - just open `index.html` in a modern browser!
 
 ## 📝 Changelog
 
+### Version 2.2 (2025-11-19) - Ultimate Polish & Juice Update
+**Visual Effects:**
+- 🎇 **Click Ripple Effects** - Beautiful expanding ripples on every click (white for hits, red for misses)
+- 💥 **Particle Burst System** - Explosive particles on kills, powerup collection, level ups
+- ⏱️ **Time Freeze on Golden Ravens** - 150ms dramatic slow-mo (20% speed) when hitting golden ravens
+- ✨ **Pop-in Animations** - Floating text now scales up smoothly for impact
+- 🌟 **Glow Effects** - Golden ravens have pulsing glow, powerups have enhanced shadow blur
+- 💓 **Pulse Animations** - Last heart pulses when at 1 life, combos pulse at 4x+
+- 🔆 **Enhanced Powerup Visual** - Powerups now pulse and have stronger glow effects
+
+**Audio System:**
+- 🔊 **Sound System Architecture** - Extensible audio system ready for additional sound effects
+- 🎵 **Sound Hooks** - Combo sounds, powerup sounds, level up sounds (ready for audio files)
+- 🔇 **Graceful Fallbacks** - Game works perfectly even without additional sound files
+
+**Gameplay Feel:**
+- ⚡ **Time Scale System** - Smooth time manipulation for dramatic effects
+- 🎨 **Color-Coded Feedback** - Different particle colors for different raven types
+- 📈 **Enhanced Visual Hierarchy** - Better use of effects to communicate game state
+- 🎯 **Improved Click Feedback** - Immediate visual response to player input
+
+**Technical Improvements:**
+- 2 new classes (ClickRipple, BurstParticle) for juice effects
+- Enhanced entity management with additional arrays
+- Time freeze system with configurable duration and slowdown
+- Particle burst generator with customizable count and colors
+- Sound system with volume control and fallback handling
+
 ### Version 2.1 (2025-11-19) - Polish & Enhancement Update
 **New Features:**
 - ⏸️ **Pause System** - SPACEBAR to pause/resume, ESC to quit while paused

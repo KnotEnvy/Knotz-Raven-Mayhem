@@ -21,6 +21,10 @@ const CONFIG = {
     SLOWMO_MULTIPLIER: 0.4, // Slow down to 40% speed
     SCREEN_SHAKE_DURATION: 200, // milliseconds
     SCREEN_SHAKE_INTENSITY: 10, // pixels
+    TIME_FREEZE_DURATION: 150, // milliseconds for dramatic effect
+    TIME_FREEZE_SLOWDOWN: 0.2, // 20% speed during freeze
+    CLICK_RIPPLE_DURATION: 400, // milliseconds
+    PARTICLE_BURST_COUNT: 15, // particles per burst
     RAVEN_TYPES: {
         NORMAL: { weight: 0.6, speed: 1, points: 1, health: 1, color: null },
         FAST: { weight: 0.2, speed: 2, points: 2, health: 1, color: 'cyan' },
@@ -58,6 +62,11 @@ const gameState = {
         active: false,
         duration: 0,
         intensity: 0
+    },
+    // Time freeze effect
+    timeFreeze: {
+        active: false,
+        duration: 0
     }
 };
 
@@ -67,10 +76,39 @@ let explosions = [];
 let particles = [];
 let powerups = [];
 let floatingTexts = [];
+let clickRipples = [];
+let particleBursts = [];
 
 // ==================== TIME MANAGEMENT ====================
 let timeToNextRaven = 0;
 let lastTime = 0;
+
+// ==================== AUDIO SYSTEM ====================
+const sounds = {
+    explosion: { src: 'boom.wav', volume: 0.3 },
+    // These sounds would be added if you have the audio files
+    combo: { src: 'combo.wav', volume: 0.4, fallback: true },
+    powerup: { src: 'powerup.wav', volume: 0.5, fallback: true },
+    levelUp: { src: 'levelup.wav', volume: 0.6, fallback: true },
+    click: { src: 'click.wav', volume: 0.2, fallback: true }
+};
+
+function playSound(soundName) {
+    try {
+        const soundConfig = sounds[soundName];
+        if (!soundConfig) return;
+
+        // Skip if it's a fallback sound and file doesn't exist
+        if (soundConfig.fallback) return;
+
+        const sound = new Audio();
+        sound.src = soundConfig.src;
+        sound.volume = soundConfig.volume || 0.5;
+        sound.play().catch(() => {}); // Silently fail if sound doesn't exist
+    } catch (e) {
+        // Silently handle audio errors
+    }
+}
 
 // ==================== UTILITY FUNCTIONS ====================
 function getRandomRavenType() {
@@ -120,6 +158,11 @@ function addCombo() {
     if (gameState.combo >= 3) {
         activateScreenShake(CONFIG.SCREEN_SHAKE_INTENSITY * (gameState.combo / 3));
     }
+
+    // Combo sound effect
+    if (gameState.combo >= 2) {
+        playSound('combo');
+    }
 }
 
 function resetCombo() {
@@ -136,6 +179,10 @@ function updateDifficulty() {
         gameState.ravenInterval = Math.max(200, CONFIG.INITIAL_RAVEN_INTERVAL - (newLevel - 1) * 50);
         floatingTexts.push(new FloatingText(canvas.width / 2, canvas.height / 2, 'DIFFICULTY UP!', 'red', 2000));
         activateScreenShake(15);
+        playSound('levelUp');
+
+        // Particle burst on level up
+        createParticleBurst(canvas.width / 2, canvas.height / 2, 'red', 20);
     }
 }
 
@@ -143,6 +190,7 @@ function activatePowerup(type) {
     const expiryTime = Date.now() + CONFIG.POWERUP_DURATION;
     gameState.activePowerups.set(type, expiryTime);
     floatingTexts.push(new FloatingText(canvas.width / 2, 100, type.toUpperCase() + '!', 'yellow', 1500));
+    playSound('powerup');
 }
 
 function updatePowerups() {
@@ -184,6 +232,27 @@ function applyScreenShake() {
     return { x: 0, y: 0 };
 }
 
+function activateTimeFreeze() {
+    gameState.timeFreeze.active = true;
+    gameState.timeFreeze.duration = CONFIG.TIME_FREEZE_DURATION;
+}
+
+function updateTimeFreeze(deltatime) {
+    if (gameState.timeFreeze.active) {
+        gameState.timeFreeze.duration -= deltatime;
+        if (gameState.timeFreeze.duration <= 0) {
+            gameState.timeFreeze.active = false;
+        }
+    }
+}
+
+function getTimeScale() {
+    if (gameState.timeFreeze.active) {
+        return CONFIG.TIME_FREEZE_SLOWDOWN;
+    }
+    return 1.0;
+}
+
 function updateStats() {
     if (gameState.stats.shotsFired > 0) {
         gameState.stats.accuracy = Math.round((gameState.stats.hits / gameState.stats.shotsFired) * 100);
@@ -192,6 +261,16 @@ function updateStats() {
 
 function togglePause() {
     gameState.isPaused = !gameState.isPaused;
+}
+
+function createClickRipple(x, y, color = 'rgba(255, 255, 255, 0.8)') {
+    clickRipples.push(new ClickRipple(x, y, color));
+}
+
+function createParticleBurst(x, y, color, count = CONFIG.PARTICLE_BURST_COUNT) {
+    for (let i = 0; i < count; i++) {
+        particleBursts.push(new BurstParticle(x, y, color));
+    }
 }
 
 function resetGame() {
@@ -217,13 +296,109 @@ function resetGame() {
         duration: 0,
         intensity: 0
     };
+    gameState.timeFreeze = {
+        active: false,
+        duration: 0
+    };
     ravens = [];
     explosions = [];
     particles = [];
     powerups = [];
     floatingTexts = [];
-    lastTime = 0; // FIX: Reset lastTime to prevent negative deltatime
+    clickRipples = [];
+    particleBursts = [];
+    lastTime = 0;
     timeToNextRaven = 0;
+}
+
+// ==================== CLICK RIPPLE CLASS ====================
+class ClickRipple {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = 0;
+        this.maxRadius = 50;
+        this.duration = CONFIG.CLICK_RIPPLE_DURATION;
+        this.timer = 0;
+        this.markedForDeletion = false;
+    }
+
+    update(deltatime) {
+        this.timer += deltatime;
+        this.radius = (this.timer / this.duration) * this.maxRadius;
+
+        if (this.timer > this.duration) {
+            this.markedForDeletion = true;
+        }
+    }
+
+    draw() {
+        ctx.save();
+        const alpha = 1 - (this.timer / this.duration);
+        ctx.globalAlpha = alpha * 0.6;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner ripple
+        ctx.globalAlpha = alpha * 0.3;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+// ==================== BURST PARTICLE CLASS ====================
+class BurstParticle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+
+        // Random direction
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 5 + 2;
+        this.velocityX = Math.cos(angle) * speed;
+        this.velocityY = Math.sin(angle) * speed;
+
+        this.radius = Math.random() * 3 + 2;
+        this.life = 1.0;
+        this.decay = Math.random() * 0.02 + 0.01;
+        this.gravity = 0.1;
+        this.markedForDeletion = false;
+    }
+
+    update(deltatime) {
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+        this.velocityY += this.gravity;
+        this.velocityX *= 0.98; // Air resistance
+        this.life -= this.decay;
+
+        if (this.life <= 0) {
+            this.markedForDeletion = true;
+        }
+    }
+
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * this.life, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glow effect
+        ctx.globalAlpha = this.life * 0.5;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * this.life * 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
 }
 
 // ==================== FLOATING TEXT CLASS ====================
@@ -237,21 +412,35 @@ class FloatingText {
         this.timer = 0;
         this.markedForDeletion = false;
         this.velocityY = -2;
+        this.scale = 0.5; // Start small
+        this.targetScale = 1.0;
     }
+
     update(deltatime) {
         this.timer += deltatime;
         this.y += this.velocityY;
+
+        // Pop-in animation
+        if (this.scale < this.targetScale) {
+            this.scale += 0.05;
+        }
+
         if (this.timer > this.duration) {
             this.markedForDeletion = true;
         }
     }
+
     draw() {
         ctx.save();
         ctx.globalAlpha = 1 - this.timer / this.duration;
-        ctx.font = '40px Impact';
+        ctx.font = (40 * this.scale) + 'px Impact';
         ctx.textAlign = 'center';
+
+        // Shadow
         ctx.fillStyle = 'black';
         ctx.fillText(this.text, this.x + 2, this.y + 2);
+
+        // Main text
         ctx.fillStyle = this.color;
         ctx.fillText(this.text, this.x, this.y);
         ctx.restore();
@@ -314,7 +503,10 @@ class Raven {
     }
 
     update(deltatime) {
-        // FIX: Apply slow-mo to existing ravens dynamically
+        // Apply time scale
+        const scaledDelta = deltatime * getTimeScale();
+
+        // Apply slow-mo to existing ravens dynamically
         if (isPowerupActive('SLOWMO')) {
             this.directionX = this.baseDirectionX * CONFIG.SLOWMO_MULTIPLIER;
             this.directionY = this.baseDirectionY * CONFIG.SLOWMO_MULTIPLIER;
@@ -329,11 +521,11 @@ class Raven {
             this.baseDirectionY = this.baseDirectionY * -1;
         }
 
-        this.x -= this.directionX;
-        this.y += this.directionY;
+        this.x -= this.directionX * (scaledDelta / deltatime);
+        this.y += this.directionY * (scaledDelta / deltatime);
 
         // Flapping animation
-        this.timeSinceFlap += deltatime;
+        this.timeSinceFlap += scaledDelta;
         if (this.timeSinceFlap > this.flapInterval) {
             if (this.frame > this.maxFrame) this.frame = 0;
             else this.frame++;
@@ -353,7 +545,7 @@ class Raven {
             this.markedForDeletion = true;
             gameState.lives--;
             resetCombo();
-            activateScreenShake(20); // Shake on life lost
+            activateScreenShake(20);
             floatingTexts.push(new FloatingText(100, canvas.height - 100, 'MISSED!', 'red', 1000));
             if (gameState.lives <= 0) {
                 gameState.gameOver = true;
@@ -369,6 +561,13 @@ class Raven {
 
         // Main canvas - tinted based on type
         ctx.save();
+
+        // Golden raven glow effect
+        if (this.type === 'GOLDEN') {
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'gold';
+        }
+
         if (this.typeProps.color && this.type !== 'NORMAL') {
             ctx.globalAlpha = 0.8;
             // Draw colored overlay for special ravens
@@ -437,10 +636,20 @@ class Raven {
 
             explosions.push(new Explosion(this.x, this.y, this.width));
 
+            // Particle burst on kill
+            const burstColor = this.typeProps.color || 'orange';
+            createParticleBurst(this.x + this.width / 2, this.y + this.height / 2, burstColor, 10);
+
             // Screen shake on kill (more intense for special ravens)
             const shakeIntensity = this.type === 'GOLDEN' ? 15 :
                                   this.type === 'ARMORED' ? 12 : 8;
             activateScreenShake(shakeIntensity);
+
+            // Time freeze on golden raven kill
+            if (this.type === 'GOLDEN') {
+                activateTimeFreeze();
+                createParticleBurst(this.x + this.width / 2, this.y + this.height / 2, 'gold', 25);
+            }
 
             // Chance to drop powerup
             if (Math.random() < CONFIG.POWERUP_DROP_CHANCE) {
@@ -450,6 +659,7 @@ class Raven {
             // Armored raven hit but not destroyed - visual feedback
             floatingTexts.push(new FloatingText(this.x + this.width / 2, this.y, 'HIT!', 'orange', 500));
             activateScreenShake(5);
+            createParticleBurst(this.x + this.width / 2, this.y + this.height / 2, 'silver', 5);
         }
     }
 }
@@ -482,12 +692,19 @@ class PowerUp {
 
         // Visual
         this.rotation = 0;
+        this.pulseScale = 1.0;
+        this.pulseDirection = 1;
     }
 
     update(deltatime) {
         this.y += this.directionY;
         this.floatOffset += this.floatSpeed;
         this.rotation += 0.02;
+
+        // Pulse animation
+        this.pulseScale += 0.02 * this.pulseDirection;
+        if (this.pulseScale > 1.2) this.pulseDirection = -1;
+        if (this.pulseScale < 0.9) this.pulseDirection = 1;
 
         // Remove if off screen
         if (this.y > canvas.height) {
@@ -504,9 +721,10 @@ class PowerUp {
         ctx.save();
         ctx.translate(this.x, this.y + Math.sin(this.floatOffset) * 5);
         ctx.rotate(this.rotation);
+        ctx.scale(this.pulseScale, this.pulseScale);
 
         // Glow effect
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 25;
         ctx.shadowColor = this.getTypeColor();
 
         // Draw powerup box
@@ -545,6 +763,9 @@ class PowerUp {
 
     collect() {
         this.markedForDeletion = true;
+
+        // Particle burst on collection
+        createParticleBurst(this.x, this.y, this.getTypeColor(), 12);
 
         switch (this.type) {
             case 'SLOWMO':
@@ -639,9 +860,20 @@ function drawLives() {
     const startY = 50;
 
     ctx.font = '40px Arial';
+
+    // Pulse effect on low health
+    const pulse = gameState.lives === 1 ? 1 + Math.sin(Date.now() / 200) * 0.1 : 1;
+
     for (let i = 0; i < gameState.lives; i++) {
+        ctx.save();
+        if (gameState.lives === 1) {
+            ctx.translate(startX + i * heartSize, startY);
+            ctx.scale(pulse, pulse);
+            ctx.translate(-(startX + i * heartSize), -startY);
+        }
         ctx.fillStyle = 'red';
         ctx.fillText('♥', startX + i * heartSize, startY);
+        ctx.restore();
     }
 
     // Empty hearts for lost lives
@@ -658,6 +890,13 @@ function drawCombo() {
 
         // Combo background
         ctx.save();
+
+        // Pulse effect on high combos
+        const pulse = gameState.combo >= 4 ? 1 + Math.sin(Date.now() / 100) * 0.05 : 1;
+        ctx.translate(x, y);
+        ctx.scale(pulse, pulse);
+        ctx.translate(-x, -y);
+
         ctx.font = '60px Impact';
         ctx.textAlign = 'center';
 
@@ -719,6 +958,10 @@ function drawActivePowerups() {
             case 'SCOREBOOST': color = 'gold'; break;
             default: color = 'white';
         }
+
+        // Glow effect
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = color;
 
         ctx.fillStyle = color;
         ctx.fillRect(x, startY, iconSize, iconSize);
@@ -852,7 +1095,7 @@ window.addEventListener('click', function(e) {
         return;
     }
 
-    if (gameState.isPaused) return; // Don't process clicks while paused
+    if (gameState.isPaused) return;
 
     const detectPixelColor = collisionCtx.getImageData(e.x, e.y, 1, 1);
     const pc = detectPixelColor.data;
@@ -860,6 +1103,10 @@ window.addEventListener('click', function(e) {
 
     // Track shot fired
     gameState.stats.shotsFired++;
+
+    // Create click ripple
+    createClickRipple(e.x, e.y);
+    playSound('click');
 
     // Check raven hits
     ravens.forEach(raven => {
@@ -901,6 +1148,7 @@ window.addEventListener('click', function(e) {
     if (!hitSomething && ravens.length > 0) {
         resetCombo();
         gameState.stats.misses++;
+        createClickRipple(e.x, e.y, 'rgba(255, 0, 0, 0.5)');
     }
 
     updateStats();
@@ -936,7 +1184,7 @@ function animate(timestamp) {
 
     if (gameState.isPaused) {
         // Draw everything frozen
-        [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts].forEach(obj => obj.draw());
+        [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts, ...clickRipples, ...particleBursts].forEach(obj => obj.draw());
         drawScore();
         drawLives();
         drawCombo();
@@ -946,7 +1194,7 @@ function animate(timestamp) {
         drawStats();
 
         // Draw pause overlay
-        ctx.restore(); // Remove shake before drawing pause overlay
+        ctx.restore();
         drawPauseOverlay();
 
         requestAnimationFrame(animate);
@@ -965,12 +1213,13 @@ function animate(timestamp) {
     updateCombo(deltatime);
     updatePowerups();
     updateScreenShake(deltatime);
+    updateTimeFreeze(deltatime);
 
     // Update all entities
-    [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts].forEach(obj => obj.update(deltatime));
+    [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts, ...clickRipples, ...particleBursts].forEach(obj => obj.update(deltatime));
 
     // Draw all entities
-    [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts].forEach(obj => obj.draw());
+    [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts, ...clickRipples, ...particleBursts].forEach(obj => obj.draw());
 
     // Clean up deleted entities
     ravens = ravens.filter(obj => !obj.markedForDeletion);
@@ -978,6 +1227,8 @@ function animate(timestamp) {
     particles = particles.filter(obj => !obj.markedForDeletion);
     powerups = powerups.filter(obj => !obj.markedForDeletion);
     floatingTexts = floatingTexts.filter(obj => !obj.markedForDeletion);
+    clickRipples = clickRipples.filter(obj => !obj.markedForDeletion);
+    particleBursts = particleBursts.filter(obj => !obj.markedForDeletion);
 
     // Draw UI
     drawScore();
@@ -988,7 +1239,7 @@ function animate(timestamp) {
     drawHighScore();
     drawStats();
 
-    ctx.restore(); // Restore after shake
+    ctx.restore();
 
     if (!gameState.gameOver) {
         requestAnimationFrame(animate);
