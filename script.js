@@ -8,6 +8,14 @@ const collisionCtx = collisionCanvas.getContext('2d');
 collisionCanvas.width = window.innerWidth;
 collisionCanvas.height = window.innerHeight;
 
+// Landing page canvas
+const landingCanvas = document.getElementById('landingCanvas');
+const landingCtx = landingCanvas ? landingCanvas.getContext('2d') : null;
+if (landingCanvas) {
+    landingCanvas.width = window.innerWidth;
+    landingCanvas.height = window.innerHeight;
+}
+
 // ==================== GAME CONFIGURATION ====================
 const CONFIG = {
     INITIAL_LIVES: 3,
@@ -68,6 +76,16 @@ const gameState = {
         active: false,
         duration: 0
     }
+};
+
+// ==================== LANDING PAGE STATE ====================
+const landingState = {
+    active: true,
+    ravens: [],
+    particles: [],
+    explosions: [],
+    lastRavenSpawn: 0,
+    ravenSpawnInterval: 800
 };
 
 // ==================== ARRAYS ====================
@@ -273,6 +291,12 @@ function createParticleBurst(x, y, color, count = CONFIG.PARTICLE_BURST_COUNT) {
     }
 }
 
+function createLandingParticleBurst(x, y, color, count = 10) {
+    for (let i = 0; i < count; i++) {
+        landingState.particles.push(new LandingParticle(x, y, color));
+    }
+}
+
 function resetGame() {
     gameState.score = 0;
     gameState.lives = CONFIG.INITIAL_LIVES;
@@ -309,6 +333,192 @@ function resetGame() {
     particleBursts = [];
     lastTime = 0;
     timeToNextRaven = 0;
+}
+
+// ==================== LANDING PAGE CLASSES ====================
+class LandingRaven {
+    constructor() {
+        this.spriteWidth = 271;
+        this.spriteHeight = 194;
+        this.sizeModifier = Math.random() * 0.5 + 0.3;
+        this.width = this.spriteWidth * this.sizeModifier;
+        this.height = this.spriteHeight * this.sizeModifier;
+
+        // Random position - can start from any side
+        const side = Math.random();
+        if (side < 0.5) {
+            // From right
+            this.x = landingCanvas.width;
+            this.y = Math.random() * landingCanvas.height;
+            this.directionX = -(Math.random() * 2 + 1);
+        } else {
+            // From left
+            this.x = -this.width;
+            this.y = Math.random() * landingCanvas.height;
+            this.directionX = Math.random() * 2 + 1;
+        }
+
+        this.directionY = Math.random() * 1.5 - 0.75;
+
+        this.markedForDeletion = false;
+        this.image = new Image();
+        this.image.src = 'raven.png';
+        this.frame = 0;
+        this.maxFrame = 4;
+        this.timeSinceFlap = 0;
+        this.flapInterval = Math.random() * 50 + 100;
+
+        // Visual effects
+        this.opacity = Math.random() * 0.3 + 0.3;
+        this.rotation = Math.random() * 0.2 - 0.1;
+        this.color = this.getRandomColor();
+    }
+
+    getRandomColor() {
+        const colors = ['rgba(255, 0, 255, 0.4)', 'rgba(0, 255, 255, 0.4)', 'rgba(255, 100, 0, 0.4)', 'rgba(255, 255, 0, 0.4)'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    update(deltatime) {
+        this.x += this.directionX;
+        this.y += this.directionY;
+
+        // Bounce at edges
+        if (this.y < 0 || this.y > landingCanvas.height - this.height) {
+            this.directionY *= -1;
+        }
+
+        // Animation
+        this.timeSinceFlap += deltatime;
+        if (this.timeSinceFlap > this.flapInterval) {
+            this.frame = this.frame >= this.maxFrame ? 0 : this.frame + 1;
+            this.timeSinceFlap = 0;
+
+            // Trail particles
+            if (Math.random() > 0.5) {
+                createLandingParticleBurst(this.x + this.width / 2, this.y + this.height / 2, this.color, 3);
+            }
+        }
+
+        // Remove if off screen
+        if (this.x < -this.width || this.x > landingCanvas.width + this.width) {
+            this.markedForDeletion = true;
+        }
+    }
+
+    draw() {
+        if (!landingCtx) return;
+
+        landingCtx.save();
+        landingCtx.globalAlpha = this.opacity;
+
+        // Draw with tint
+        landingCtx.drawImage(
+            this.image,
+            this.frame * this.spriteWidth,
+            0,
+            this.spriteWidth,
+            this.spriteHeight,
+            this.x,
+            this.y,
+            this.width,
+            this.height
+        );
+
+        // Color overlay
+        landingCtx.globalCompositeOperation = 'source-atop';
+        landingCtx.fillStyle = this.color;
+        landingCtx.fillRect(this.x, this.y, this.width, this.height);
+
+        landingCtx.restore();
+    }
+}
+
+class LandingParticle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 2 + 1;
+        this.velocityX = Math.cos(angle) * speed;
+        this.velocityY = Math.sin(angle) * speed;
+
+        this.radius = Math.random() * 3 + 1;
+        this.life = 1.0;
+        this.decay = Math.random() * 0.02 + 0.01;
+        this.markedForDeletion = false;
+    }
+
+    update() {
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+        this.velocityX *= 0.98;
+        this.velocityY *= 0.98;
+        this.life -= this.decay;
+
+        if (this.life <= 0) {
+            this.markedForDeletion = true;
+        }
+    }
+
+    draw() {
+        if (!landingCtx) return;
+
+        landingCtx.save();
+        landingCtx.globalAlpha = this.life * 0.6;
+        landingCtx.fillStyle = this.color;
+        landingCtx.beginPath();
+        landingCtx.arc(this.x, this.y, this.radius * this.life, 0, Math.PI * 2);
+        landingCtx.fill();
+        landingCtx.restore();
+    }
+}
+
+class LandingExplosion {
+    constructor(x, y, size) {
+        this.image = new Image();
+        this.image.src = 'boom.png';
+        this.spriteWidth = 200;
+        this.spriteHeight = 179;
+        this.size = size;
+        this.x = x;
+        this.y = y;
+        this.frame = 0;
+        this.timeSinceLastFrame = 0;
+        this.frameInterval = 200;
+        this.markedForDeletion = false;
+        this.opacity = Math.random() * 0.3 + 0.3;
+    }
+
+    update(deltatime) {
+        this.timeSinceLastFrame += deltatime;
+        if (this.timeSinceLastFrame > this.frameInterval) {
+            this.frame++;
+            this.timeSinceLastFrame = 0;
+            if (this.frame > 5) this.markedForDeletion = true;
+        }
+    }
+
+    draw() {
+        if (!landingCtx) return;
+
+        landingCtx.save();
+        landingCtx.globalAlpha = this.opacity;
+        landingCtx.drawImage(
+            this.image,
+            this.frame * this.spriteWidth,
+            0,
+            this.spriteWidth,
+            this.spriteHeight,
+            this.x,
+            this.y - this.size / 4,
+            this.size,
+            this.size
+        );
+        landingCtx.restore();
+    }
 }
 
 // ==================== CLICK RIPPLE CLASS ====================
@@ -1248,7 +1458,70 @@ function animate(timestamp) {
     }
 }
 
+// ==================== LANDING PAGE ANIMATION ====================
+function animateLandingPage(timestamp) {
+    if (!landingState.active || !landingCtx) {
+        return;
+    }
+
+    landingCtx.clearRect(0, 0, landingCanvas.width, landingCanvas.height);
+
+    const deltatime = timestamp - landingState.lastRavenSpawn;
+
+    // Spawn ravens
+    if (timestamp - landingState.lastRavenSpawn > landingState.ravenSpawnInterval) {
+        landingState.ravens.push(new LandingRaven());
+        landingState.lastRavenSpawn = timestamp;
+
+        // Random explosions
+        if (Math.random() > 0.7) {
+            const x = Math.random() * landingCanvas.width;
+            const y = Math.random() * landingCanvas.height;
+            const size = Math.random() * 100 + 80;
+            landingState.explosions.push(new LandingExplosion(x, y, size));
+            createLandingParticleBurst(x + size / 2, y + size / 2, 'rgba(255, 100, 0, 0.6)', 15);
+        }
+    }
+
+    // Update all entities
+    [...landingState.ravens, ...landingState.particles, ...landingState.explosions].forEach(obj => obj.update(deltatime));
+
+    // Draw all entities
+    [...landingState.ravens, ...landingState.explosions, ...landingState.particles].forEach(obj => obj.draw());
+
+    // Clean up
+    landingState.ravens = landingState.ravens.filter(obj => !obj.markedForDeletion);
+    landingState.particles = landingState.particles.filter(obj => !obj.markedForDeletion);
+    landingState.explosions = landingState.explosions.filter(obj => !obj.markedForDeletion);
+
+    requestAnimationFrame(animateLandingPage);
+}
+
+// ==================== START BUTTON HANDLER ====================
+function startGame() {
+    const landingPage = document.getElementById('landingPage');
+    if (landingPage) {
+        landingPage.classList.add('fade-out');
+
+        setTimeout(() => {
+            landingState.active = false;
+            landingPage.style.display = 'none';
+            animate(0);
+        }, 800);
+    }
+}
+
 // ==================== INITIALIZE AND START ====================
 loadHighScore();
 ctx.font = '50px Impact';
-animate(0);
+
+// Set up start button
+const startButton = document.getElementById('startButton');
+if (startButton) {
+    startButton.addEventListener('click', startGame);
+}
+
+// Start landing page animation
+if (landingState.active) {
+    animateLandingPage(0);
+}
