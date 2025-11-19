@@ -4,7 +4,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 const collisionCanvas = document.getElementById('collisionCanvas');
-const collisionCtx = collisionCanvas.getContext('2d');
+const collisionCtx = collisionCanvas.getContext('2d', { willReadFrequently: true });
 collisionCanvas.width = window.innerWidth;
 collisionCanvas.height = window.innerHeight;
 
@@ -385,17 +385,24 @@ class BurstParticle {
     }
 
     draw() {
+        // Don't draw if life is depleted
+        if (this.life <= 0) return;
+
         ctx.save();
         ctx.globalAlpha = this.life;
         ctx.fillStyle = this.color;
+
+        // Ensure radius is never negative
+        const radius = Math.max(0, this.radius * this.life);
+
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * this.life, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
         ctx.fill();
 
         // Glow effect
         ctx.globalAlpha = this.life * 0.5;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * this.life * 2, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, radius * 2, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
