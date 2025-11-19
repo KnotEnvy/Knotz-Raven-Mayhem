@@ -470,7 +470,7 @@ class LandingParticle {
         landingCtx.globalAlpha = this.life * 0.6;
         landingCtx.fillStyle = this.color;
         landingCtx.beginPath();
-        landingCtx.arc(this.x, this.y, this.radius * this.life, 0, Math.PI * 2);
+        landingCtx.arc(this.x, this.y, Math.max(0, this.radius * this.life), 0, Math.PI * 2);
         landingCtx.fill();
         landingCtx.restore();
     }
