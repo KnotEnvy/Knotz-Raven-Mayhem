@@ -598,14 +598,15 @@ class BurstParticle {
         ctx.save();
         ctx.globalAlpha = this.life;
         ctx.fillStyle = this.color;
+        const radius = Math.max(0, this.radius * this.life);
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * this.life, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
         ctx.fill();
 
         // Glow effect
         ctx.globalAlpha = this.life * 0.5;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * this.life * 2, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, radius * 2, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
