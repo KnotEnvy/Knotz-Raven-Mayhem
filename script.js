@@ -4,7 +4,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 const collisionCanvas = document.getElementById('collisionCanvas');
-const collisionCtx = collisionCanvas.getContext('2d');
+const collisionCtx = collisionCanvas.getContext('2d', { willReadFrequently: true });
 collisionCanvas.width = window.innerWidth;
 collisionCanvas.height = window.innerHeight;
 
