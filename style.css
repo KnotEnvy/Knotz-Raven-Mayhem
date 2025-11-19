@@ -344,3 +344,62 @@ canvas {
         font-size: 14px;
     }
 }
+
+/* ==================== RESTART BUTTON ==================== */
+.restart-button {
+    position: fixed;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    font-weight: bold;
+    font-family: 'Impact', sans-serif;
+    padding: 20px 60px;
+    background: linear-gradient(135deg, #ff0066, #ff6600);
+    border: 4px solid #ffff00;
+    border-radius: 15px;
+    color: white;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    box-shadow:
+        0 0 20px rgba(255, 255, 0, 0.5),
+        0 8px 0 #cc0044,
+        0 12px 20px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease;
+    z-index: 2000;
+    overflow: hidden;
+    animation: restartButtonPulse 2s ease-in-out infinite;
+}
+
+.restart-button:hover {
+    transform: translate(-50%, -50%) translateY(-5px) scale(1.05);
+    box-shadow:
+        0 0 30px rgba(255, 255, 0, 0.8),
+        0 10px 0 #cc0044,
+        0 15px 25px rgba(0, 0, 0, 0.6);
+    border-color: #ffff66;
+    animation: none;
+}
+
+.restart-button:active {
+    transform: translate(-50%, -50%) translateY(2px) scale(0.98);
+    box-shadow:
+        0 0 15px rgba(255, 255, 0, 0.6),
+        0 4px 0 #cc0044,
+        0 6px 15px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes restartButtonPulse {
+    0%, 100% {
+        box-shadow:
+            0 0 20px rgba(255, 255, 0, 0.5),
+            0 8px 0 #cc0044,
+            0 12px 20px rgba(0, 0, 0, 0.5);
+    }
+    50% {
+        box-shadow:
+            0 0 35px rgba(255, 255, 0, 0.9),
+            0 8px 0 #cc0044,
+            0 12px 25px rgba(0, 0, 0, 0.5);
+    }
+}

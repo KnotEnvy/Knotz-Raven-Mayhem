@@ -21,12 +21,13 @@ const CONFIG = {
     INITIAL_LIVES: 3,
     INITIAL_RAVEN_INTERVAL: 500,
     INITIAL_RAVEN_SPEED: { min: 3, max: 5 },
-    DIFFICULTY_SCORE_THRESHOLD: 10,
+    DIFFICULTY_SCORE_THRESHOLD: 25, // Increased from 10 to slow down progression
     COMBO_WINDOW: 2000, // 2 seconds to maintain combo
     COMBO_MULTIPLIERS: [1, 2, 3, 4, 5], // max 5x multiplier
     POWERUP_DROP_CHANCE: 0.15, // 15% chance on raven kill
-    POWERUP_DURATION: 5000, // 5 seconds
-    SLOWMO_MULTIPLIER: 0.4, // Slow down to 40% speed
+    POWERUP_DURATION: 5000, // 5 seconds for most powerups
+    SLOWMO_DURATION: 8000, // 8 seconds specifically for slowmo (longer than other powerups)
+    SLOWMO_MULTIPLIER: 0.35, // Slow down to 35% speed (more noticeable)
     SCREEN_SHAKE_DURATION: 200, // milliseconds
     SCREEN_SHAKE_INTENSITY: 10, // pixels
     TIME_FREEZE_DURATION: 150, // milliseconds for dramatic effect
@@ -205,7 +206,9 @@ function updateDifficulty() {
 }
 
 function activatePowerup(type) {
-    const expiryTime = Date.now() + CONFIG.POWERUP_DURATION;
+    // Use longer duration for SLOWMO powerup
+    const duration = type === 'SLOWMO' ? CONFIG.SLOWMO_DURATION : CONFIG.POWERUP_DURATION;
+    const expiryTime = Date.now() + duration;
     gameState.activePowerups.set(type, expiryTime);
     floatingTexts.push(new FloatingText(canvas.width / 2, 100, type.toUpperCase() + '!', 'yellow', 1500));
     playSound('powerup');
@@ -766,9 +769,14 @@ class Raven {
     }
 
     draw() {
-        // Collision canvas
+        // Collision canvas - draw circular hitbox for smoother appearance
         collisionCtx.fillStyle = this.color;
-        collisionCtx.fillRect(this.x, this.y, this.width, this.height);
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+        const radius = Math.max(this.width, this.height) / 2;
+        collisionCtx.beginPath();
+        collisionCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        collisionCtx.fill();
 
         // Main canvas - tinted based on type
         ctx.save();
@@ -924,9 +932,12 @@ class PowerUp {
     }
 
     draw() {
-        // Collision canvas
+        // Collision canvas - circular hitbox
         collisionCtx.fillStyle = this.color;
-        collisionCtx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+        const radius = this.width / 2;
+        collisionCtx.beginPath();
+        collisionCtx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+        collisionCtx.fill();
 
         // Main canvas
         ctx.save();
@@ -1185,8 +1196,9 @@ function drawActivePowerups() {
         const icon = type === 'SLOWMO' ? '⏱' : type === 'MULTISHOT' ? '✸' : '★';
         ctx.fillText(icon, x + iconSize / 2, startY + iconSize / 2);
 
-        // Timer bar
-        const progress = timeLeft / CONFIG.POWERUP_DURATION;
+        // Timer bar (use correct duration based on powerup type)
+        const totalDuration = type === 'SLOWMO' ? CONFIG.SLOWMO_DURATION : CONFIG.POWERUP_DURATION;
+        const progress = timeLeft / totalDuration;
         ctx.fillStyle = 'white';
         ctx.fillRect(x, startY + iconSize, iconSize * progress, 5);
 
@@ -1292,21 +1304,13 @@ function drawGameOver() {
     ctx.fillText('Best Combo: ' + gameState.stats.bestCombo + 'x', canvas.width / 2, canvas.height / 2 + 100);
     ctx.fillText('Shots: ' + gameState.stats.hits + '/' + gameState.stats.shotsFired, canvas.width / 2, canvas.height / 2 + 125);
 
-    // Restart prompt
-    ctx.font = '20px Impact';
-    ctx.fillStyle = 'yellow';
-    ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 170);
+    // Restart button will be shown via HTML button
 }
 
 // ==================== EVENT HANDLERS ====================
 window.addEventListener('click', function(e) {
-    if (gameState.gameOver) {
-        resetGame();
-        animate(0);
-        return;
-    }
-
-    if (gameState.isPaused) return;
+    // Don't process clicks during game over or pause
+    if (gameState.gameOver || gameState.isPaused) return;
 
     const detectPixelColor = collisionCtx.getImageData(e.x, e.y, 1, 1);
     const pc = detectPixelColor.data;
@@ -1380,6 +1384,16 @@ window.addEventListener('keydown', function(e) {
         }
     }
 });
+
+// Restart button handler
+const restartButton = document.getElementById('restartButton');
+if (restartButton) {
+    restartButton.addEventListener('click', function() {
+        restartButton.style.display = 'none';
+        resetGame();
+        animate(0);
+    });
+}
 
 // ==================== MAIN GAME LOOP ====================
 function animate(timestamp) {
@@ -1456,6 +1470,10 @@ function animate(timestamp) {
         requestAnimationFrame(animate);
     } else {
         drawGameOver();
+        // Show restart button
+        if (restartButton) {
+            restartButton.style.display = 'block';
+        }
     }
 }
 
