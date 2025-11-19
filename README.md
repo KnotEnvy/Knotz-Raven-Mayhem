@@ -9,6 +9,8 @@ Knotz Raven Mayhem is an action-packed canvas-based shooter game built with vani
 - **Collect power-ups** dropped by destroyed ravens
 - **Survive** - You have 3 lives. Lose a life when a raven escapes!
 - **Beat your high score** - Your best score is saved automatically
+- **Press SPACEBAR** to pause/resume the game
+- **Press ESC** while paused to quit to game over screen
 
 ## 🆕 New Features (v2.0)
 
@@ -70,6 +72,35 @@ Knotz Raven Mayhem is an action-packed canvas-based shooter game built with vani
 - Animated combo display with gradient text
 - Glowing power-up effects with rotation
 - Smooth fade-out animations
+
+### 8. ⏸️ Pause System
+- **Press SPACEBAR** to pause/resume gameplay
+- Beautiful pause overlay with semi-transparent background
+- View current stats while paused (score, level, accuracy, combo)
+- **Press ESC** while paused to quit to game over
+- Game freezes completely - no updates while paused
+- Resume exactly where you left off
+
+### 9. 📊 Live Stats Tracking
+- **Real-time statistics** displayed on screen during gameplay
+- **Accuracy percentage** - tracks hits vs total shots fired
+- **Ravens killed** - total enemy count
+- **Best combo** - highest combo multiplier achieved
+- **Shots tracking** - hits/total shots ratio
+- Stats panel with dark background overlay
+- Final stats shown on game over screen
+
+### 10. 💥 Screen Shake & Juice Effects
+- **Dynamic camera shake** adds impact to gameplay
+- Different shake intensities for different events:
+  - **Golden ravens**: Intense shake (15px)
+  - **Armored ravens**: Heavy shake (12px)
+  - **Normal kills**: Standard shake (8px)
+  - **Life lost**: Major shake (20px)
+  - **Difficulty up**: Strong shake (15px)
+  - **High combos**: Escalating shake (3x+ combo)
+- 200ms shake duration for snappy feel
+- Configurable intensity and duration in CONFIG
 
 ## 🎮 Gameplay Elements
 
@@ -151,6 +182,9 @@ Pure vanilla JavaScript - just open `index.html` in a modern browser!
 5. **Watch Your Lives** - Don't get greedy chasing high-value targets
 6. **Multi-Shot Synergy** - Combine with high combos for massive points
 7. **Focus on Mini Ravens Early** - Harder to hit at higher speeds
+8. **Pause for Strategy** - Use SPACEBAR to pause and plan your next move
+9. **Track Your Accuracy** - Check the stats panel to improve your precision
+10. **Feel the Shake** - Screen shake intensity tells you the value of your hits!
 
 ## 📊 Difficulty Progression
 
@@ -174,7 +208,28 @@ Pure vanilla JavaScript - just open `index.html` in a modern browser!
 
 ## 📝 Changelog
 
-### Version 2.0 (2025-11-19)
+### Version 2.1 (2025-11-19) - Polish & Enhancement Update
+**New Features:**
+- ⏸️ **Pause System** - SPACEBAR to pause/resume, ESC to quit while paused
+- 📊 **Live Stats Tracking** - Real-time accuracy, kills, best combo on-screen
+- 💥 **Screen Shake Effects** - Dynamic camera shake for impactful gameplay
+- Stats panel with semi-transparent background
+- Comprehensive pause overlay showing current stats
+- Final stats display on game over screen
+
+**Bug Fixes:**
+- 🐛 **Fixed Slow-Mo consistency** - Now affects ALL ravens on screen, not just new spawns
+- 🐛 **Fixed restart bug** - lastTime now properly resets (prevented negative deltatime)
+- 🐛 **Fixed pause state** - isPaused now fully functional with keyboard controls
+
+**Improvements:**
+- Screen shake intensity varies by event type (kills, combos, damage)
+- Added keyboard controls (SPACEBAR, ESC)
+- Enhanced combo system triggers screen shake at 3x+
+- Better game state management with resetGame() function
+- Improved code organization and comments
+
+### Version 2.0 (2025-11-19) - Major Feature Update
 - ✅ Added lives system (3 hearts)
 - ✅ Implemented combo multiplier with visual feedback
 - ✅ Created 4-type power-up system
@@ -193,16 +248,24 @@ Pure vanilla JavaScript - just open `index.html` in a modern browser!
 - Dual canvas collision detection
 - Score tracking
 
+## ⌨️ Controls
+- **Left Click** - Shoot ravens / Collect power-ups / Restart after game over
+- **SPACEBAR** - Pause/Resume game
+- **ESC** - Quit to game over (while paused)
+
 ## 🔧 Configuration
 Want to tweak the game? Edit the `CONFIG` object in `script.js`:
 
 ```javascript
 const CONFIG = {
-    INITIAL_LIVES: 3,              // Starting lives
-    COMBO_WINDOW: 2000,            // Combo timer (ms)
+    INITIAL_LIVES: 3,               // Starting lives
+    COMBO_WINDOW: 2000,             // Combo timer (ms)
     COMBO_MULTIPLIERS: [1,2,3,4,5], // Combo levels
-    POWERUP_DROP_CHANCE: 0.15,     // 15% drop rate
-    POWERUP_DURATION: 5000,        // 5 seconds
+    POWERUP_DROP_CHANCE: 0.15,      // 15% drop rate
+    POWERUP_DURATION: 5000,         // 5 seconds (powerups)
+    SLOWMO_MULTIPLIER: 0.4,         // Slow-mo speed (40%)
+    SCREEN_SHAKE_DURATION: 200,     // Shake duration (ms)
+    SCREEN_SHAKE_INTENSITY: 10,     // Shake intensity (pixels)
     DIFFICULTY_SCORE_THRESHOLD: 10, // Points per level
     // ... and more!
 };

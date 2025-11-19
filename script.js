@@ -18,6 +18,9 @@ const CONFIG = {
     COMBO_MULTIPLIERS: [1, 2, 3, 4, 5], // max 5x multiplier
     POWERUP_DROP_CHANCE: 0.15, // 15% chance on raven kill
     POWERUP_DURATION: 5000, // 5 seconds
+    SLOWMO_MULTIPLIER: 0.4, // Slow down to 40% speed
+    SCREEN_SHAKE_DURATION: 200, // milliseconds
+    SCREEN_SHAKE_INTENSITY: 10, // pixels
     RAVEN_TYPES: {
         NORMAL: { weight: 0.6, speed: 1, points: 1, health: 1, color: null },
         FAST: { weight: 0.2, speed: 2, points: 2, health: 1, color: 'cyan' },
@@ -40,7 +43,22 @@ const gameState = {
     comboMultiplier: 1,
     activePowerups: new Map(), // powerup type -> expiry timestamp
     highScore: 0,
-    isPaused: false
+    isPaused: false,
+    // Stats tracking
+    stats: {
+        shotsFired: 0,
+        hits: 0,
+        misses: 0,
+        ravensKilled: 0,
+        bestCombo: 0,
+        accuracy: 0
+    },
+    // Screen shake
+    screenShake: {
+        active: false,
+        duration: 0,
+        intensity: 0
+    }
 };
 
 // ==================== ARRAYS ====================
@@ -92,6 +110,16 @@ function addCombo() {
     gameState.comboTimer = CONFIG.COMBO_WINDOW;
     const comboIndex = Math.min(gameState.combo - 1, CONFIG.COMBO_MULTIPLIERS.length - 1);
     gameState.comboMultiplier = CONFIG.COMBO_MULTIPLIERS[comboIndex];
+
+    // Track best combo
+    if (gameState.combo > gameState.stats.bestCombo) {
+        gameState.stats.bestCombo = gameState.combo;
+    }
+
+    // Screen shake on high combos
+    if (gameState.combo >= 3) {
+        activateScreenShake(CONFIG.SCREEN_SHAKE_INTENSITY * (gameState.combo / 3));
+    }
 }
 
 function resetCombo() {
@@ -107,6 +135,7 @@ function updateDifficulty() {
         gameState.ravenSpeedMultiplier = 1 + (newLevel - 1) * 0.15;
         gameState.ravenInterval = Math.max(200, CONFIG.INITIAL_RAVEN_INTERVAL - (newLevel - 1) * 50);
         floatingTexts.push(new FloatingText(canvas.width / 2, canvas.height / 2, 'DIFFICULTY UP!', 'red', 2000));
+        activateScreenShake(15);
     }
 }
 
@@ -127,6 +156,74 @@ function updatePowerups() {
 
 function isPowerupActive(type) {
     return gameState.activePowerups.has(type);
+}
+
+function activateScreenShake(intensity = CONFIG.SCREEN_SHAKE_INTENSITY) {
+    gameState.screenShake.active = true;
+    gameState.screenShake.duration = CONFIG.SCREEN_SHAKE_DURATION;
+    gameState.screenShake.intensity = intensity;
+}
+
+function updateScreenShake(deltatime) {
+    if (gameState.screenShake.active) {
+        gameState.screenShake.duration -= deltatime;
+        if (gameState.screenShake.duration <= 0) {
+            gameState.screenShake.active = false;
+            gameState.screenShake.intensity = 0;
+        }
+    }
+}
+
+function applyScreenShake() {
+    if (gameState.screenShake.active) {
+        const x = (Math.random() - 0.5) * gameState.screenShake.intensity;
+        const y = (Math.random() - 0.5) * gameState.screenShake.intensity;
+        ctx.translate(x, y);
+        return { x, y };
+    }
+    return { x: 0, y: 0 };
+}
+
+function updateStats() {
+    if (gameState.stats.shotsFired > 0) {
+        gameState.stats.accuracy = Math.round((gameState.stats.hits / gameState.stats.shotsFired) * 100);
+    }
+}
+
+function togglePause() {
+    gameState.isPaused = !gameState.isPaused;
+}
+
+function resetGame() {
+    gameState.score = 0;
+    gameState.lives = CONFIG.INITIAL_LIVES;
+    gameState.gameOver = false;
+    gameState.difficultyLevel = 1;
+    gameState.ravenInterval = CONFIG.INITIAL_RAVEN_INTERVAL;
+    gameState.ravenSpeedMultiplier = 1;
+    gameState.isPaused = false;
+    resetCombo();
+    gameState.activePowerups.clear();
+    gameState.stats = {
+        shotsFired: 0,
+        hits: 0,
+        misses: 0,
+        ravensKilled: 0,
+        bestCombo: 0,
+        accuracy: 0
+    };
+    gameState.screenShake = {
+        active: false,
+        duration: 0,
+        intensity: 0
+    };
+    ravens = [];
+    explosions = [];
+    particles = [];
+    powerups = [];
+    floatingTexts = [];
+    lastTime = 0; // FIX: Reset lastTime to prevent negative deltatime
+    timeToNextRaven = 0;
 }
 
 // ==================== FLOATING TEXT CLASS ====================
@@ -186,14 +283,12 @@ class Raven {
 
         // Speed based on type and difficulty
         const baseSpeed = Math.random() * 2 + 3;
-        this.directionX = baseSpeed * this.typeProps.speed * gameState.ravenSpeedMultiplier;
-        this.directionY = Math.random() * 5 - 2.5;
+        this.baseDirectionX = baseSpeed * this.typeProps.speed * gameState.ravenSpeedMultiplier;
+        this.baseDirectionY = Math.random() * 5 - 2.5;
 
-        // Slow-mo powerup effect
-        if (isPowerupActive('SLOWMO')) {
-            this.directionX *= 0.4;
-            this.directionY *= 0.4;
-        }
+        // Store base speeds for slow-mo calculations
+        this.directionX = this.baseDirectionX;
+        this.directionY = this.baseDirectionY;
 
         // Health system for armored ravens
         this.maxHealth = this.typeProps.health;
@@ -219,9 +314,19 @@ class Raven {
     }
 
     update(deltatime) {
+        // FIX: Apply slow-mo to existing ravens dynamically
+        if (isPowerupActive('SLOWMO')) {
+            this.directionX = this.baseDirectionX * CONFIG.SLOWMO_MULTIPLIER;
+            this.directionY = this.baseDirectionY * CONFIG.SLOWMO_MULTIPLIER;
+        } else {
+            this.directionX = this.baseDirectionX;
+            this.directionY = this.baseDirectionY;
+        }
+
         // Bounce at screen edges
         if (this.y < 0 || this.y > canvas.height - this.height) {
             this.directionY = this.directionY * -1;
+            this.baseDirectionY = this.baseDirectionY * -1;
         }
 
         this.x -= this.directionX;
@@ -248,6 +353,7 @@ class Raven {
             this.markedForDeletion = true;
             gameState.lives--;
             resetCombo();
+            activateScreenShake(20); // Shake on life lost
             floatingTexts.push(new FloatingText(100, canvas.height - 100, 'MISSED!', 'red', 1000));
             if (gameState.lives <= 0) {
                 gameState.gameOver = true;
@@ -315,6 +421,7 @@ class Raven {
             // Score boost powerup
             const finalPoints = isPowerupActive('SCOREBOOST') ? points * 2 : points;
             gameState.score += finalPoints;
+            gameState.stats.ravensKilled++;
 
             addCombo();
             updateDifficulty();
@@ -330,6 +437,11 @@ class Raven {
 
             explosions.push(new Explosion(this.x, this.y, this.width));
 
+            // Screen shake on kill (more intense for special ravens)
+            const shakeIntensity = this.type === 'GOLDEN' ? 15 :
+                                  this.type === 'ARMORED' ? 12 : 8;
+            activateScreenShake(shakeIntensity);
+
             // Chance to drop powerup
             if (Math.random() < CONFIG.POWERUP_DROP_CHANCE) {
                 powerups.push(new PowerUp(this.x + this.width / 2, this.y + this.height / 2));
@@ -337,6 +449,7 @@ class Raven {
         } else {
             // Armored raven hit but not destroyed - visual feedback
             floatingTexts.push(new FloatingText(this.x + this.width / 2, this.y, 'HIT!', 'orange', 500));
+            activateScreenShake(5);
         }
     }
 }
@@ -638,64 +751,115 @@ function drawHighScore() {
     ctx.textAlign = 'left';
 }
 
+function drawStats() {
+    const x = 50;
+    const y = 160;
+    const lineHeight = 25;
+
+    ctx.font = '18px Impact';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(x - 5, y - 20, 200, 130);
+
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'left';
+    ctx.fillText('STATS', x, y);
+    ctx.font = '14px Impact';
+    ctx.fillText('Accuracy: ' + gameState.stats.accuracy + '%', x, y + lineHeight);
+    ctx.fillText('Kills: ' + gameState.stats.ravensKilled, x, y + lineHeight * 2);
+    ctx.fillText('Best Combo: ' + gameState.stats.bestCombo + 'x', x, y + lineHeight * 3);
+    ctx.fillText('Hits: ' + gameState.stats.hits + '/' + gameState.stats.shotsFired, x, y + lineHeight * 4);
+}
+
+function drawPauseOverlay() {
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Pause text
+    ctx.font = '100px Impact';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'white';
+    ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2 - 50);
+
+    // Instructions
+    ctx.font = '30px Impact';
+    ctx.fillStyle = 'yellow';
+    ctx.fillText('Press SPACEBAR to resume', canvas.width / 2, canvas.height / 2 + 50);
+    ctx.fillText('Press ESC to quit', canvas.width / 2, canvas.height / 2 + 100);
+
+    // Show stats during pause
+    ctx.font = '20px Impact';
+    ctx.fillStyle = 'white';
+    const statsY = canvas.height / 2 + 180;
+    ctx.fillText('Current Stats:', canvas.width / 2, statsY);
+    ctx.font = '18px Impact';
+    ctx.fillText('Score: ' + gameState.score + ' | Level: ' + gameState.difficultyLevel, canvas.width / 2, statsY + 30);
+    ctx.fillText('Accuracy: ' + gameState.stats.accuracy + '% | Best Combo: ' + gameState.stats.bestCombo + 'x', canvas.width / 2, statsY + 55);
+    ctx.fillText('Ravens Killed: ' + gameState.stats.ravensKilled, canvas.width / 2, statsY + 80);
+}
+
 function drawGameOver() {
     ctx.textAlign = 'center';
     ctx.font = '80px Impact';
 
     // Game Over text
     ctx.fillStyle = 'black';
-    ctx.fillText('GAME OVER', canvas.width / 2 + 4, canvas.height / 2 - 46);
+    ctx.fillText('GAME OVER', canvas.width / 2 + 4, canvas.height / 2 - 146);
     ctx.fillStyle = 'red';
-    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
+    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 150);
 
     // Final score
     ctx.font = '40px Impact';
     ctx.fillStyle = 'black';
-    ctx.fillText('Final Score: ' + gameState.score, canvas.width / 2 + 2, canvas.height / 2 + 22);
+    ctx.fillText('Final Score: ' + gameState.score, canvas.width / 2 + 2, canvas.height / 2 - 78);
     ctx.fillStyle = 'white';
-    ctx.fillText('Final Score: ' + gameState.score, canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText('Final Score: ' + gameState.score, canvas.width / 2, canvas.height / 2 - 80);
 
     // High score
     if (gameState.score >= gameState.highScore) {
         ctx.font = '30px Impact';
         ctx.fillStyle = 'gold';
-        ctx.fillText('NEW HIGH SCORE!', canvas.width / 2, canvas.height / 2 + 70);
+        ctx.fillText('NEW HIGH SCORE!', canvas.width / 2, canvas.height / 2 - 30);
     } else {
         ctx.font = '25px Impact';
         ctx.fillStyle = 'gray';
-        ctx.fillText('High Score: ' + gameState.highScore, canvas.width / 2, canvas.height / 2 + 60);
+        ctx.fillText('High Score: ' + gameState.highScore, canvas.width / 2, canvas.height / 2 - 40);
     }
+
+    // Final stats
+    ctx.font = '22px Impact';
+    ctx.fillStyle = 'cyan';
+    ctx.fillText('FINAL STATS', canvas.width / 2, canvas.height / 2 + 20);
+
+    ctx.font = '18px Impact';
+    ctx.fillStyle = 'white';
+    ctx.fillText('Accuracy: ' + gameState.stats.accuracy + '%', canvas.width / 2, canvas.height / 2 + 50);
+    ctx.fillText('Ravens Killed: ' + gameState.stats.ravensKilled, canvas.width / 2, canvas.height / 2 + 75);
+    ctx.fillText('Best Combo: ' + gameState.stats.bestCombo + 'x', canvas.width / 2, canvas.height / 2 + 100);
+    ctx.fillText('Shots: ' + gameState.stats.hits + '/' + gameState.stats.shotsFired, canvas.width / 2, canvas.height / 2 + 125);
 
     // Restart prompt
     ctx.font = '20px Impact';
-    ctx.fillStyle = 'white';
-    ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 120);
+    ctx.fillStyle = 'yellow';
+    ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 170);
 }
 
-// ==================== CLICK HANDLER ====================
+// ==================== EVENT HANDLERS ====================
 window.addEventListener('click', function(e) {
     if (gameState.gameOver) {
-        // Restart game
-        gameState.score = 0;
-        gameState.lives = CONFIG.INITIAL_LIVES;
-        gameState.gameOver = false;
-        gameState.difficultyLevel = 1;
-        gameState.ravenInterval = CONFIG.INITIAL_RAVEN_INTERVAL;
-        gameState.ravenSpeedMultiplier = 1;
-        resetCombo();
-        gameState.activePowerups.clear();
-        ravens = [];
-        explosions = [];
-        particles = [];
-        powerups = [];
-        floatingTexts = [];
+        resetGame();
         animate(0);
         return;
     }
 
+    if (gameState.isPaused) return; // Don't process clicks while paused
+
     const detectPixelColor = collisionCtx.getImageData(e.x, e.y, 1, 1);
     const pc = detectPixelColor.data;
     let hitSomething = false;
+
+    // Track shot fired
+    gameState.stats.shotsFired++;
 
     // Check raven hits
     ravens.forEach(raven => {
@@ -704,6 +868,7 @@ window.addEventListener('click', function(e) {
             raven.randomColors[2] === pc[2]) {
             raven.hit();
             hitSomething = true;
+            gameState.stats.hits++;
 
             // Multi-shot powerup - hit nearby ravens
             if (isPowerupActive('MULTISHOT')) {
@@ -714,6 +879,7 @@ window.addEventListener('click', function(e) {
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         if (distance < 200) {
                             otherRaven.hit();
+                            gameState.stats.hits++;
                         }
                     }
                 });
@@ -734,6 +900,25 @@ window.addEventListener('click', function(e) {
     // Reset combo if missed click
     if (!hitSomething && ravens.length > 0) {
         resetCombo();
+        gameState.stats.misses++;
+    }
+
+    updateStats();
+});
+
+// Keyboard controls
+window.addEventListener('keydown', function(e) {
+    if (e.code === 'Space') {
+        e.preventDefault();
+        if (!gameState.gameOver) {
+            togglePause();
+        }
+    }
+    if (e.code === 'Escape') {
+        if (gameState.isPaused) {
+            gameState.gameOver = true;
+            gameState.isPaused = false;
+        }
     }
 });
 
@@ -744,6 +929,29 @@ function animate(timestamp) {
 
     let deltatime = timestamp - lastTime;
     lastTime = timestamp;
+
+    // Apply screen shake
+    ctx.save();
+    const shakeOffset = applyScreenShake();
+
+    if (gameState.isPaused) {
+        // Draw everything frozen
+        [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts].forEach(obj => obj.draw());
+        drawScore();
+        drawLives();
+        drawCombo();
+        drawDifficulty();
+        drawActivePowerups();
+        drawHighScore();
+        drawStats();
+
+        // Draw pause overlay
+        ctx.restore(); // Remove shake before drawing pause overlay
+        drawPauseOverlay();
+
+        requestAnimationFrame(animate);
+        return;
+    }
 
     // Spawn ravens
     timeToNextRaven += deltatime;
@@ -756,6 +964,7 @@ function animate(timestamp) {
     // Update game state
     updateCombo(deltatime);
     updatePowerups();
+    updateScreenShake(deltatime);
 
     // Update all entities
     [...particles, ...ravens, ...explosions, ...powerups, ...floatingTexts].forEach(obj => obj.update(deltatime));
@@ -777,6 +986,9 @@ function animate(timestamp) {
     drawDifficulty();
     drawActivePowerups();
     drawHighScore();
+    drawStats();
+
+    ctx.restore(); // Restore after shake
 
     if (!gameState.gameOver) {
         requestAnimationFrame(animate);
