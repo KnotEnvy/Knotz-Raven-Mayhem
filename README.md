@@ -156,6 +156,10 @@ This game requires the following assets (all included):
 
 ## 🚀 How to Run
 
+### Play Online (Recommended)
+Visit the live version hosted on GitHub Pages:
+**[https://knotenvy.github.io/Knotz-Raven-Mayhem/](https://knotenvy.github.io/Knotz-Raven-Mayhem/)**
+
 ### Local Development
 ```bash
 # Option 1: Python HTTP Server
@@ -172,6 +176,13 @@ Then open: `http://localhost:8000`
 
 ### No Build Required
 Pure vanilla JavaScript - just open `index.html` in a modern browser!
+
+### Deploy Your Own
+1. Fork this repository
+2. Go to Settings → Pages
+3. Set Source to "Deploy from branch"
+4. Select `main` branch
+5. Your game will be live at `https://yourusername.github.io/Knotz-Raven-Mayhem/`
 
 ## 🎓 Game Tips
 
@@ -207,6 +218,26 @@ Pure vanilla JavaScript - just open `index.html` in a modern browser!
 - **Immortal:** Complete a run without losing a life
 
 ## 📝 Changelog
+
+### Version 3.0 (2025-11-21) - Production Release 🚀
+**Production-Ready Features:**
+- 📱 **Full Mobile & Touch Support** - Play on any device with responsive touch controls
+- 🔊 **Sound Toggle Control** - Mute/unmute button in top-right corner with localStorage persistence
+- 🌐 **SEO & Social Sharing** - Complete meta tags, Open Graph, and Twitter Cards for sharing
+- 🎨 **Custom Favicon** - Professional SVG favicon with gradient raven design
+- 📐 **Responsive Design** - Optimized UI for mobile, tablet, and desktop (768px and 480px breakpoints)
+- 🔄 **Auto-Resize Canvas** - Smoothly adapts to window/screen size changes
+- 🚀 **GitHub Pages Ready** - Configured for instant deployment with .nojekyll file
+- ♿ **Accessibility** - Larger touch targets (60x60px minimum) for better mobile UX
+- 🎯 **Cross-Browser Compatible** - Works on all modern browsers and mobile devices
+
+**Technical Improvements:**
+- Unified `handleClickOrTouch()` function for mouse and touch events
+- Proper coordinate calculation using `getBoundingClientRect()`
+- Sound preference saved to localStorage as `ravenMayhemSoundEnabled`
+- Window resize event handler for responsive canvas
+- Viewport meta tag prevents unwanted mobile zooming
+- Comprehensive meta tags for SEO and social media
 
 ### Version 2.2 (2025-11-19) - Ultimate Polish & Juice Update
 **Visual Effects:**
@@ -277,9 +308,18 @@ Pure vanilla JavaScript - just open `index.html` in a modern browser!
 - Score tracking
 
 ## ⌨️ Controls
+
+### Desktop
 - **Left Click** - Shoot ravens / Collect power-ups / Restart after game over
 - **SPACEBAR** - Pause/Resume game
 - **ESC** - Quit to game over (while paused)
+
+### Mobile & Tablet
+- **Tap** - Shoot ravens / Collect power-ups / Restart after game over
+- **Sound Toggle Button** - Tap the 🔊 icon (top-right) to mute/unmute
+
+### Additional Controls
+- **Sound Toggle** - Click/tap the speaker icon in the top-right corner to toggle sound on/off
 
 ## 🔧 Configuration
 Want to tweak the game? Edit the `CONFIG` object in `script.js`:

@@ -330,6 +330,9 @@ canvas {
     .start-button {
         font-size: 28px;
         padding: 15px 40px;
+        /* Larger touch target for mobile */
+        min-width: 200px;
+        min-height: 60px;
     }
 
     .features {
@@ -343,6 +346,93 @@ canvas {
     .feature-text {
         font-size: 14px;
     }
+
+    .sound-toggle {
+        /* Larger touch target for mobile */
+        width: 60px;
+        height: 60px;
+        top: 15px;
+        right: 15px;
+        font-size: 28px;
+    }
+
+    .restart-button {
+        font-size: 24px;
+        padding: 18px 50px;
+        /* Larger touch target for mobile */
+        min-width: 180px;
+        min-height: 65px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .game-title {
+        font-size: 36px;
+    }
+
+    .title-word:nth-child(2) {
+        font-size: 42px;
+    }
+
+    .subtitle {
+        font-size: 16px;
+    }
+
+    .start-button {
+        font-size: 24px;
+        padding: 12px 35px;
+    }
+
+    .instructions {
+        font-size: 16px;
+        padding: 0 20px;
+    }
+
+    .landing-content {
+        padding: 20px;
+    }
+}
+
+/* ==================== SOUND TOGGLE BUTTON ==================== */
+.sound-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.sound-toggle:hover {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.sound-toggle:active {
+    transform: scale(0.95);
+}
+
+.sound-toggle.muted {
+    background: rgba(200, 0, 0, 0.6);
+    border-color: rgba(255, 100, 100, 0.5);
+}
+
+.sound-toggle.muted:hover {
+    background: rgba(200, 0, 0, 0.8);
 }
 
 /* ==================== RESTART BUTTON ==================== */

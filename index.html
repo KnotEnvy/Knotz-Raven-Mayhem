@@ -3,13 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KnotzBirdShot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Primary Meta Tags -->
+    <title>Knotz Raven Mayhem - Fast-Paced Shooting Game</title>
+    <meta name="title" content="Knotz Raven Mayhem - Fast-Paced Shooting Game">
+    <meta name="description" content="Test your reflexes in this action-packed browser game! Click to destroy ravens, build combos, collect power-ups, and climb the leaderboard. Free to play!">
+    <meta name="keywords" content="browser game, shooting game, raven game, canvas game, action game, free game, online game, web game">
+    <meta name="author" content="KnotEnvy">
+    <meta name="theme-color" content="#2d0052">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://knotenvy.github.io/Knotz-Raven-Mayhem/">
+    <meta property="og:title" content="Knotz Raven Mayhem - Fast-Paced Shooting Game">
+    <meta property="og:description" content="Test your reflexes in this action-packed browser game! Click to destroy ravens, build combos, collect power-ups, and climb the leaderboard.">
+    <meta property="og:image" content="https://knotenvy.github.io/Knotz-Raven-Mayhem/raven.png">
+    <meta property="og:image:width" content="271">
+    <meta property="og:image:height" content="194">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://knotenvy.github.io/Knotz-Raven-Mayhem/">
+    <meta property="twitter:title" content="Knotz Raven Mayhem - Fast-Paced Shooting Game">
+    <meta property="twitter:description" content="Test your reflexes in this action-packed browser game! Click to destroy ravens, build combos, collect power-ups, and climb the leaderboard.">
+    <meta property="twitter:image" content="https://knotenvy.github.io/Knotz-Raven-Mayhem/raven.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="alternate icon" type="image/png" href="raven.png">
+    <link rel="apple-touch-icon" href="raven.png">
+
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <canvas id="collisionCanvas"></canvas>
     <canvas id="canvas1"></canvas>
+
+    <!-- Sound Toggle Button -->
+    <button id="soundToggle" class="sound-toggle" title="Toggle Sound">
+        <span id="soundIcon">🔊</span>
+    </button>
 
     <!-- Restart Button (hidden by default) -->
     <button id="restartButton" class="restart-button" style="display: none;">

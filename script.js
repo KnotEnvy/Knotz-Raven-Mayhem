@@ -57,6 +57,7 @@ const gameState = {
     activePowerups: new Map(), // powerup type -> expiry timestamp
     highScore: 0,
     isPaused: false,
+    soundEnabled: true,
     // Stats tracking
     stats: {
         shotsFired: 0,
@@ -113,6 +114,9 @@ const sounds = {
 };
 
 function playSound(soundName) {
+    // Check if sound is enabled
+    if (!gameState.soundEnabled) return;
+
     try {
         const soundConfig = sounds[soundName];
         if (!soundConfig) return;
@@ -129,6 +133,23 @@ function playSound(soundName) {
     }
 }
 
+function toggleSound() {
+    gameState.soundEnabled = !gameState.soundEnabled;
+    const soundIcon = document.getElementById('soundIcon');
+    const soundToggle = document.getElementById('soundToggle');
+
+    if (gameState.soundEnabled) {
+        soundIcon.textContent = '🔊';
+        soundToggle.classList.remove('muted');
+    } else {
+        soundIcon.textContent = '🔇';
+        soundToggle.classList.add('muted');
+    }
+
+    // Save preference to localStorage
+    localStorage.setItem('ravenMayhemSoundEnabled', gameState.soundEnabled);
+}
+
 // ==================== UTILITY FUNCTIONS ====================
 function getRandomRavenType() {
     const rand = Math.random();
@@ -143,6 +164,20 @@ function getRandomRavenType() {
 function loadHighScore() {
     const saved = localStorage.getItem('ravenMayhemHighScore');
     gameState.highScore = saved ? parseInt(saved) : 0;
+}
+
+function loadSoundPreference() {
+    const saved = localStorage.getItem('ravenMayhemSoundEnabled');
+    if (saved !== null) {
+        gameState.soundEnabled = saved === 'true';
+        const soundIcon = document.getElementById('soundIcon');
+        const soundToggle = document.getElementById('soundToggle');
+
+        if (!gameState.soundEnabled && soundIcon && soundToggle) {
+            soundIcon.textContent = '🔇';
+            soundToggle.classList.add('muted');
+        }
+    }
 }
 
 function saveHighScore() {
@@ -1308,11 +1343,17 @@ function drawGameOver() {
 }
 
 // ==================== EVENT HANDLERS ====================
-window.addEventListener('click', function(e) {
+// Unified click/touch handler
+function handleClickOrTouch(e) {
     // Don't process clicks during game over or pause
     if (gameState.gameOver || gameState.isPaused) return;
 
-    const detectPixelColor = collisionCtx.getImageData(e.x, e.y, 1, 1);
+    // Get coordinates (works for both mouse and touch)
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+
+    const detectPixelColor = collisionCtx.getImageData(x, y, 1, 1);
     const pc = detectPixelColor.data;
     let hitSomething = false;
 
@@ -1320,7 +1361,7 @@ window.addEventListener('click', function(e) {
     gameState.stats.shotsFired++;
 
     // Create click ripple
-    createClickRipple(e.x, e.y);
+    createClickRipple(x, y);
     playSound('click');
 
     // Check raven hits
@@ -1363,10 +1404,17 @@ window.addEventListener('click', function(e) {
     if (!hitSomething && ravens.length > 0) {
         resetCombo();
         gameState.stats.misses++;
-        createClickRipple(e.x, e.y, 'rgba(255, 0, 0, 0.5)');
+        createClickRipple(x, y, 'rgba(255, 0, 0, 0.5)');
     }
 
     updateStats();
+}
+
+// Mouse and touch event listeners
+window.addEventListener('click', handleClickOrTouch);
+window.addEventListener('touchstart', function(e) {
+    e.preventDefault(); // Prevent default touch behavior (scrolling, etc.)
+    handleClickOrTouch(e);
 });
 
 // Keyboard controls
@@ -1532,6 +1580,7 @@ function startGame() {
 
 // ==================== INITIALIZE AND START ====================
 loadHighScore();
+loadSoundPreference();
 ctx.font = '50px Impact';
 
 // Set up start button
@@ -1539,6 +1588,24 @@ const startButton = document.getElementById('startButton');
 if (startButton) {
     startButton.addEventListener('click', startGame);
 }
+
+// Set up sound toggle button
+const soundToggle = document.getElementById('soundToggle');
+if (soundToggle) {
+    soundToggle.addEventListener('click', toggleSound);
+}
+
+// Handle window resize for responsive canvas
+window.addEventListener('resize', function() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    collisionCanvas.width = window.innerWidth;
+    collisionCanvas.height = window.innerHeight;
+    if (landingCanvas) {
+        landingCanvas.width = window.innerWidth;
+        landingCanvas.height = window.innerHeight;
+    }
+});
 
 // Start landing page animation
 if (landingState.active) {
