@@ -1,4 +1,5 @@
 import type { StageDefinition } from '../types';
+import { STAGE_OVERFLOW_TUNING } from './tuning';
 
 export const STAGES: StageDefinition[] = [
   {
@@ -150,9 +151,12 @@ export function getStage(index: number): StageDefinition {
     ...finalStage,
     id: `${finalStage.id}-${overflow}`,
     title: `${finalStage.title} +${overflow}`,
-    targetKills: finalStage.targetKills + overflow * 8,
-    spawnEveryMs: Math.max(330, finalStage.spawnEveryMs - overflow * 18),
-    speedMultiplier: finalStage.speedMultiplier + overflow * 0.12,
-    rewardCoins: finalStage.rewardCoins + overflow * 15,
+    targetKills: finalStage.targetKills + overflow * STAGE_OVERFLOW_TUNING.targetKillsPerLoop,
+    spawnEveryMs: Math.max(
+      STAGE_OVERFLOW_TUNING.minimumSpawnEveryMs,
+      finalStage.spawnEveryMs - overflow * STAGE_OVERFLOW_TUNING.spawnMsReductionPerLoop,
+    ),
+    speedMultiplier: finalStage.speedMultiplier + overflow * STAGE_OVERFLOW_TUNING.speedMultiplierPerLoop,
+    rewardCoins: finalStage.rewardCoins + overflow * STAGE_OVERFLOW_TUNING.rewardCoinsPerLoop,
   };
 }

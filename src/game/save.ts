@@ -1,5 +1,6 @@
 import { CROSSHAIRS, WEAPONS } from './data/weapons';
 import { UPGRADES, getUpgradeCost } from './data/upgrades';
+import { ECONOMY_TUNING } from './data/tuning';
 import type { CrosshairId, GameSettings, RunRewards, RunSnapshot, SaveData, UpgradeId, WeaponId } from './types';
 
 const SAVE_KEY = 'knotz-raven-mayhem-save-v1';
@@ -139,12 +140,17 @@ export function applyRunRewards(save: SaveData, snapshot: RunSnapshot, rewards: 
 }
 
 export function calculateRunRewards(save: SaveData, snapshot: RunSnapshot, bossKills: number): RunRewards {
-  const scoreCoins = Math.floor(snapshot.score / 75);
-  const stageCoins = Math.max(0, snapshot.stageIndex - 1) * 10;
-  const accuracyBonus = snapshot.accuracy >= 70 ? Math.floor(snapshot.accuracy / 10) * 3 : 0;
-  const bossBonus = bossKills * 35;
-  const payoutMultiplier = 1 + (save.upgrades.bountyChip ?? 0) * 0.08;
-  const totalCoins = Math.max(8, Math.floor((scoreCoins + stageCoins + accuracyBonus + bossBonus + snapshot.coinsEarned) * payoutMultiplier));
+  const scoreCoins = Math.floor(snapshot.score / ECONOMY_TUNING.scoreCoinDivisor);
+  const stageCoins = Math.max(0, snapshot.stageIndex - 1) * ECONOMY_TUNING.stageClearCoinsPerStage;
+  const accuracyBonus = snapshot.accuracy >= ECONOMY_TUNING.accuracyBonusThreshold
+    ? Math.floor(snapshot.accuracy / ECONOMY_TUNING.accuracyBonusStepPercent) * ECONOMY_TUNING.accuracyBonusCoinsPerStep
+    : 0;
+  const bossBonus = bossKills * ECONOMY_TUNING.bossKillBonusCoins;
+  const payoutMultiplier = 1 + (save.upgrades.bountyChip ?? 0) * ECONOMY_TUNING.bountyChipPayoutMultiplierPerRank;
+  const totalCoins = Math.max(
+    ECONOMY_TUNING.minimumRunCoins,
+    Math.floor((scoreCoins + stageCoins + accuracyBonus + bossBonus + snapshot.coinsEarned) * payoutMultiplier),
+  );
 
   return {
     scoreCoins,

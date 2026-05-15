@@ -3,6 +3,7 @@ import { AUDIO_KEYS, SPRITE_KEYS } from '../data/assets';
 import { ENEMIES } from '../data/enemies';
 import { getStage } from '../data/stages';
 import { CROSSHAIRS, WEAPONS } from '../data/weapons';
+import { INPUT_TUNING, POWERUP_TUNING, PRESENTATION_TUNING } from '../data/tuning';
 import { applyRunRewards, calculateRunRewards, loadSave } from '../save';
 import { getLoadout } from '../systems/progression';
 import { RunState, powerupLabel } from '../systems/RunState';
@@ -80,7 +81,7 @@ export class GameScene extends Phaser.Scene {
     this.registerInput();
     this.renderHud();
     this.showStageBanner(this.stage.title, this.stage.subtitle);
-    arcadeAudio.startMusic('run', this.save.settings);
+    arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.unsubscribers.forEach((unsubscribe) => unsubscribe());
@@ -146,7 +147,8 @@ export class GameScene extends Phaser.Scene {
     this.background = this.add.graphics().setDepth(-10);
     this.drawBackground();
 
-    this.starfield = Array.from({ length: 70 }, () => {
+    const starCount = this.isCompactPlayfield() ? PRESENTATION_TUNING.mobileStarCount : PRESENTATION_TUNING.desktopStarCount;
+    this.starfield = Array.from({ length: starCount }, () => {
       const star = this.add.circle(
         Phaser.Math.Between(0, this.scale.width),
         Phaser.Math.Between(0, this.scale.height),
@@ -169,6 +171,7 @@ export class GameScene extends Phaser.Scene {
     this.background.fillRect(0, 0, width, height);
     this.background.fillStyle(0x070510, 0.55);
     this.background.fillRect(0, height * 0.72, width, height * 0.28);
+    this.drawStageSetDressing(width, height);
     this.background.lineStyle(2, palette.neon, 0.3);
 
     for (let x = -80; x < width + 100; x += 96) {
@@ -178,6 +181,155 @@ export class GameScene extends Phaser.Scene {
     for (let y = height * 0.74; y < height; y += 36) {
       this.background.lineBetween(0, y, width, y);
     }
+  }
+
+  private drawStageSetDressing(width: number, height: number): void {
+    const baseId = this.stage.id.replace(/-\d+$/, '');
+
+    switch (baseId) {
+      case 'graveyard-dusk':
+        this.drawGraveyardBackdrop(width, height);
+        break;
+      case 'neon-boardwalk':
+        this.drawBoardwalkBackdrop(width, height);
+        break;
+      case 'storm-tower':
+        this.drawStormTowerBackdrop(width, height);
+        break;
+      case 'junkyard-moon':
+        this.drawJunkyardBackdrop(width, height);
+        break;
+      case 'carnival-night':
+        this.drawCarnivalBackdrop(width, height);
+        break;
+      case 'raven-kings-nest':
+        this.drawRavenNestBackdrop(width, height);
+        break;
+    }
+  }
+
+  private drawGraveyardBackdrop(width: number, height: number): void {
+    const horizon = height * 0.72;
+
+    this.background.fillStyle(0xfff0a6, 0.2);
+    this.background.fillCircle(width * 0.78, height * 0.18, Math.min(width, height) * 0.11);
+    this.background.fillStyle(0x06040c, 0.42);
+    for (let index = 0; index < 9; index++) {
+      const x = width * 0.04 + index * width * 0.11;
+      const stoneHeight = 34 + (index % 3) * 18;
+      this.background.fillRoundedRect(x, horizon - stoneHeight, 26 + (index % 2) * 14, stoneHeight, 6);
+      if (index % 2 === 0) {
+        this.background.fillRect(x - 9, horizon - stoneHeight + 15, 44, 7);
+      }
+    }
+
+    this.background.lineStyle(3, 0xff42f8, 0.22);
+    for (let x = 0; x < width; x += 92) {
+      this.background.lineBetween(x, horizon - 22, x + 48, horizon - 44);
+      this.background.lineBetween(x + 48, horizon - 44, x + 96, horizon - 18);
+    }
+  }
+
+  private drawBoardwalkBackdrop(width: number, height: number): void {
+    const horizon = height * 0.68;
+
+    this.background.lineStyle(5, 0x20f2ff, 0.34);
+    this.background.lineBetween(0, horizon, width, horizon - 18);
+    this.background.lineStyle(2, 0xffb11f, 0.36);
+    for (let x = -20; x < width + 60; x += 72) {
+      this.background.lineBetween(x, horizon - 26, x + 24, height);
+      this.background.fillStyle(0x06101b, 0.72);
+      this.background.fillRect(x + 28, horizon - 118 - (x % 3) * 14, 46, 86);
+      this.background.fillStyle(0x20f2ff, 0.28);
+      this.background.fillRect(x + 34, horizon - 104 - (x % 3) * 14, 34, 9);
+    }
+
+    this.background.fillStyle(0xff3fb4, 0.2);
+    this.background.fillRoundedRect(width * 0.62, horizon - 145, 170, 54, 10);
+    this.background.lineStyle(3, 0xffb11f, 0.55);
+    this.background.strokeRoundedRect(width * 0.62, horizon - 145, 170, 54, 10);
+  }
+
+  private drawStormTowerBackdrop(width: number, height: number): void {
+    const horizon = height * 0.72;
+    const towerX = width * 0.68;
+
+    this.background.fillStyle(0x020812, 0.66);
+    this.background.fillRect(towerX, horizon - 250, 92, 250);
+    this.background.fillTriangle(towerX - 24, horizon - 250, towerX + 46, horizon - 330, towerX + 116, horizon - 250);
+    this.background.fillRect(towerX + 28, horizon - 306, 36, 56);
+    this.background.lineStyle(3, 0x93ff29, 0.28);
+    for (let y = horizon - 225; y < horizon - 20; y += 42) {
+      this.background.lineBetween(towerX + 12, y, towerX + 80, y + 22);
+      this.background.lineBetween(towerX + 80, y, towerX + 12, y + 22);
+    }
+
+    this.background.lineStyle(4, 0xd7f7ff, 0.3);
+    this.background.lineBetween(width * 0.18, 0, width * 0.32, height * 0.21);
+    this.background.lineBetween(width * 0.32, height * 0.21, width * 0.26, height * 0.32);
+    this.background.lineBetween(width * 0.26, height * 0.32, width * 0.42, height * 0.48);
+  }
+
+  private drawJunkyardBackdrop(width: number, height: number): void {
+    const horizon = height * 0.72;
+
+    this.background.fillStyle(0x080707, 0.62);
+    for (let index = 0; index < 10; index++) {
+      const x = index * width * 0.1 - 20;
+      const pileHeight = 28 + (index % 4) * 19;
+      this.background.fillTriangle(x, horizon, x + 66, horizon - pileHeight, x + 132, horizon);
+      this.background.fillRect(x + 36, horizon - pileHeight - 16, 50, 16);
+    }
+
+    this.background.lineStyle(5, 0xffe14b, 0.22);
+    this.background.lineBetween(width * 0.14, horizon - 168, width * 0.34, horizon - 252);
+    this.background.lineBetween(width * 0.34, horizon - 252, width * 0.47, horizon - 98);
+    this.background.lineStyle(3, 0xff6d2d, 0.3);
+    this.background.strokeCircle(width * 0.78, horizon - 32, 36);
+    this.background.strokeCircle(width * 0.84, horizon - 27, 27);
+  }
+
+  private drawCarnivalBackdrop(width: number, height: number): void {
+    const horizon = height * 0.72;
+    const wheelX = width * 0.76;
+    const wheelY = horizon - 118;
+    const wheelRadius = Math.min(width, height) * 0.15;
+
+    this.background.lineStyle(4, 0x2cffc8, 0.28);
+    this.background.strokeCircle(wheelX, wheelY, wheelRadius);
+    for (let index = 0; index < 10; index++) {
+      const angle = (Math.PI * 2 * index) / 10;
+      this.background.lineBetween(wheelX, wheelY, wheelX + Math.cos(angle) * wheelRadius, wheelY + Math.sin(angle) * wheelRadius);
+      this.background.fillStyle(index % 2 === 0 ? 0xff2f7f : 0xffdf4d, 0.45);
+      this.background.fillCircle(wheelX + Math.cos(angle) * wheelRadius, wheelY + Math.sin(angle) * wheelRadius, 5);
+    }
+
+    this.background.fillStyle(0x09040c, 0.58);
+    for (let x = width * 0.05; x < width * 0.58; x += 128) {
+      this.background.fillTriangle(x, horizon, x + 64, horizon - 112, x + 128, horizon);
+      this.background.lineStyle(2, 0xff2f7f, 0.38);
+      this.background.lineBetween(x + 18, horizon - 24, x + 64, horizon - 96);
+      this.background.lineBetween(x + 110, horizon - 24, x + 64, horizon - 96);
+    }
+  }
+
+  private drawRavenNestBackdrop(width: number, height: number): void {
+    const horizon = height * 0.72;
+
+    this.background.fillStyle(0xff1e3d, 0.18);
+    this.background.fillCircle(width * 0.24, height * 0.22, Math.min(width, height) * 0.14);
+    this.background.lineStyle(8, 0x050307, 0.7);
+    for (let index = 0; index < 12; index++) {
+      const y = horizon - 28 - index * 8;
+      this.background.lineBetween(width * 0.48 - index * 12, y, width * 0.98, y - 76 + index * 10);
+      this.background.lineBetween(width * 0.52 + index * 6, y + 14, width * 0.12, y - 34 + index * 7);
+    }
+
+    this.background.lineStyle(3, 0x9c2dff, 0.32);
+    this.background.strokeCircle(width * 0.72, horizon - 150, 72);
+    this.background.lineBetween(width * 0.72, horizon - 218, width * 0.69, horizon - 250);
+    this.background.lineBetween(width * 0.72, horizon - 218, width * 0.75, horizon - 250);
+    this.background.lineBetween(width * 0.69, horizon - 250, width * 0.75, horizon - 250);
   }
 
   private updateBackground(delta: number): void {
@@ -198,7 +350,7 @@ export class GameScene extends Phaser.Scene {
 
   private updateCrosshair(): void {
     const pointer = this.input.activePointer;
-    const radius = 18 + this.crosshairRadiusBonus * 0.4;
+    const radius = 18 + this.crosshairRadiusBonus * 0.4 + this.touchAimBonus * INPUT_TUNING.mobileCrosshairVisualBonus;
     const color = Phaser.Display.Color.HexStringToColor(this.crosshairColor).color;
 
     this.crosshair.clear();
@@ -252,7 +404,7 @@ export class GameScene extends Phaser.Scene {
       actor.sprite.y = this.scale.height * 0.35;
       this.showStageBanner('Boss Warning', def.label);
       arcadeAudio.playBossWarning();
-      arcadeAudio.startMusic('boss', this.save.settings);
+      arcadeAudio.startMusic('boss', this.save.settings, this.stage.id);
       this.shakeCamera(450, 0.008);
     }
 
@@ -302,9 +454,9 @@ export class GameScene extends Phaser.Scene {
 
   private updatePowerups(time: number, delta: number): void {
     for (const powerup of this.powerups) {
-      powerup.container.y += delta * 0.06;
-      powerup.container.x += Math.sin((time - powerup.bornMs) / 200) * 0.18 * delta;
-      powerup.container.rotation += delta * 0.0025;
+      powerup.container.y += delta * POWERUP_TUNING.fallSpeedPerMs;
+      powerup.container.x += Math.sin((time - powerup.bornMs) / 200) * POWERUP_TUNING.bobSpeedPerMs * delta;
+      powerup.container.rotation += delta * POWERUP_TUNING.rotationSpeedPerMs;
 
       if (powerup.container.y > this.scale.height + 50) {
         powerup.container.destroy();
@@ -329,7 +481,7 @@ export class GameScene extends Phaser.Scene {
       const anchor = hitActors[0].sprite;
       for (const actor of this.enemies) {
         const distance = Phaser.Math.Distance.Between(anchor.x, anchor.y, actor.sprite.x, actor.sprite.y);
-        if (!hitActors.includes(actor) && distance < 190) hitActors.push(actor);
+        if (!hitActors.includes(actor) && distance < POWERUP_TUNING.multishotChainRadius) hitActors.push(actor);
       }
     }
 
@@ -350,7 +502,7 @@ export class GameScene extends Phaser.Scene {
   private resolveWeaponHits(x: number, y: number): EnemyActor[] {
     const hitActors: EnemyActor[] = [];
     const probes = this.weapon.pellets <= 1 ? [{ x, y }] : this.createSpreadProbes(x, y);
-    const radius = this.weapon.radius + this.crosshairRadiusBonus;
+    const radius = this.weapon.radius + this.crosshairRadiusBonus + this.touchAimBonus * INPUT_TUNING.mobileHitRadiusBonus;
 
     for (const probe of probes) {
       const candidates = this.enemies
@@ -382,7 +534,7 @@ export class GameScene extends Phaser.Scene {
 
   private damageEnemy(actor: EnemyActor, damage: number): void {
     actor.hp -= damage;
-    arcadeAudio.playHit();
+    arcadeAudio.playHit(actor.def.id);
     actor.sprite.setTintFill(0xffffff);
     this.time.delayedCall(70, () => {
       actor.sprite.clearTint();
@@ -422,7 +574,9 @@ export class GameScene extends Phaser.Scene {
       this.spawnEnemy('mini', x + 34, y + 36, actor.splitDepth + 1);
     }
 
-    if (Math.random() < (actor.boss ? 1 : 0.16)) {
+    arcadeAudio.playEnemyDestroyed(actor.def.id, this.run.comboMultiplier);
+
+    if (Math.random() < (actor.boss ? POWERUP_TUNING.bossDropChance : POWERUP_TUNING.dropChance)) {
       this.spawnPowerup(x, y);
     }
 
@@ -432,12 +586,14 @@ export class GameScene extends Phaser.Scene {
     if (bossKilled) {
       this.bossKills++;
       this.bossSpawned = false;
+      arcadeAudio.playBossDefeated();
       this.clearStage();
     }
   }
 
   private collectPowerupAt(x: number, y: number): boolean {
-    const powerup = this.powerups.find((item) => Phaser.Math.Distance.Between(x, y, item.container.x, item.container.y) < 42);
+    const collectRadius = POWERUP_TUNING.collectRadius + this.touchAimBonus * POWERUP_TUNING.mobileCollectRadiusBonus;
+    const powerup = this.powerups.find((item) => Phaser.Math.Distance.Between(x, y, item.container.x, item.container.y) < collectRadius);
     if (!powerup) return false;
 
     if (powerup.id === 'extraLife') {
@@ -448,7 +604,7 @@ export class GameScene extends Phaser.Scene {
 
     this.floatText(powerup.container.x, powerup.container.y - 32, powerup.label, '#9dff57', 24);
     this.createFeathers(powerup.container.x, powerup.container.y, 0x9dff57, 16);
-    arcadeAudio.playPowerup();
+    arcadeAudio.playPowerup(powerup.id);
     powerup.container.destroy();
     return true;
   }
@@ -499,7 +655,7 @@ export class GameScene extends Phaser.Scene {
 
     this.stageTransition = true;
     this.run.coinsEarned += this.stage.rewardCoins;
-    arcadeAudio.playStageClear();
+    arcadeAudio.playStageClear(this.run.stageIndex);
     this.floatText(this.scale.width / 2, this.scale.height * 0.38, `STAGE CLEAR +${this.stage.rewardCoins}`, '#ffe56a', 36);
     if (!this.save.settings.reducedMotion) this.cameras.main.flash(220, 255, 225, 106, false);
 
@@ -510,7 +666,7 @@ export class GameScene extends Phaser.Scene {
       this.bossSpawned = false;
       this.stageTransition = false;
       this.drawBackground();
-      arcadeAudio.startMusic('run', this.save.settings);
+      arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
       this.showStageBanner(this.stage.title, this.stage.subtitle);
     });
   }
@@ -621,7 +777,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createFeathers(x: number, y: number, color: number, count: number): void {
-    for (let index = 0; index < count; index++) {
+    const cap = this.save.settings.reducedMotion
+      ? PRESENTATION_TUNING.reducedMotionFeatherCap
+      : this.isCompactPlayfield()
+        ? PRESENTATION_TUNING.mobileFeatherCap
+        : PRESENTATION_TUNING.desktopFeatherCap;
+
+    for (let index = 0; index < Math.min(count, cap); index++) {
       const particle = this.add.rectangle(x, y, Phaser.Math.Between(4, 12), Phaser.Math.Between(2, 5), color, 0.88);
       particle.setDepth(55);
       particle.rotation = Phaser.Math.FloatBetween(0, Math.PI);
@@ -730,6 +892,18 @@ export class GameScene extends Phaser.Scene {
   private shakeCamera(duration: number, intensity: number): void {
     if (!this.save.settings.screenShake || this.save.settings.reducedMotion) return;
     this.cameras.main.shake(duration, intensity);
+  }
+
+  private get touchAimBonus(): number {
+    return this.isCompactPlayfield() || this.isCoarsePointer() ? 1 : 0;
+  }
+
+  private isCompactPlayfield(): boolean {
+    return this.scale.width <= INPUT_TUNING.compactViewportWidth || this.scale.height <= INPUT_TUNING.compactViewportHeight;
+  }
+
+  private isCoarsePointer(): boolean {
+    return window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
   }
 }
 

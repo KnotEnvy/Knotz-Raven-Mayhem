@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "balance:report": "node scripts/report-balance.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
+    "release:check": "node scripts/check-release.mjs",
+    "release:smoke": "node scripts/smoke-dist.mjs",
+    "release:verify": "npm run balance:report && npm run build && npm run release:check && npm run release:smoke",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

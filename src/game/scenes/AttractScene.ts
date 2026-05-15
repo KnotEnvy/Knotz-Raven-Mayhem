@@ -41,7 +41,7 @@ export class AttractScene extends Phaser.Scene {
     this.createBackdrop();
     this.bindCommands();
     this.renderUi();
-    arcadeAudio.startMusic('menu', this.save.settings);
+    arcadeAudio.startMusic('menu', this.save.settings, 'menu');
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.unsubscribers.forEach((unsubscribe) => unsubscribe());
@@ -162,7 +162,7 @@ export class AttractScene extends Phaser.Scene {
       onCommand('cycle-setting', ({ id }) => {
         if (!id) return;
         this.save = cycleSetting(this.save, id as keyof GameSettings);
-        arcadeAudio.startMusic('menu', this.save.settings);
+        arcadeAudio.startMusic('menu', this.save.settings, 'menu');
         arcadeAudio.playMenuConfirm();
         this.renderUi();
       }),

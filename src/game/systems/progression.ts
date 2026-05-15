@@ -1,4 +1,5 @@
 import { getCrosshair, getWeapon } from '../data/weapons';
+import { PLAYER_TUNING } from '../data/tuning';
 import type { PlayerStats, SaveData } from '../types';
 
 export function getPlayerStats(save: SaveData): PlayerStats {
@@ -8,10 +9,13 @@ export function getPlayerStats(save: SaveData): PlayerStats {
   const bountyChip = save.upgrades.bountyChip ?? 0;
 
   return {
-    startingLives: 3 + Math.floor(thickJacket / 2),
-    comboWindowMs: 1900 + comboCore * 220,
-    cooldownMultiplier: Math.max(0.72, 1 - steadyHands * 0.055),
-    scoreMultiplier: 1 + bountyChip * 0.08,
+    startingLives: PLAYER_TUNING.baseStartingLives + Math.floor(thickJacket / PLAYER_TUNING.thickJacketRanksPerLife),
+    comboWindowMs: PLAYER_TUNING.baseComboWindowMs + comboCore * PLAYER_TUNING.comboCoreWindowBonusMs,
+    cooldownMultiplier: Math.max(
+      PLAYER_TUNING.minimumCooldownMultiplier,
+      1 - steadyHands * PLAYER_TUNING.steadyHandsCooldownReduction,
+    ),
+    scoreMultiplier: 1 + bountyChip * PLAYER_TUNING.bountyChipMultiplierPerRank,
   };
 }
 

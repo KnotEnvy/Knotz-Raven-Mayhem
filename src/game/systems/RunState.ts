@@ -1,4 +1,5 @@
 import type { EnemyDefinition, PlayerStats, PowerupId, RunSnapshot, WeaponDefinition, CrosshairDefinition } from '../types';
+import { PLAYER_TUNING, POWERUP_TUNING } from '../data/tuning';
 
 interface ActivePowerup {
   id: PowerupId;
@@ -89,11 +90,11 @@ export class RunState {
   }
 
   addLife(): void {
-    this.lives = Math.min(this.maxLives + 2, this.lives + 1);
+    this.lives = Math.min(this.maxLives + PLAYER_TUNING.extraLifeOverflowCap, this.lives + 1);
   }
 
   activatePowerup(id: PowerupId): void {
-    const durationMs = id === 'slowmo' ? 8000 : id === 'overdrive' ? 4500 : 6000;
+    const durationMs = POWERUP_TUNING.durationsMs[id];
     this.activePowerups.set(id, {
       id,
       durationMs,
@@ -107,7 +108,10 @@ export class RunState {
   }
 
   get comboMultiplier(): number {
-    return Math.min(6, 1 + Math.floor(Math.max(0, this.combo - 1) / 4));
+    return Math.min(
+      PLAYER_TUNING.maxComboMultiplier,
+      1 + Math.floor(Math.max(0, this.combo - 1) / PLAYER_TUNING.killsPerComboMultiplierStep),
+    );
   }
 
   get accuracy(): number {
@@ -120,7 +124,7 @@ export class RunState {
   }
 
   get weaponCooldownMs(): number {
-    const overdrive = this.isPowerupActive('overdrive') ? 0.58 : 1;
+    const overdrive = this.isPowerupActive('overdrive') ? PLAYER_TUNING.overdriveCooldownMultiplier : 1;
     return this.weapon.cooldownMs * this.stats.cooldownMultiplier * overdrive;
   }
 

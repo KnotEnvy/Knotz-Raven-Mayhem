@@ -1,12 +1,37 @@
-import type { GameSettings, WeaponId } from '../types';
+import type { EnemyId, GameSettings, PowerupId, WeaponId } from '../types';
 
 type MusicMode = 'menu' | 'run' | 'boss';
+type AudioBus = 'music' | 'sfx';
+
+interface StageAudioProfile {
+  transpose: number;
+  bassWave: OscillatorType;
+  leadWave: OscillatorType;
+  accentEvery: number;
+}
+
+const STAGE_AUDIO_PROFILES: Record<string, StageAudioProfile> = {
+  'graveyard-dusk': { transpose: -2, bassWave: 'square', leadWave: 'triangle', accentEvery: 4 },
+  'neon-boardwalk': { transpose: 2, bassWave: 'square', leadWave: 'square', accentEvery: 3 },
+  'storm-tower': { transpose: 5, bassWave: 'sawtooth', leadWave: 'triangle', accentEvery: 4 },
+  'junkyard-moon': { transpose: -5, bassWave: 'sawtooth', leadWave: 'square', accentEvery: 5 },
+  'carnival-night': { transpose: 7, bassWave: 'square', leadWave: 'square', accentEvery: 2 },
+  'raven-kings-nest': { transpose: -7, bassWave: 'sawtooth', leadWave: 'sawtooth', accentEvery: 3 },
+};
+
+const DEFAULT_STAGE_PROFILE: StageAudioProfile = {
+  transpose: 0,
+  bassWave: 'square',
+  leadWave: 'triangle',
+  accentEvery: 4,
+};
 
 class ArcadeAudio {
   private context?: AudioContext;
   private musicTimer?: number;
   private musicStep = 0;
   private mode: MusicMode = 'menu';
+  private stageId = 'menu';
   private settings: GameSettings = {
     musicVolume: 0.65,
     sfxVolume: 0.75,
@@ -18,15 +43,18 @@ class ArcadeAudio {
     this.settings = { ...settings };
   }
 
-  startMusic(mode: MusicMode, settings = this.settings): void {
+  startMusic(mode: MusicMode, settings = this.settings, stageId = this.stageId): void {
     this.applySettings(settings);
     this.mode = mode;
+    this.stageId = stageId;
+    this.musicStep = 0;
     this.ensureContext();
     this.stopMusic();
 
     if (this.settings.musicVolume <= 0 || this.settings.reducedMotion) return;
 
-    const interval = mode === 'boss' ? 150 : mode === 'run' ? 185 : 240;
+    const profile = this.stageProfile;
+    const interval = mode === 'boss' ? 150 : mode === 'run' ? 185 - Math.min(18, Math.max(0, profile.transpose)) : 240;
     this.musicTimer = window.setInterval(() => this.playMusicStep(), interval);
   }
 
@@ -43,26 +71,84 @@ class ArcadeAudio {
   }
 
   playShot(weaponId: WeaponId): void {
-    const base = weaponId === 'scattergun' ? 150 : weaponId === 'arcLaser' ? 720 : weaponId === 'burstRifle' ? 460 : 540;
-    this.tone(base, 0.045, weaponId === 'arcLaser' ? 'sawtooth' : 'square', 0.08);
-    if (weaponId === 'scattergun') this.tone(90, 0.07, 'sawtooth', 0.05);
+    if (weaponId === 'scattergun') {
+      this.tone(130, 0.06, 'sawtooth', 0.08);
+      this.tone(92, 0.08, 'sawtooth', 0.05, 0.018);
+      this.tone(180, 0.035, 'square', 0.04, 0.035);
+      return;
+    }
+
+    if (weaponId === 'arcLaser') {
+      this.tone(720, 0.08, 'sawtooth', 0.07);
+      this.tone(1080, 0.06, 'triangle', 0.05, 0.018);
+      this.tone(1440, 0.04, 'square', 0.035, 0.04);
+      return;
+    }
+
+    if (weaponId === 'burstRifle') {
+      [460, 520, 580].forEach((frequency, index) => {
+        this.tone(frequency, 0.035, 'square', 0.055, index * 0.035);
+      });
+      return;
+    }
+
+    this.tone(540, 0.045, 'square', 0.08);
+    this.tone(810, 0.03, 'triangle', 0.035, 0.018);
   }
 
-  playHit(): void {
-    this.tone(760, 0.04, 'triangle', 0.07);
+  playHit(enemyId: EnemyId): void {
+    const base = enemyId === 'boss'
+      ? 185
+      : enemyId === 'armored'
+        ? 290
+        : enemyId === 'shield'
+          ? 920
+          : enemyId === 'golden'
+            ? 1040
+            : 760;
+
+    this.tone(base, enemyId === 'boss' ? 0.075 : 0.04, enemyId === 'shield' ? 'square' : 'triangle', 0.07);
+    if (enemyId === 'armored' || enemyId === 'boss') this.tone(base * 0.5, 0.06, 'sawtooth', 0.04, 0.025);
   }
 
   playMiss(): void {
     this.tone(150, 0.08, 'sawtooth', 0.05);
   }
 
-  playPowerup(): void {
-    this.tone(720, 0.06, 'square', 0.08);
-    this.tone(1080, 0.08, 'square', 0.07, 0.055);
+  playEnemyDestroyed(enemyId: EnemyId, comboMultiplier: number): void {
+    if (enemyId === 'boss') return;
+
+    const bonus = Math.min(7, comboMultiplier) * 18;
+    const root = enemyId === 'golden' ? 880 : enemyId === 'splitter' ? 440 : enemyId === 'armored' ? 320 : 620;
+    this.tone(root + bonus, 0.055, enemyId === 'golden' ? 'triangle' : 'square', enemyId === 'golden' ? 0.08 : 0.045);
+    if (enemyId === 'golden') {
+      [1108, 1318, 1760].forEach((frequency, index) => this.tone(frequency, 0.07, 'triangle', 0.055, 0.05 + index * 0.045));
+    }
   }
 
-  playStageClear(): void {
+  playPowerup(id: PowerupId): void {
+    const roots: Record<PowerupId, number[]> = {
+      slowmo: [330, 247, 196],
+      multishot: [520, 660, 780],
+      scoreBoost: [660, 990, 1320],
+      extraLife: [392, 523, 784],
+      overdrive: [740, 1110, 1480],
+    };
+
+    roots[id].forEach((frequency, index) => {
+      this.tone(frequency, 0.07, id === 'overdrive' ? 'sawtooth' : 'square', 0.07, index * 0.045);
+    });
+  }
+
+  playStageClear(stageIndex: number): void {
+    const transpose = Math.min(12, stageIndex * 2);
     [523, 659, 784, 1046].forEach((frequency, index) => {
+      this.tone(transposeFrequency(frequency, transpose), 0.1, 'triangle', 0.08, index * 0.075);
+    });
+  }
+
+  playBossDefeated(): void {
+    [196, 294, 392, 587, 784, 1175].forEach((frequency, index) => {
       this.tone(frequency, 0.1, 'triangle', 0.08, index * 0.075);
     });
   }
@@ -81,6 +167,7 @@ class ArcadeAudio {
   private playMusicStep(): void {
     if (this.settings.musicVolume <= 0) return;
 
+    const profile = this.stageProfile;
     const sequence = this.mode === 'boss'
       ? [55, 55, 82, 73, 55, 98, 82, 73]
       : this.mode === 'run'
@@ -93,9 +180,14 @@ class ArcadeAudio {
         : [330, 392, 494, 523, 494, 392, 330, 294];
 
     const index = this.musicStep % sequence.length;
-    this.tone(sequence[index], 0.095, 'square', 0.045 * this.settings.musicVolume);
+    const transpose = this.mode === 'menu' ? 0 : profile.transpose;
+    this.tone(transposeFrequency(sequence[index], transpose), 0.095, profile.bassWave, 0.045, 0, 'music');
     if (this.musicStep % 2 === 0) {
-      this.tone(lead[index], 0.06, 'triangle', 0.035 * this.settings.musicVolume, 0.025);
+      this.tone(transposeFrequency(lead[index], transpose), 0.06, profile.leadWave, 0.035, 0.025, 'music');
+    }
+
+    if (this.mode !== 'menu' && this.musicStep % profile.accentEvery === 0) {
+      this.tone(this.mode === 'boss' ? 41 : 55, 0.045, 'square', 0.025, 0.01, 'music');
     }
 
     this.musicStep++;
@@ -107,9 +199,11 @@ class ArcadeAudio {
     type: OscillatorType,
     volume: number,
     delaySeconds = 0,
+    bus: AudioBus = 'sfx',
   ): void {
     const context = this.ensureContext();
-    if (!context || this.settings.sfxVolume <= 0) return;
+    const busVolume = bus === 'music' ? this.settings.musicVolume : this.settings.sfxVolume;
+    if (!context || busVolume <= 0) return;
 
     const now = context.currentTime + delaySeconds;
     const oscillator = context.createOscillator();
@@ -117,7 +211,7 @@ class ArcadeAudio {
     oscillator.type = type;
     oscillator.frequency.setValueAtTime(frequency, now);
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * this.settings.sfxVolume), now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * busVolume), now + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
     oscillator.connect(gain);
     gain.connect(context.destination);
@@ -137,6 +231,15 @@ class ArcadeAudio {
     }
     return this.context;
   }
+
+  private get stageProfile(): StageAudioProfile {
+    const baseStageId = this.stageId.replace(/-\d+$/, '');
+    return STAGE_AUDIO_PROFILES[baseStageId] ?? DEFAULT_STAGE_PROFILE;
+  }
 }
 
 export const arcadeAudio = new ArcadeAudio();
+
+function transposeFrequency(frequency: number, semitones: number): number {
+  return frequency * 2 ** (semitones / 12);
+}

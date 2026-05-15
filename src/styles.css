@@ -67,6 +67,7 @@ button:disabled {
 
 #game-root canvas {
   display: block;
+  touch-action: none;
 }
 
 .ui-root {
@@ -74,6 +75,16 @@ button:disabled {
   inset: 0;
   z-index: 10;
   pointer-events: none;
+}
+
+.ui-hud {
+  touch-action: none;
+}
+
+.ui-attract .arcade-panel,
+.ui-pause .modal-screen,
+.ui-gameover .modal-screen {
+  touch-action: pan-y;
 }
 
 .ui-root button,
@@ -346,13 +357,28 @@ button:disabled {
   pointer-events: none;
 }
 
+.hud::before {
+  position: absolute;
+  inset: 8px;
+  border: 2px solid rgba(255, 229, 106, 0.18);
+  border-radius: 8px;
+  content: "";
+  box-shadow:
+    inset 0 0 0 1px rgba(32, 242, 255, 0.12),
+    inset 0 0 34px rgba(255, 63, 180, 0.08);
+}
+
 .hud-cluster {
   position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 229, 106, 0.24);
   border-radius: 7px;
   padding: 10px 12px;
-  background: var(--panel);
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 38%),
+    var(--panel);
+  box-shadow:
+    0 0 24px rgba(0, 0, 0, 0.24),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.28);
 }
 
 .hud-cluster span,
@@ -381,12 +407,14 @@ button:disabled {
   left: 50%;
   width: min(360px, calc(100vw - 420px));
   transform: translateX(-50%);
+  border-color: rgba(32, 242, 255, 0.32);
 }
 
 .life-cluster {
   top: 14px;
   right: 14px;
   min-width: 184px;
+  border-color: rgba(255, 49, 90, 0.32);
 }
 
 .life-cluster button {
@@ -413,6 +441,7 @@ button:disabled {
   bottom: 16px;
   display: flex;
   gap: 16px;
+  border-color: rgba(157, 255, 87, 0.24);
 }
 
 .stat-strip span {
@@ -548,6 +577,29 @@ button:disabled {
     max-height: 54vh;
   }
 
+  .hud {
+    padding: 10px;
+  }
+
+  .hud::before {
+    inset: 5px;
+  }
+
+  .hud-cluster {
+    padding: 8px 9px;
+  }
+
+  .hud-cluster strong {
+    font-size: clamp(22px, 7vw, 32px);
+  }
+
+  .score-cluster {
+    top: 10px;
+    left: 10px;
+    min-width: 150px;
+    max-width: calc(100vw - 168px);
+  }
+
   .armory-columns,
   .record-grid,
   .settings-grid,
@@ -556,21 +608,44 @@ button:disabled {
   }
 
   .stage-cluster {
-    top: 96px;
-    left: 14px;
-    right: 14px;
+    top: 86px;
+    left: 10px;
+    right: 10px;
     width: auto;
     transform: none;
   }
 
   .life-cluster {
-    min-width: 144px;
+    top: 10px;
+    right: 10px;
+    min-width: 124px;
+  }
+
+  .life-cluster button {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .combo-cluster {
+    bottom: 70px;
+    left: 10px;
+    min-width: 150px;
+    max-width: calc(100vw - 20px);
   }
 
   .stat-strip {
-    left: 14px;
-    right: 14px;
-    justify-content: space-between;
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .stat-strip span {
+    text-align: center;
+    font-size: 11px;
   }
 
   .powerup-rack {

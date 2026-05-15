@@ -44,11 +44,25 @@ public/assets/  # shipped raven, explosion, and boom audio assets
 ```bash
 npm install
 npm run dev
+npm run balance:report
 npm run typecheck
 npm run build
+npm run release:check
+npm run release:smoke
+npm run release:verify
 ```
 
 The Vite config uses `base: './'`, so `dist/` can be deployed as static GitHub Pages output for the project URL.
+
+## Release Readiness
+
+- Balance and economy constants live in `src/game/data/tuning.ts` so spawn overflow, player stats, powerup behavior, combo pacing, and reward payouts can be tuned without digging through scene code.
+- Mobile and presentation constants live in `src/game/data/tuning.ts` for touch hit forgiveness, powerup collection radius, starfield density, and particle caps.
+- Final manual QA should use `DOCS/RELEASE-QA-CHECKLIST.md` after `npm run release:verify`.
+- `npm run release:verify` runs the balance report, production build, `dist/` asset checks, and an HTTP smoke test from a simulated GitHub Pages subpath.
+- `DOCS/BALANCE-NOTES.md` records the current economy baseline and the tuning entry points for manual playtest adjustments.
+- `DOCS/DEPLOYMENT-RUNBOOK.md` documents the GitHub Actions CI and manual GitHub Pages deployment path.
+- Current v1 release scope is local records and local progression only; online leaderboard and account features are deferred unless explicitly brought into scope.
 
 ## Controls
 
@@ -67,9 +81,10 @@ The Vite config uses `base: './'`, so `dist/` can be deployed as static GitHub P
 - 5 powerups: slow-mo, multi-shot, score boost, extra life, and overdrive.
 - Local records for high score, best stage, best combo, lifetime kills, unlocked gear, and coins.
 - Persistent options for music volume, SFX volume, screen shake, and reduced motion.
-- Procedural arcade audio for menu confirms, shots, hits, misses, powerups, stage clear, boss warning, and game over.
+- Procedural arcade audio with stage-aware music motifs, weapon-specific shots, enemy-specific hits, powerup cues, boss warning/defeat stings, stage clear, and game over.
 - Death sequence before the final score screen.
+- Stage-specific procedural background set dressing for graveyard, boardwalk, tower, junkyard, carnival, and Raven King's Nest runs.
 
 ## Asset Direction
 
-The original `raven.png`, `boom.png`, `boom.wav`, and `boom.mp3` are copied into `public/assets/` and used as the seed visual/audio set. Future production asset work should add normalized sprite sheets, stage backgrounds, UI art, and more sound/music through the manifest/data layer instead of hardcoding filenames in scenes.
+The original `raven.png`, `boom.png`, `boom.wav`, and `boom.mp3` are copied into `public/assets/` and used as the seed visual/audio set. The current release candidate adds procedural stage set dressing in Phaser, cabinet-style HUD framing in CSS, stage-aware procedural music, and dedicated procedural event SFX. Future production asset work should add normalized sprite sheets, dedicated boss art, richer UI cabinet art, and optional recorded sound/music through the manifest/data layer instead of hardcoding filenames in scenes.
