@@ -63,8 +63,9 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 
 - [ ] `dist/` contains `index.html` and static assets after `npm run build`.
 - [ ] Production build works from a non-root static path; `npm run release:check` and `npm run release:smoke` pass and Vite `base: './'` is preserved.
+- [ ] GitHub Pages settings use Source: `GitHub Actions`, not the classic branch/folder Pages source.
 - [ ] The `Release Verification` GitHub Actions workflow is green on the release commit.
-- [ ] The `Deploy GitHub Pages` workflow has been run manually from `master`.
+- [ ] The `Deploy GitHub Pages` workflow has been run manually from `master` and the run event is `workflow_dispatch`.
 - [ ] Published build first-loads in a fresh browser profile with an empty local save.
 - [ ] Published build loads with an existing local save from the prior release candidate.
 - [ ] Final release notes list any remaining asset, mobile, leaderboard, or balance caveats.

@@ -32,11 +32,15 @@ The final deploy should not proceed until these areas are checked:
 
 ## GitHub Pages Deployment
 
-1. Merge or push the final release branch to `master`.
-2. Confirm the `Release Verification` workflow is green.
-3. In GitHub, open Actions, select `Deploy GitHub Pages`, and run the workflow manually.
-4. After deployment, open the workflow-provided Pages URL.
-5. Run the published-build checks from `DOCS/RELEASE-QA-CHECKLIST.md`.
+1. In GitHub, open Settings -> Pages and set Source to `GitHub Actions`. Do not use the classic branch/folder Pages source for this Vite build.
+2. Merge or push the final release branch to `master`.
+3. Confirm the `Release Verification` workflow is green.
+4. In GitHub, open Actions, select `Deploy GitHub Pages`, and choose `Run workflow` on `master`.
+5. Confirm the run shows the `workflow_dispatch` event. That manual event is the intended deployment trigger for `.github/workflows/pages.yml`.
+6. After deployment, open the workflow-provided Pages URL.
+7. Run the published-build checks from `DOCS/RELEASE-QA-CHECKLIST.md`.
+
+If the Pages site shows a blank white screen after a successful build, first confirm the repository is using the `GitHub Actions` Pages source. The classic branch/folder source can serve stale or mismatched files after the Vite stack migration.
 
 ## Rollback
 

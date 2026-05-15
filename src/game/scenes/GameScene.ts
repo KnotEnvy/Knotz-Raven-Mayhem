@@ -438,12 +438,12 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (!actor.boss && actor.sprite.x < -160) {
-        actor.sprite.destroy();
-        actor.healthBar?.destroy();
+        this.destroyEnemyActor(actor);
         this.floatText(120, this.scale.height - 120, 'MISSED', '#ff315a', 34);
         arcadeAudio.playMiss();
         this.shakeCamera(250, 0.01);
         if (this.run.loseLife()) this.endRun();
+        continue;
       }
 
       this.drawHealthBar(actor);
@@ -537,6 +537,7 @@ export class GameScene extends Phaser.Scene {
     arcadeAudio.playHit(actor.def.id);
     actor.sprite.setTintFill(0xffffff);
     this.time.delayedCall(70, () => {
+      if (!actor.sprite.active) return;
       actor.sprite.clearTint();
       if (actor.def.tint) actor.sprite.setTint(actor.def.tint);
     });
@@ -580,8 +581,7 @@ export class GameScene extends Phaser.Scene {
       this.spawnPowerup(x, y);
     }
 
-    actor.sprite.destroy();
-    actor.healthBar?.destroy();
+    this.destroyEnemyActor(actor);
 
     if (bossKilled) {
       this.bossKills++;
@@ -750,6 +750,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawHealthBar(actor: EnemyActor): void {
+    if (!actor.sprite.active || actor.hp <= 0) {
+      actor.healthBar?.destroy();
+      actor.healthBar = undefined;
+      return;
+    }
+
     if (actor.hp >= actor.def.health && !actor.boss) return;
     if (!actor.healthBar) {
       actor.healthBar = this.add.graphics().setDepth(actor.boss ? 80 : 40);
@@ -765,6 +771,12 @@ export class GameScene extends Phaser.Scene {
     actor.healthBar.fillRect(x, y, width, 8);
     actor.healthBar.fillStyle(actor.boss ? 0xff214f : 0x9dff57, 1);
     actor.healthBar.fillRect(x, y, width * progress, 8);
+  }
+
+  private destroyEnemyActor(actor: EnemyActor): void {
+    actor.healthBar?.destroy();
+    actor.healthBar = undefined;
+    actor.sprite.destroy();
   }
 
   private createExplosion(x: number, y: number, scale: number): void {
