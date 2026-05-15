@@ -1,0 +1,98 @@
+import type { CrosshairDefinition, WeaponDefinition } from '../types';
+
+export const WEAPONS: WeaponDefinition[] = [
+  {
+    id: 'pistol',
+    name: 'Quarter Pistol',
+    tagline: 'Fast, clean, and perfect for score chasers.',
+    cost: 0,
+    cooldownMs: 230,
+    damage: 1,
+    radius: 42,
+    pellets: 1,
+    spread: 0,
+    pierce: 1,
+    color: '#ffe56a',
+  },
+  {
+    id: 'burstRifle',
+    name: 'Burst Rifle',
+    tagline: 'Three snappy taps from one trigger pull.',
+    cost: 120,
+    cooldownMs: 430,
+    damage: 1,
+    radius: 36,
+    pellets: 3,
+    spread: 40,
+    pierce: 1,
+    color: '#5ee7ff',
+  },
+  {
+    id: 'scattergun',
+    name: 'Scattergun',
+    tagline: 'Wide arcade spread for crowded waves.',
+    cost: 220,
+    cooldownMs: 650,
+    damage: 1,
+    radius: 50,
+    pellets: 6,
+    spread: 130,
+    pierce: 1,
+    color: '#ff8a32',
+  },
+  {
+    id: 'arcLaser',
+    name: 'Arc Laser',
+    tagline: 'Pierces a whole flight line when timed right.',
+    cost: 380,
+    cooldownMs: 820,
+    damage: 1,
+    radius: 34,
+    pellets: 1,
+    spread: 0,
+    pierce: 5,
+    color: '#9dff57',
+  },
+];
+
+export const CROSSHAIRS: CrosshairDefinition[] = [
+  {
+    id: 'classic',
+    name: 'Classic Sight',
+    tagline: 'Cabinet-standard precision.',
+    cost: 0,
+    color: '#ffffff',
+    radiusBonus: 0,
+    cooldownMultiplier: 1,
+  },
+  {
+    id: 'neonDot',
+    name: 'Neon Dot',
+    tagline: 'Smaller visual footprint, faster follow-up.',
+    cost: 90,
+    color: '#20f2ff',
+    radiusBonus: -2,
+    cooldownMultiplier: 0.94,
+  },
+  {
+    id: 'eagleEye',
+    name: 'Eagle Eye',
+    tagline: 'A forgiving ring for armored targets.',
+    cost: 160,
+    color: '#ffe56a',
+    radiusBonus: 8,
+    cooldownMultiplier: 1.04,
+  },
+  {
+    id: 'wideNet',
+    name: 'Wide Net',
+    tagline: 'Messier, broader, made for chaos waves.',
+    cost: 260,
+    color: '#ff5fbb',
+    radiusBonus: 14,
+    cooldownMultiplier: 1.1,
+  },
+];
+
+export const getWeapon = (id: string) => WEAPONS.find((weapon) => weapon.id === id) ?? WEAPONS[0];
+export const getCrosshair = (id: string) => CROSSHAIRS.find((crosshair) => crosshair.id === id) ?? CROSSHAIRS[0];

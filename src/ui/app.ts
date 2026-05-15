@@ -1,0 +1,294 @@
+import { getUpgradeCost } from '../game/data/upgrades';
+import type { CrosshairDefinition, SaveData, UpgradeDefinition, WeaponDefinition } from '../game/types';
+import { dispatchCommand, onUiState, type UiState } from './events';
+
+const root = () => document.getElementById('ui-root');
+
+export function initializeUi(): void {
+  onUiState(render);
+
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement | null;
+    const actionEl = target?.closest<HTMLElement>('[data-action]');
+    if (!actionEl) return;
+
+    const action = actionEl.dataset.action;
+    const id = actionEl.dataset.id;
+    if (!action) return;
+
+    dispatchCommand(action as Parameters<typeof dispatchCommand>[0], { id });
+  });
+}
+
+function render(state: UiState): void {
+  const uiRoot = root();
+  if (!uiRoot) return;
+
+  uiRoot.className = `ui-root ui-${state.screen}`;
+
+  if (state.screen === 'blank') {
+    uiRoot.innerHTML = '';
+    return;
+  }
+
+  if (state.screen === 'attract') {
+    uiRoot.innerHTML = renderAttract(state);
+    return;
+  }
+
+  if (state.screen === 'hud') {
+    uiRoot.innerHTML = renderHud(state);
+    return;
+  }
+
+  if (state.screen === 'pause') {
+    uiRoot.innerHTML = renderPause(state);
+    return;
+  }
+
+  uiRoot.innerHTML = renderGameOver(state);
+}
+
+function renderAttract(state: Extract<UiState, { screen: 'attract' }>): string {
+  return `
+    <div class="crt-overlay" aria-hidden="true"></div>
+    <main class="attract-shell">
+      <section class="cabinet-title">
+        <p class="eyebrow">KNOTZ ARCADE SYSTEM 1996</p>
+        <h1><span>Knotz</span><span>Raven</span><span>Mayhem</span></h1>
+        <p class="tagline">Aim sharp. Chain combos. Upgrade the shooter. Outlast the flock.</p>
+      </section>
+      <nav class="arcade-menu" aria-label="Main menu">
+        <button class="primary-command" data-action="start-run">Start Run</button>
+        <button data-action="open-armory">Armory</button>
+        <button data-action="open-records">Records</button>
+      </nav>
+      ${state.mode === 'armory' ? renderArmory(state.save, state.weapons, state.crosshairs, state.upgrades) : ''}
+      ${state.mode === 'records' ? renderRecords(state.save) : ''}
+      ${state.mode === 'home' ? renderHomeStats(state.save) : ''}
+      <footer class="coin-line">Press Start or click Start Run. Space pauses during play.</footer>
+    </main>
+  `;
+}
+
+function renderHomeStats(save: SaveData): string {
+  return `
+    <section class="arcade-panel compact-panel">
+      <div>
+        <span class="panel-label">Best Score</span>
+        <strong>${save.highScore}</strong>
+      </div>
+      <div>
+        <span class="panel-label">Best Stage</span>
+        <strong>${save.bestStage}</strong>
+      </div>
+      <div>
+        <span class="panel-label">Coins</span>
+        <strong>${save.coins}</strong>
+      </div>
+    </section>
+  `;
+}
+
+function renderRecords(save: SaveData): string {
+  return `
+    <section class="arcade-panel records-panel">
+      <header class="panel-header">
+        <h2>Records</h2>
+        <button data-action="show-home">Back</button>
+      </header>
+      <div class="record-grid">
+        <div><span>High Score</span><strong>${save.highScore}</strong></div>
+        <div><span>Best Stage</span><strong>${save.bestStage}</strong></div>
+        <div><span>Best Combo</span><strong>${save.bestCombo}x</strong></div>
+        <div><span>Lifetime Kills</span><strong>${save.lifetimeKills}</strong></div>
+      </div>
+      <button class="danger-command" data-action="reset-save">Reset Save</button>
+    </section>
+  `;
+}
+
+function renderArmory(
+  save: SaveData,
+  weapons: WeaponDefinition[],
+  crosshairs: CrosshairDefinition[],
+  upgrades: UpgradeDefinition[],
+): string {
+  return `
+    <section class="arcade-panel armory-panel">
+      <header class="panel-header">
+        <div>
+          <h2>Armory</h2>
+          <p>${save.coins} coins available</p>
+        </div>
+        <button data-action="show-home">Back</button>
+      </header>
+      <div class="armory-columns">
+        <div>
+          <h3>Guns</h3>
+          ${weapons.map((weapon) => renderWeaponCard(save, weapon)).join('')}
+        </div>
+        <div>
+          <h3>Crosshairs</h3>
+          ${crosshairs.map((crosshair) => renderCrosshairCard(save, crosshair)).join('')}
+        </div>
+        <div>
+          <h3>Stats</h3>
+          ${upgrades.map((upgrade) => renderUpgradeCard(save, upgrade)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderWeaponCard(save: SaveData, weapon: WeaponDefinition): string {
+  const unlocked = save.unlockedWeapons.includes(weapon.id);
+  const selected = save.selectedWeapon === weapon.id;
+  const action = unlocked ? 'select-weapon' : 'purchase-weapon';
+  const label = selected ? 'Equipped' : unlocked ? 'Equip' : `Buy ${weapon.cost}`;
+
+  return `
+    <article class="loadout-card ${selected ? 'selected' : ''}">
+      <div>
+        <strong>${weapon.name}</strong>
+        <span>${weapon.tagline}</span>
+      </div>
+      <button data-action="${action}" data-id="${weapon.id}" ${selected ? 'disabled' : ''}>${label}</button>
+    </article>
+  `;
+}
+
+function renderCrosshairCard(save: SaveData, crosshair: CrosshairDefinition): string {
+  const unlocked = save.unlockedCrosshairs.includes(crosshair.id);
+  const selected = save.selectedCrosshair === crosshair.id;
+  const action = unlocked ? 'select-crosshair' : 'purchase-crosshair';
+  const label = selected ? 'Equipped' : unlocked ? 'Equip' : `Buy ${crosshair.cost}`;
+
+  return `
+    <article class="loadout-card ${selected ? 'selected' : ''}">
+      <div>
+        <strong>${crosshair.name}</strong>
+        <span>${crosshair.tagline}</span>
+      </div>
+      <button data-action="${action}" data-id="${crosshair.id}" ${selected ? 'disabled' : ''}>${label}</button>
+    </article>
+  `;
+}
+
+function renderUpgradeCard(save: SaveData, upgrade: UpgradeDefinition): string {
+  const rank = save.upgrades[upgrade.id] ?? 0;
+  const maxed = rank >= upgrade.maxRank;
+  const label = maxed ? 'Max' : `Buy ${getUpgradeCost(upgrade, rank)}`;
+
+  return `
+    <article class="loadout-card ${maxed ? 'selected' : ''}">
+      <div>
+        <strong>${upgrade.name} ${rank}/${upgrade.maxRank}</strong>
+        <span>${upgrade.tagline}</span>
+      </div>
+      <button data-action="purchase-upgrade" data-id="${upgrade.id}" ${maxed ? 'disabled' : ''}>${label}</button>
+    </article>
+  `;
+}
+
+function renderHud(state: Extract<UiState, { screen: 'hud' }>): string {
+  const { snapshot, stage, weapon, crosshair } = state;
+  const lifePips = Array.from({ length: snapshot.maxLives }, (_, index) => `<span class="${index < snapshot.lives ? 'on' : ''}"></span>`).join('');
+  const progress = Math.min(100, (snapshot.stageKills / snapshot.stageTargetKills) * 100);
+  const comboProgress = snapshot.comboWindowMs > 0 ? Math.max(0, (snapshot.comboTimerMs / snapshot.comboWindowMs) * 100) : 0;
+
+  return `
+    <div class="hud">
+      <section class="hud-cluster score-cluster">
+        <span>Score</span>
+        <strong>${snapshot.score}</strong>
+        <small>${weapon.name} / ${crosshair.name}</small>
+      </section>
+      <section class="hud-cluster stage-cluster">
+        <span>Stage ${snapshot.stageIndex}</span>
+        <strong>${stage.title}</strong>
+        <div class="meter"><i style="width:${progress}%"></i></div>
+      </section>
+      <section class="hud-cluster life-cluster">
+        <span>Lives</span>
+        <div class="life-pips">${lifePips}</div>
+        <button data-action="pause">Pause</button>
+      </section>
+      <section class="hud-cluster combo-cluster ${snapshot.comboMultiplier >= 4 ? 'hot' : ''}">
+        <span>Combo</span>
+        <strong>x${snapshot.comboMultiplier}</strong>
+        <div class="meter combo-meter"><i style="width:${comboProgress}%"></i></div>
+      </section>
+      <section class="hud-cluster stat-strip">
+        <span>Accuracy ${snapshot.accuracy}%</span>
+        <span>Kills ${snapshot.kills}</span>
+        <span>Coins +${snapshot.coinsEarned}</span>
+      </section>
+      ${snapshot.activePowerups.length ? renderPowerups(snapshot.activePowerups) : ''}
+    </div>
+  `;
+}
+
+function renderPowerups(powerups: Extract<UiState, { screen: 'hud' }>['snapshot']['activePowerups']): string {
+  return `
+    <section class="powerup-rack">
+      ${powerups
+        .map((powerup) => {
+          const width = Math.max(0, (powerup.timeLeftMs / powerup.durationMs) * 100);
+          return `<div><span>${powerup.label}</span><i style="width:${width}%"></i></div>`;
+        })
+        .join('')}
+    </section>
+  `;
+}
+
+function renderPause(state: Extract<UiState, { screen: 'pause' }>): string {
+  const { snapshot, stage } = state;
+  return `
+    ${renderHud({ screen: 'hud', snapshot, stage, weapon: { name: snapshot.weaponName } as WeaponDefinition, crosshair: { name: snapshot.crosshairName } as CrosshairDefinition })}
+    <section class="modal-screen pause-screen">
+      <div class="modal-card">
+        <p class="eyebrow">Cabinet Paused</p>
+        <h2>Stage ${snapshot.stageIndex}: ${stage.title}</h2>
+        <div class="record-grid">
+          <div><span>Score</span><strong>${snapshot.score}</strong></div>
+          <div><span>Accuracy</span><strong>${snapshot.accuracy}%</strong></div>
+          <div><span>Best Combo</span><strong>${snapshot.bestCombo}x</strong></div>
+          <div><span>Kills</span><strong>${snapshot.kills}</strong></div>
+        </div>
+        <div class="modal-actions">
+          <button class="primary-command" data-action="resume">Resume</button>
+          <button data-action="return-menu">Quit Run</button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderGameOver(state: Extract<UiState, { screen: 'gameover' }>): string {
+  const { snapshot, rewards } = state;
+  return `
+    <div class="crt-overlay heavy" aria-hidden="true"></div>
+    <section class="modal-screen gameover-screen">
+      <div class="modal-card gameover-card">
+        <p class="eyebrow">${rewards.newHighScore ? 'New High Score' : 'Run Complete'}</p>
+        <h2>Game Over</h2>
+        <div class="final-score">${snapshot.score}</div>
+        <div class="record-grid">
+          <div><span>Stage</span><strong>${snapshot.stageIndex}</strong></div>
+          <div><span>Accuracy</span><strong>${snapshot.accuracy}%</strong></div>
+          <div><span>Best Combo</span><strong>${snapshot.bestCombo}x</strong></div>
+          <div><span>Kills</span><strong>${snapshot.kills}</strong></div>
+        </div>
+        <div class="reward-line">
+          <span>Coins earned</span>
+          <strong>+${rewards.totalCoins}</strong>
+        </div>
+        <div class="modal-actions">
+          <button class="primary-command" data-action="restart-run">Run It Back</button>
+          <button data-action="return-menu">Armory/Menu</button>
+        </div>
+      </div>
+    </section>
+  `;
+}

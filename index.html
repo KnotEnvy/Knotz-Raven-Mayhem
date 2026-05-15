@@ -1,61 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KnotzBirdShot</title>
-    <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-    <canvas id="collisionCanvas"></canvas>
-    <canvas id="canvas1"></canvas>
-
-    <!-- Restart Button (hidden by default) -->
-    <button id="restartButton" class="restart-button" style="display: none;">
-        <span class="button-text">RESTART GAME</span>
-        <span class="button-glow"></span>
-    </button>
-
-    <!-- Landing Page -->
-    <div id="landingPage" class="landing-page">
-        <canvas id="landingCanvas" class="landing-canvas"></canvas>
-
-        <div class="landing-content">
-            <h1 class="game-title">
-                <span class="title-word">KNOTZ</span>
-                <span class="title-word">RAVEN</span>
-                <span class="title-word">MAYHEM</span>
-            </h1>
-
-            <div class="subtitle">Click fast. Destroy ravens. Survive.</div>
-
-            <button id="startButton" class="start-button">
-                <span class="button-text">START GAME</span>
-                <span class="button-glow"></span>
-            </button>
-
-            <div class="features">
-                <div class="feature">
-                    <span class="feature-icon">⚡</span>
-                    <span class="feature-text">Fast-Paced Action</span>
-                </div>
-                <div class="feature">
-                    <span class="feature-icon">🎯</span>
-                    <span class="feature-text">Precision Shooting</span>
-                </div>
-                <div class="feature">
-                    <span class="feature-icon">💥</span>
-                    <span class="feature-text">Epic Explosions</span>
-                </div>
-            </div>
-
-            <div class="instructions">
-                Click on ravens to destroy them before they escape!
-            </div>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Knotz Raven Mayhem is a 1990s-inspired arcade raven shooter with roguelite progression."
+    />
+    <title>Knotz Raven Mayhem</title>
+  </head>
+  <body>
+    <div id="game-root" aria-label="Knotz Raven Mayhem game canvas"></div>
+    <div id="ui-root" aria-live="polite"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
