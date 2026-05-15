@@ -4,6 +4,7 @@ import { SPRITE_KEYS } from '../data/assets';
 import { CROSSHAIRS, WEAPONS } from '../data/weapons';
 import { UPGRADES } from '../data/upgrades';
 import {
+  cycleSetting,
   loadSave,
   purchaseCrosshair,
   purchaseUpgrade,
@@ -12,7 +13,8 @@ import {
   selectCrosshair,
   selectWeapon,
 } from '../save';
-import type { SaveData } from '../types';
+import type { GameSettings, SaveData } from '../types';
+import { arcadeAudio } from '../systems/ArcadeAudio';
 import { dispatchUiState, onCommand } from '../../ui/events';
 
 interface MenuRaven {
@@ -23,7 +25,7 @@ interface MenuRaven {
 
 export class AttractScene extends Phaser.Scene {
   private save!: SaveData;
-  private mode: 'home' | 'armory' | 'records' = 'home';
+  private mode: 'home' | 'armory' | 'records' | 'options' | 'credits' = 'home';
   private ravens: MenuRaven[] = [];
   private unsubscribers: Array<() => void> = [];
   private spawnTimer = 0;
@@ -39,6 +41,7 @@ export class AttractScene extends Phaser.Scene {
     this.createBackdrop();
     this.bindCommands();
     this.renderUi();
+    arcadeAudio.startMusic('menu', this.save.settings);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.unsubscribers.forEach((unsubscribe) => unsubscribe());
@@ -96,23 +99,38 @@ export class AttractScene extends Phaser.Scene {
   private bindCommands(): void {
     this.unsubscribers.push(
       onCommand('start-run', () => {
+        arcadeAudio.playMenuConfirm();
         dispatchUiState({ screen: 'blank' });
         this.scene.start('GameScene');
       }),
       onCommand('open-armory', () => {
+        arcadeAudio.playMenuConfirm();
         this.mode = 'armory';
         this.renderUi();
       }),
       onCommand('open-records', () => {
+        arcadeAudio.playMenuConfirm();
         this.mode = 'records';
         this.renderUi();
       }),
+      onCommand('open-options', () => {
+        arcadeAudio.playMenuConfirm();
+        this.mode = 'options';
+        this.renderUi();
+      }),
+      onCommand('open-credits', () => {
+        arcadeAudio.playMenuConfirm();
+        this.mode = 'credits';
+        this.renderUi();
+      }),
       onCommand('show-home', () => {
+        arcadeAudio.playMenuConfirm();
         this.mode = 'home';
         this.renderUi();
       }),
       onCommand('reset-save', () => {
         this.save = resetSave();
+        arcadeAudio.applySettings(this.save.settings);
         this.mode = 'records';
         this.renderUi();
       }),
@@ -139,6 +157,13 @@ export class AttractScene extends Phaser.Scene {
       onCommand('purchase-upgrade', ({ id }) => {
         if (!id) return;
         this.save = purchaseUpgrade(this.save, id as keyof SaveData['upgrades']);
+        this.renderUi();
+      }),
+      onCommand('cycle-setting', ({ id }) => {
+        if (!id) return;
+        this.save = cycleSetting(this.save, id as keyof GameSettings);
+        arcadeAudio.startMusic('menu', this.save.settings);
+        arcadeAudio.playMenuConfirm();
         this.renderUi();
       }),
     );

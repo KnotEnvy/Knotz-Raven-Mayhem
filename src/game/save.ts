@@ -1,8 +1,15 @@
 import { CROSSHAIRS, WEAPONS } from './data/weapons';
 import { UPGRADES, getUpgradeCost } from './data/upgrades';
-import type { CrosshairId, RunRewards, RunSnapshot, SaveData, UpgradeId, WeaponId } from './types';
+import type { CrosshairId, GameSettings, RunRewards, RunSnapshot, SaveData, UpgradeId, WeaponId } from './types';
 
 const SAVE_KEY = 'knotz-raven-mayhem-save-v1';
+
+export const DEFAULT_SETTINGS: GameSettings = {
+  musicVolume: 0.65,
+  sfxVolume: 0.75,
+  screenShake: true,
+  reducedMotion: false,
+};
 
 export const DEFAULT_SAVE: SaveData = {
   version: 1,
@@ -16,6 +23,7 @@ export const DEFAULT_SAVE: SaveData = {
   unlockedWeapons: ['pistol'],
   unlockedCrosshairs: ['classic'],
   upgrades: {},
+  settings: { ...DEFAULT_SETTINGS },
 };
 
 export function loadSave(): SaveData {
@@ -97,6 +105,28 @@ export function purchaseUpgrade(save: SaveData, upgradeId: UpgradeId): SaveData 
   return next;
 }
 
+export function cycleSetting(save: SaveData, setting: keyof GameSettings): SaveData {
+  const next = cloneSave(save);
+
+  switch (setting) {
+    case 'musicVolume':
+      next.settings.musicVolume = cycleVolume(next.settings.musicVolume);
+      break;
+    case 'sfxVolume':
+      next.settings.sfxVolume = cycleVolume(next.settings.sfxVolume);
+      break;
+    case 'screenShake':
+      next.settings.screenShake = !next.settings.screenShake;
+      break;
+    case 'reducedMotion':
+      next.settings.reducedMotion = !next.settings.reducedMotion;
+      break;
+  }
+
+  persistSave(next);
+  return next;
+}
+
 export function applyRunRewards(save: SaveData, snapshot: RunSnapshot, rewards: RunRewards): SaveData {
   const next = cloneSave(save);
   next.coins += rewards.totalCoins;
@@ -149,6 +179,16 @@ function normalizeSave(input: Partial<SaveData>): SaveData {
     unlockedWeapons,
     unlockedCrosshairs,
     upgrades: normalizeUpgrades(input.upgrades),
+    settings: normalizeSettings(input.settings),
+  };
+}
+
+function normalizeSettings(input: Partial<GameSettings> | undefined): GameSettings {
+  return {
+    musicVolume: clampVolume(input?.musicVolume, DEFAULT_SETTINGS.musicVolume),
+    sfxVolume: clampVolume(input?.sfxVolume, DEFAULT_SETTINGS.sfxVolume),
+    screenShake: typeof input?.screenShake === 'boolean' ? input.screenShake : DEFAULT_SETTINGS.screenShake,
+    reducedMotion: typeof input?.reducedMotion === 'boolean' ? input.reducedMotion : DEFAULT_SETTINGS.reducedMotion,
   };
 }
 
@@ -169,4 +209,15 @@ function sanitizeIds<TId extends string>(input: TId[] | undefined, allowed: TId[
 
 function cloneSave(save: SaveData): SaveData {
   return JSON.parse(JSON.stringify(save)) as SaveData;
+}
+
+function cycleVolume(value: number): number {
+  const steps = [0, 0.35, 0.65, 1];
+  const currentIndex = steps.findIndex((step) => Math.abs(step - value) < 0.02);
+  return steps[(currentIndex + 1) % steps.length] ?? DEFAULT_SETTINGS.musicVolume;
+}
+
+function clampVolume(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  return Math.max(0, Math.min(1, value));
 }

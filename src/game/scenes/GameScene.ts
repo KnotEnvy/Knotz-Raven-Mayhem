@@ -7,6 +7,7 @@ import { applyRunRewards, calculateRunRewards, loadSave } from '../save';
 import { getLoadout } from '../systems/progression';
 import { RunState, powerupLabel } from '../systems/RunState';
 import { WaveDirector } from '../systems/WaveDirector';
+import { arcadeAudio } from '../systems/ArcadeAudio';
 import type { EnemyDefinition, EnemyId, PowerupId, RunRewards, SaveData, StageDefinition, WeaponDefinition } from '../types';
 import { dispatchUiState, onCommand } from '../../ui/events';
 
@@ -79,6 +80,7 @@ export class GameScene extends Phaser.Scene {
     this.registerInput();
     this.renderHud();
     this.showStageBanner(this.stage.title, this.stage.subtitle);
+    arcadeAudio.startMusic('run', this.save.settings);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.unsubscribers.forEach((unsubscribe) => unsubscribe());
@@ -249,7 +251,9 @@ export class GameScene extends Phaser.Scene {
       actor.sprite.x = this.scale.width + 180;
       actor.sprite.y = this.scale.height * 0.35;
       this.showStageBanner('Boss Warning', def.label);
-      this.cameras.main.shake(450, 0.008);
+      arcadeAudio.playBossWarning();
+      arcadeAudio.startMusic('boss', this.save.settings);
+      this.shakeCamera(450, 0.008);
     }
 
     this.enemies.push(actor);
@@ -285,7 +289,8 @@ export class GameScene extends Phaser.Scene {
         actor.sprite.destroy();
         actor.healthBar?.destroy();
         this.floatText(120, this.scale.height - 120, 'MISSED', '#ff315a', 34);
-        this.cameras.main.shake(250, 0.01);
+        arcadeAudio.playMiss();
+        this.shakeCamera(250, 0.01);
         if (this.run.loseLife()) this.endRun();
       }
 
@@ -314,6 +319,7 @@ export class GameScene extends Phaser.Scene {
 
     this.nextShotAt = now + this.run.weaponCooldownMs;
     this.run.recordShot();
+    arcadeAudio.playShot(this.weapon.id);
     this.drawMuzzleFlash(x, y);
 
     const powerupHit = this.collectPowerupAt(x, y);
@@ -329,8 +335,9 @@ export class GameScene extends Phaser.Scene {
 
     if (hitActors.length === 0 && !powerupHit) {
       this.run.recordMiss();
+      arcadeAudio.playMiss();
       this.floatText(x, y - 24, 'MISS', '#ff315a', 22);
-      this.cameras.main.shake(90, 0.003);
+      this.shakeCamera(90, 0.003);
       return;
     }
 
@@ -375,6 +382,7 @@ export class GameScene extends Phaser.Scene {
 
   private damageEnemy(actor: EnemyActor, damage: number): void {
     actor.hp -= damage;
+    arcadeAudio.playHit();
     actor.sprite.setTintFill(0xffffff);
     this.time.delayedCall(70, () => {
       actor.sprite.clearTint();
@@ -383,7 +391,7 @@ export class GameScene extends Phaser.Scene {
 
     if (actor.hp > 0) {
       this.floatText(actor.sprite.x, actor.sprite.y - actor.radius, 'HIT', '#ffe56a', 22);
-      this.cameras.main.shake(80, 0.004);
+      this.shakeCamera(80, 0.004);
       return;
     }
 
@@ -400,7 +408,7 @@ export class GameScene extends Phaser.Scene {
     this.floatText(x, y - radius, `+${points}`, actor.def.tint ? `#${actor.def.tint.toString(16).padStart(6, '0')}` : '#ffe56a', 24 + Math.min(18, this.run.comboMultiplier * 2));
     this.createExplosion(x, y, actor.def.scale);
     this.createFeathers(x, y, actor.def.tint ?? this.stage.palette.neon, actor.boss ? 44 : 18);
-    this.cameras.main.shake(actor.boss ? 650 : 160, actor.boss ? 0.018 : 0.006);
+    this.shakeCamera(actor.boss ? 650 : 160, actor.boss ? 0.018 : 0.006);
 
     if (actor.def.id === 'golden') {
       this.time.timeScale = 0.25;
@@ -440,6 +448,7 @@ export class GameScene extends Phaser.Scene {
 
     this.floatText(powerup.container.x, powerup.container.y - 32, powerup.label, '#9dff57', 24);
     this.createFeathers(powerup.container.x, powerup.container.y, 0x9dff57, 16);
+    arcadeAudio.playPowerup();
     powerup.container.destroy();
     return true;
   }
@@ -490,8 +499,9 @@ export class GameScene extends Phaser.Scene {
 
     this.stageTransition = true;
     this.run.coinsEarned += this.stage.rewardCoins;
+    arcadeAudio.playStageClear();
     this.floatText(this.scale.width / 2, this.scale.height * 0.38, `STAGE CLEAR +${this.stage.rewardCoins}`, '#ffe56a', 36);
-    this.cameras.main.flash(220, 255, 225, 106, false);
+    if (!this.save.settings.reducedMotion) this.cameras.main.flash(220, 255, 225, 106, false);
 
     this.time.delayedCall(1800, () => {
       this.stage = getStage(this.run.stageIndex);
@@ -500,6 +510,7 @@ export class GameScene extends Phaser.Scene {
       this.bossSpawned = false;
       this.stageTransition = false;
       this.drawBackground();
+      arcadeAudio.startMusic('run', this.save.settings);
       this.showStageBanner(this.stage.title, this.stage.subtitle);
     });
   }
@@ -528,13 +539,15 @@ export class GameScene extends Phaser.Scene {
     const snapshot = this.run.snapshot(this.stage.title);
     const rewards: RunRewards = calculateRunRewards(this.save, snapshot, this.bossKills);
     this.save = applyRunRewards(this.save, snapshot, rewards);
-    this.cameras.main.flash(500, 255, 35, 80, false);
-    this.cameras.main.shake(700, 0.018);
-    dispatchUiState({
-      screen: 'gameover',
-      snapshot,
-      rewards,
-      save: this.save,
+    arcadeAudio.stopMusic();
+    arcadeAudio.playGameOver();
+    this.playDeathSequence(() => {
+      dispatchUiState({
+        screen: 'gameover',
+        snapshot,
+        rewards,
+        save: this.save,
+      });
     });
   }
 
@@ -603,7 +616,7 @@ export class GameScene extends Phaser.Scene {
     explosion.setScale(Math.max(0.55, scale * 1.05));
     explosion.setDepth(60);
     explosion.play('boom-pop');
-    this.sound.play(AUDIO_KEYS.boom, { volume: 0.22 });
+    this.sound.play(AUDIO_KEYS.boom, { volume: 0.22 * this.save.settings.sfxVolume });
     explosion.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => explosion.destroy());
   }
 
@@ -660,6 +673,63 @@ export class GameScene extends Phaser.Scene {
       ease: 'Quad.easeOut',
       onComplete: () => label.destroy(),
     });
+  }
+
+  private playDeathSequence(onComplete: () => void): void {
+    this.enemies.forEach((enemy) => {
+      enemy.velocityX *= -0.25;
+      enemy.velocityY *= 0.2;
+      enemy.sprite.setTint(0xff315a);
+    });
+
+    const overlay = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x05030a, 0.1);
+    overlay.setOrigin(0);
+    overlay.setDepth(300);
+    const title = this.add.text(this.scale.width / 2, this.scale.height * 0.42, 'SYSTEM FAILURE', {
+      fontFamily: 'Impact, Haettenschweiler, sans-serif',
+      fontSize: '64px',
+      color: '#ff315a',
+      stroke: '#05030a',
+      strokeThickness: 8,
+      align: 'center',
+    });
+    title.setOrigin(0.5);
+    title.setDepth(310);
+    const prompt = this.add.text(this.scale.width / 2, this.scale.height * 0.42 + 64, 'THE FLOCK CLAIMED THIS RUN', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '18px',
+      color: '#ffe56a',
+      align: 'center',
+    });
+    prompt.setOrigin(0.5);
+    prompt.setDepth(310);
+
+    if (!this.save.settings.reducedMotion) {
+      this.cameras.main.flash(500, 255, 35, 80, false);
+      this.shakeCamera(700, 0.018);
+      this.tweens.add({
+        targets: overlay,
+        alpha: 0.82,
+        duration: 700,
+        ease: 'Quad.easeOut',
+      });
+      this.tweens.add({
+        targets: title,
+        scale: 1.08,
+        duration: 120,
+        yoyo: true,
+        repeat: 4,
+      });
+    } else {
+      overlay.setAlpha(0.82);
+    }
+
+    this.time.delayedCall(this.save.settings.reducedMotion ? 650 : 1450, onComplete);
+  }
+
+  private shakeCamera(duration: number, intensity: number): void {
+    if (!this.save.settings.screenShake || this.save.settings.reducedMotion) return;
+    this.cameras.main.shake(duration, intensity);
   }
 }
 

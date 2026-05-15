@@ -103,6 +103,14 @@ export interface SaveData {
   unlockedWeapons: WeaponId[];
   unlockedCrosshairs: CrosshairId[];
   upgrades: Partial<Record<UpgradeId, number>>;
+  settings: GameSettings;
+}
+
+export interface GameSettings {
+  musicVolume: number;
+  sfxVolume: number;
+  screenShake: boolean;
+  reducedMotion: boolean;
 }
 
 export interface RunSnapshot {

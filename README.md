@@ -6,6 +6,7 @@ Knotz Raven Mayhem is now a Phaser + TypeScript + Vite arcade shooter built from
 
 - Start from the animated arcade attract screen.
 - Pick or unlock guns, crosshairs, and permanent stat upgrades in the armory.
+- Tune music, SFX, motion, and screen shake from Options.
 - Enter a run and clear escalating raven stages.
 - Shoot enemies, chain combos, collect powerups, and survive missed ravens.
 - Boss stages introduce the Raven King as a high-health gate.
@@ -17,7 +18,8 @@ Knotz Raven Mayhem is now a Phaser + TypeScript + Vite arcade shooter built from
 - Phaser 3 for the game canvas, scene flow, sprites, animation, camera shake, and effects.
 - TypeScript for game data, save state, progression, and scene code.
 - Vite for local development and static production builds.
-- DOM overlays for the arcade landing page, HUD, pause menu, armory, records, and game-over GUI.
+- DOM overlays for the arcade landing page, HUD, pause menu, armory, records, options, credits, and game-over GUI.
+- Procedural WebAudio cabinet music and sound effects layered with the original boom sample.
 
 ## Project Structure
 
@@ -64,6 +66,9 @@ The Vite config uses `base: './'`, so `dist/` can be deployed as static GitHub P
 - 4 permanent upgrades: cooldown, combo window, starting lives, and payout scaling.
 - 5 powerups: slow-mo, multi-shot, score boost, extra life, and overdrive.
 - Local records for high score, best stage, best combo, lifetime kills, unlocked gear, and coins.
+- Persistent options for music volume, SFX volume, screen shake, and reduced motion.
+- Procedural arcade audio for menu confirms, shots, hits, misses, powerups, stage clear, boss warning, and game over.
+- Death sequence before the final score screen.
 
 ## Asset Direction
 

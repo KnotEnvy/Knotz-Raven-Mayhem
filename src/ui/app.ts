@@ -1,5 +1,5 @@
 import { getUpgradeCost } from '../game/data/upgrades';
-import type { CrosshairDefinition, SaveData, UpgradeDefinition, WeaponDefinition } from '../game/types';
+import type { CrosshairDefinition, GameSettings, SaveData, UpgradeDefinition, WeaponDefinition } from '../game/types';
 import { dispatchCommand, onUiState, type UiState } from './events';
 
 const root = () => document.getElementById('ui-root');
@@ -62,9 +62,13 @@ function renderAttract(state: Extract<UiState, { screen: 'attract' }>): string {
         <button class="primary-command" data-action="start-run">Start Run</button>
         <button data-action="open-armory">Armory</button>
         <button data-action="open-records">Records</button>
+        <button data-action="open-options">Options</button>
+        <button data-action="open-credits">Credits</button>
       </nav>
       ${state.mode === 'armory' ? renderArmory(state.save, state.weapons, state.crosshairs, state.upgrades) : ''}
       ${state.mode === 'records' ? renderRecords(state.save) : ''}
+      ${state.mode === 'options' ? renderOptions(state.save.settings) : ''}
+      ${state.mode === 'credits' ? renderCredits() : ''}
       ${state.mode === 'home' ? renderHomeStats(state.save) : ''}
       <footer class="coin-line">Press Start or click Start Run. Space pauses during play.</footer>
     </main>
@@ -88,6 +92,60 @@ function renderHomeStats(save: SaveData): string {
       </div>
     </section>
   `;
+}
+
+function renderOptions(settings: GameSettings): string {
+  return `
+    <section class="arcade-panel options-panel">
+      <header class="panel-header">
+        <div>
+          <h2>Options</h2>
+          <p>Cabinet settings are saved locally.</p>
+        </div>
+        <button data-action="show-home">Back</button>
+      </header>
+      <div class="settings-grid">
+        ${renderSetting('Music', formatVolume(settings.musicVolume), 'musicVolume')}
+        ${renderSetting('SFX', formatVolume(settings.sfxVolume), 'sfxVolume')}
+        ${renderSetting('Screen Shake', settings.screenShake ? 'On' : 'Off', 'screenShake')}
+        ${renderSetting('Motion', settings.reducedMotion ? 'Reduced' : 'Full', 'reducedMotion')}
+      </div>
+    </section>
+  `;
+}
+
+function renderCredits(): string {
+  return `
+    <section class="arcade-panel credits-panel">
+      <header class="panel-header">
+        <div>
+          <h2>Credits</h2>
+          <p>Release candidate arcade build.</p>
+        </div>
+        <button data-action="show-home">Back</button>
+      </header>
+      <div class="credits-copy">
+        <p><strong>Knotz Raven Mayhem</strong> is built from the original raven click-target prototype and expanded into a Phaser-powered arcade run game.</p>
+        <p>Original seed assets: raven sprite, explosion sheet, and boom audio. Current build: Phaser runtime, roguelite progression, DOM arcade UI, procedural cabinet audio, and local save progression.</p>
+      </div>
+    </section>
+  `;
+}
+
+function renderSetting(label: string, value: string, id: keyof GameSettings): string {
+  return `
+    <article class="setting-card">
+      <div>
+        <span>${label}</span>
+        <strong>${value}</strong>
+      </div>
+      <button data-action="cycle-setting" data-id="${id}">Change</button>
+    </article>
+  `;
+}
+
+function formatVolume(value: number): string {
+  return `${Math.round(value * 100)}%`;
 }
 
 function renderRecords(save: SaveData): string {

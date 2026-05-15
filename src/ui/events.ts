@@ -11,7 +11,7 @@ import type {
 export type UiState =
   | {
       screen: 'attract';
-      mode: 'home' | 'armory' | 'records';
+      mode: 'home' | 'armory' | 'records' | 'options' | 'credits';
       save: SaveData;
       weapons: WeaponDefinition[];
       crosshairs: CrosshairDefinition[];
@@ -43,6 +43,8 @@ export type CommandName =
   | 'start-run'
   | 'open-armory'
   | 'open-records'
+  | 'open-options'
+  | 'open-credits'
   | 'show-home'
   | 'restart-run'
   | 'return-menu'
@@ -53,7 +55,8 @@ export type CommandName =
   | 'select-weapon'
   | 'purchase-crosshair'
   | 'select-crosshair'
-  | 'purchase-upgrade';
+  | 'purchase-upgrade'
+  | 'cycle-setting';
 
 export interface CommandDetail {
   id?: string;
