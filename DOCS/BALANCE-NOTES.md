@@ -9,11 +9,11 @@ Use `npm run balance:report` before manual tuning sessions. The report reads the
 - All paid weapons and Assist Chips: 1230 coins.
 - All permanent upgrade ranks: 2745 coins.
 - Full armory economy: 3975 coins.
-- Solid Stage 1 clear estimate: 76 coins.
-- Solid Stage 3 clear estimate: 331 coins.
-- Solid Stage 6 clear estimate: 938 coins.
-- Solid full 9-stage clear estimate: 1781 coins.
-- Solid full 9-stage score estimate: 15880 points.
+- Solid Stage 1 clear estimate: 70 coins.
+- Solid Stage 3 clear estimate: 315 coins.
+- Solid Stage 6 clear estimate: 937 coins.
+- Solid full 9-stage clear estimate: 1786 coins.
+- Solid full 9-stage score estimate: 15760 points.
 
 ## Release Interpretation
 
@@ -34,6 +34,7 @@ Use `npm run balance:report` before manual tuning sessions. The report reads the
 ## Current Content Notes
 
 - Stage count is now 9: the original six-stage arc, Jackpot Alley bonus round, Cinder Viaduct, and Clocktower Apex.
-- New enemy introductions: Wraith Raven appears first in Jackpot Alley, and Brute Raven appears first in Cinder Viaduct.
+- Enemy introductions are now staggered across the full arc: Stage 1 teaches Raven and Turbo Raven, Stage 2 adds Mini and Jackpot Raven, Stage 3 adds Shield Raven and the first Raven King boss, Stage 4 adds Armored Raven, Stage 5 adds Splitter and Dive Raven, Stage 8 adds Wraith Raven, and Stage 9 adds Brute Raven.
+- Jackpot Alley is intentionally a no-new-enemy payout remix before the late-game Wraith and Brute reveals.
 - New powerup: Coin Rush doubles enemy coin drops while active.
 - `npm run balance:report` now prints both Stage 6 and final-stage reward/score estimates.

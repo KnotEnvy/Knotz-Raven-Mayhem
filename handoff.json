@@ -11,7 +11,7 @@
     "summary": "The original raven click-target prototype has been rebuilt into a Phaser 3 + TypeScript + Vite arcade shooter with staged runs, bosses, bonus round pacing, between-stage interstitials, armory-forward game over, armory progression, persistent local saves, DOM overlays, procedural stage art, stage-aware procedural audio, release verification scripts, and GitHub Actions workflow scaffolding.",
     "implementedContent": {
       "stages": "9 named stages with different spawn pools, palettes, speed multipliers, rewards, procedural set dressing, a Jackpot Alley bonus round, and overflow scaling after the final named stage.",
-      "enemies": "11 enemy definitions: normal, fast, golden, armored, mini, shield, splitter, dive, wraith, brute, and boss.",
+      "enemies": "11 enemy definitions: normal, fast, golden, armored, mini, shield, splitter, dive, wraith, brute, and boss. Stage pools now reveal enemy types gradually across the full 9-stage arc instead of front-loading most variants early.",
       "weapons": "4 guns: Quarter Pistol, Burst Rifle, Scattergun, Arc Laser.",
       "assistChips": "4 Assist Chip unlocks: Stock Cabinet, Turbo Capacitor, Threat Scanner, Chaos Net. These are cabinet hardware purchases that tune recharge feel and target forgiveness while the live reticle identity follows the equipped gun.",
       "upgrades": "4 permanent upgrade tracks: cooldown, combo window, starting lives, payout scaling.",
@@ -51,7 +51,7 @@
         "details": [
           "Do not rework the between-stage or armory-forward flows unless a new bug appears; recent playtests say those flows are working well.",
           "Use DOCS/BALANCE-NOTES.md and npm run balance:report as the numeric baseline.",
-          "Continue play-session confirmation for Jackpot Alley payout, Stage 8/9 pressure, Wraith/Brute readability, boss health, powerup drop rates, stage length, rewards, and unlock timing."
+          "Continue play-session confirmation for the staggered enemy reveal curve, Jackpot Alley payout, Stage 8/9 pressure, Wraith/Brute readability, boss health, powerup drop rates, stage length, rewards, and unlock timing."
         ]
       },
       {
@@ -104,7 +104,7 @@
         "DOCS/RELEASE-QA-CHECKLIST.md"
       ],
       "acceptance": [
-        "Manual play sessions continue to confirm Stage 7 bonus pacing, Stage 8/9 pressure, and new enemy readability.",
+        "Manual play sessions continue to confirm the slower enemy introduction curve, Stage 7 bonus pacing, Stage 8/9 pressure, and new enemy readability.",
         "Full release QA checklist is completed against a production preview or deployment candidate.",
         "Real touch-device validation confirms HUD density, touch hit radius, stage-clear screens, and game-over armory recommendations.",
         "DOCS/BALANCE-NOTES.md is updated if tuning changes materially.",

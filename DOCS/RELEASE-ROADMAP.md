@@ -9,7 +9,7 @@
 - Stage-clear interstitials with reward, accuracy, combo, next-stage preview, bonus-round warning, and new enemy warnings.
 - Armory-forward game-over flow with affordable upgrade/unlock recommendations.
 - Weapon-driven reticles, cooldown-readiness feedback, projectile traces, multishot chain traces, shotgun spread visualization, and laser lane feedback.
-- Expanded 9-stage content arc with Jackpot Alley bonus round, Wraith Raven, Brute Raven, and Coin Rush powerup.
+- Expanded 9-stage content arc with a slower enemy introduction curve, Jackpot Alley bonus round, Wraith Raven, Brute Raven, and Coin Rush powerup.
 - Procedural arcade music and sound effects with persistent audio/motion settings.
 - Stronger death sequence before the final run summary.
 - Release tuning constants in `src/game/data/tuning.ts` for player stats, overflow stages, powerup behavior, combo pacing, and economy payouts.
@@ -25,7 +25,7 @@
 ## Remaining Before Public Release
 
 - Add final original production visuals: final raven variants, boss sprite work, and richer UI cabinet art. Optional recorded music beds or SFX can replace the procedural audio if desired.
-- Validate the economy and difficulty curve from real play sessions using `DOCS/BALANCE-NOTES.md` and the named tuning constants: early unlock timing, boss health, Jackpot Alley payout feel, new Wraith/Brute readability, powerup drop rates, stage length, and coin payouts.
+- Validate the economy and difficulty curve from real play sessions using `DOCS/BALANCE-NOTES.md` and the named tuning constants: early unlock timing, boss health, staggered enemy reveal pacing, Jackpot Alley payout feel, late Wraith/Brute readability, powerup drop rates, stage length, and coin payouts.
 - Run the release QA checklist: first-load, new save, returning save, all menu buttons, every weapon, every powerup, boss stage, game over, mobile layout, `npm run release:verify`, and GitHub Pages deploy.
 - Validate mobile-specific tuning on real touch devices: hit radius, HUD density, pause affordance, and performance particle caps.
 

@@ -48,6 +48,7 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 - [ ] Continue, Space, or P advances from stage-clear to the next stage without spawning enemies underneath the overlay.
 - [ ] Missed ravens remove lives and trigger game over at 0 lives.
 - [ ] Normal, fast, golden, armored, mini, shield, splitter, dive, wraith, and brute ravens appear across the staged run.
+- [ ] Enemy reveals feel staggered: Stage 1 is readable, Stage 2 adds small/value targets, Stage 3 adds shields and the first boss, Stage 4 adds armor, Stage 5 adds split/dive pressure, Stage 8 adds wraiths, and Stage 9 adds brutes.
 - [ ] Slow-Mo, Multi-Shot, Score Boost, Extra Life, Overdrive, and Coin Rush can drop, be collected, and affect the HUD or run state.
 - [ ] Stage 3 spawns and resolves the Raven King boss.
 - [ ] Stage 6 spawns and resolves the Raven King boss.
