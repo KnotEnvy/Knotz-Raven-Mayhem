@@ -13,7 +13,7 @@ import type {
 export type UiState =
   | {
       screen: 'attract';
-      mode: 'home' | 'armory' | 'records' | 'options' | 'credits' | 'raven-guide' | 'field-guide';
+      mode: 'home' | 'armory' | 'records' | 'options' | 'credits' | 'raven-guide' | 'field-guide' | 'upgrade-guide' | 'armory-guide';
       save: SaveData;
       weapons: WeaponDefinition[];
       crosshairs: CrosshairDefinition[];

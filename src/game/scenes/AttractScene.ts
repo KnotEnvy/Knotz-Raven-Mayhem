@@ -24,11 +24,12 @@ interface MenuRaven {
 }
 
 type AttractMode = 'home' | 'armory' | 'records' | 'options' | 'credits';
-type AttractDemoMode = 'raven-guide' | 'field-guide';
+type AttractDemoMode = 'raven-guide' | 'field-guide' | 'upgrade-guide' | 'armory-guide';
 type AttractUiMode = AttractMode | AttractDemoMode;
 
 const ATTRACT_IDLE_MS = 15000;
 const ATTRACT_DEMO_SLIDE_MS = 10000;
+const ATTRACT_DEMO_SEQUENCE: AttractDemoMode[] = ['raven-guide', 'field-guide', 'upgrade-guide', 'armory-guide'];
 
 export class AttractScene extends Phaser.Scene {
   private save!: SaveData;
@@ -209,8 +210,8 @@ export class AttractScene extends Phaser.Scene {
     if (this.mode === 'home') {
       this.idleTimer += delta;
       if (this.idleTimer >= ATTRACT_IDLE_MS) {
-        this.mode = 'raven-guide';
         this.demoSlideIndex = 0;
+        this.mode = ATTRACT_DEMO_SEQUENCE[this.demoSlideIndex];
         this.demoTimer = 0;
         this.renderUi();
       }
@@ -220,8 +221,8 @@ export class AttractScene extends Phaser.Scene {
     this.demoTimer += delta;
     if (this.demoTimer >= ATTRACT_DEMO_SLIDE_MS) {
       this.demoTimer = 0;
-      this.demoSlideIndex = (this.demoSlideIndex + 1) % 2;
-      this.mode = this.demoSlideIndex === 0 ? 'raven-guide' : 'field-guide';
+      this.demoSlideIndex = (this.demoSlideIndex + 1) % ATTRACT_DEMO_SEQUENCE.length;
+      this.mode = ATTRACT_DEMO_SEQUENCE[this.demoSlideIndex];
       this.renderUi();
     }
   }
@@ -230,7 +231,7 @@ export class AttractScene extends Phaser.Scene {
     this.idleTimer = 0;
     this.demoTimer = 0;
     this.demoSlideIndex = 0;
-    if (this.mode === 'raven-guide' || this.mode === 'field-guide') {
+    if (this.isDemoMode()) {
       this.mode = 'home';
       this.renderUi();
     }
@@ -238,6 +239,10 @@ export class AttractScene extends Phaser.Scene {
 
   private isUtilityMode(): boolean {
     return this.mode === 'armory' || this.mode === 'records' || this.mode === 'options' || this.mode === 'credits';
+  }
+
+  private isDemoMode(): boolean {
+    return this.mode === 'raven-guide' || this.mode === 'field-guide' || this.mode === 'upgrade-guide' || this.mode === 'armory-guide';
   }
 
   private renderUi(): void {

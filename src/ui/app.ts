@@ -63,12 +63,12 @@ function render(state: UiState): void {
 }
 
 function renderAttract(state: Extract<UiState, { screen: 'attract' }>): string {
-  const isDemoMode = state.mode === 'raven-guide' || state.mode === 'field-guide';
+  const isDemoMode = isAttractDemoMode(state.mode);
 
   return `
     <div class="crt-overlay" aria-hidden="true"></div>
     <main class="attract-shell ${isDemoMode ? 'demo-shell' : ''}">
-      ${isDemoMode ? '' : renderCabinetTitle()}
+      ${renderCabinetTitle(isDemoMode)}
       ${isDemoMode ? '' : renderMainMenu()}
       ${state.mode === 'armory' ? renderArmory(state.save, state.weapons, state.crosshairs, state.upgrades) : ''}
       ${state.mode === 'records' ? renderRecords(state.save) : ''}
@@ -76,15 +76,21 @@ function renderAttract(state: Extract<UiState, { screen: 'attract' }>): string {
       ${state.mode === 'credits' ? renderCredits() : ''}
       ${state.mode === 'raven-guide' ? renderRavenGuide(state.enemies) : ''}
       ${state.mode === 'field-guide' ? renderFieldGuide() : ''}
+      ${state.mode === 'upgrade-guide' ? renderUpgradeGuide(state.upgrades) : ''}
+      ${state.mode === 'armory-guide' ? renderArmoryGuide(state.weapons, state.crosshairs) : ''}
       ${state.mode === 'home' ? renderHomeStats(state.save) : ''}
-      ${isDemoMode ? '' : `<footer class="coin-line">${state.mode === 'home' ? 'Idle cabinet demo starts after 15 seconds.' : 'Press Start or click Start Run. Space pauses during play.'}</footer>`}
+      <footer class="coin-line">${state.mode === 'home' ? 'Idle cabinet demo starts after 15 seconds.' : 'Press Start or click Start Run. Space pauses during play.'}</footer>
     </main>
   `;
 }
 
-function renderCabinetTitle(): string {
+function isAttractDemoMode(mode: Extract<UiState, { screen: 'attract' }>['mode']): boolean {
+  return mode === 'raven-guide' || mode === 'field-guide' || mode === 'upgrade-guide' || mode === 'armory-guide';
+}
+
+function renderCabinetTitle(compact = false): string {
   return `
-    <section class="cabinet-title">
+    <section class="cabinet-title ${compact ? 'demo-title' : ''}">
       <p class="eyebrow">KNOTZ ARCADE SYSTEM 1996</p>
       <h1><span>Knotz</span><span>Raven</span><span>Mayhem</span></h1>
       <p class="tagline">Aim sharp. Chain combos. Upgrade the shooter. Outlast the flock.</p>
@@ -188,6 +194,105 @@ function renderFieldGuide(): string {
       </div>
     </section>
   `;
+}
+
+function renderUpgradeGuide(upgrades: UpgradeDefinition[]): string {
+  return `
+    <section class="arcade-panel attract-demo-panel upgrade-guide-panel">
+      <header class="panel-header">
+        <div>
+          <p class="eyebrow">Cabinet Demo</p>
+          <h2>Permanent Upgrades</h2>
+        </div>
+        <button data-action="show-home">Home</button>
+      </header>
+      <div class="upgrade-demo-grid">
+        ${upgrades.map((upgrade) => renderUpgradeDemoCard(upgrade)).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderUpgradeDemoCard(upgrade: UpgradeDefinition): string {
+  return `
+    <article class="demo-info-card upgrade-${upgrade.id}">
+      <span>${formatUpgradeStat(upgrade.stat)}</span>
+      <strong>${upgrade.name}</strong>
+      <p>${upgrade.tagline}</p>
+      <div class="demo-meter" aria-hidden="true">${Array.from({ length: upgrade.maxRank }, () => '<i></i>').join('')}</div>
+      <em>Starts at ${upgrade.baseCost} coins / +${upgrade.perRank} per rank</em>
+    </article>
+  `;
+}
+
+function renderArmoryGuide(weapons: WeaponDefinition[], crosshairs: CrosshairDefinition[]): string {
+  return `
+    <section class="arcade-panel attract-demo-panel armory-guide-panel">
+      <header class="panel-header">
+        <div>
+          <p class="eyebrow">Cabinet Demo</p>
+          <h2>Armory Loadouts</h2>
+        </div>
+        <button data-action="show-home">Home</button>
+      </header>
+      <div class="armory-demo-grid">
+        <section>
+          <h3>Guns</h3>
+          ${weapons.map((weapon) => renderWeaponDemoCard(weapon)).join('')}
+        </section>
+        <section>
+          <h3>Assist Chips</h3>
+          ${crosshairs.map((chip) => renderChipDemoCard(chip)).join('')}
+        </section>
+      </div>
+    </section>
+  `;
+}
+
+function renderWeaponDemoCard(weapon: WeaponDefinition): string {
+  return `
+    <article class="demo-loadout-card" style="--loadout-color:${weapon.color}">
+      <div class="weapon-preview weapon-${weapon.id}" aria-hidden="true">
+        ${Array.from({ length: Math.min(weapon.pellets, 6) }, (_, index) => `<i style="--shot-index:${index}; --shot-count:${Math.max(1, Math.min(weapon.pellets, 6))}"></i>`).join('')}
+      </div>
+      <div>
+        <strong>${weapon.name}</strong>
+        <span>${weapon.tagline}</span>
+      </div>
+      <em>${weapon.cost === 0 ? 'Starter' : `${weapon.cost} coins`}</em>
+    </article>
+  `;
+}
+
+function renderChipDemoCard(chip: CrosshairDefinition): string {
+  const radiusText = chip.radiusBonus === 0 ? 'Stock aim' : `${chip.radiusBonus > 0 ? '+' : ''}${chip.radiusBonus} aim`;
+  const rechargeText = chip.cooldownMultiplier === 1
+    ? 'Stock recharge'
+    : chip.cooldownMultiplier < 1
+      ? `${Math.round((1 - chip.cooldownMultiplier) * 100)}% faster`
+      : `${Math.round((chip.cooldownMultiplier - 1) * 100)}% slower`;
+
+  return `
+    <article class="demo-loadout-card" style="--loadout-color:${chip.color}">
+      <div class="chip-preview" aria-hidden="true"><i></i></div>
+      <div>
+        <strong>${chip.name}</strong>
+        <span>${chip.effectLabel} / ${radiusText} / ${rechargeText}</span>
+      </div>
+      <em>${chip.cost === 0 ? 'Starter' : `${chip.cost} coins`}</em>
+    </article>
+  `;
+}
+
+function formatUpgradeStat(stat: UpgradeDefinition['stat']): string {
+  const labels: Record<UpgradeDefinition['stat'], string> = {
+    cooldown: 'Trigger speed',
+    comboWindow: 'Combo timer',
+    startingLives: 'Starting lives',
+    scoreMultiplier: 'Score payout',
+  };
+
+  return labels[stat];
 }
 
 function formatEnemyBehavior(behavior: EnemyDefinition['behavior']): string {
