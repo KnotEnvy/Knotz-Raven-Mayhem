@@ -1,6 +1,13 @@
 import { getUpgradeCost, UPGRADES } from '../game/data/upgrades';
 import { CROSSHAIRS, WEAPONS } from '../game/data/weapons';
-import type { CrosshairDefinition, GameSettings, SaveData, UpgradeDefinition, WeaponDefinition } from '../game/types';
+import type {
+  CrosshairDefinition,
+  EnemyDefinition,
+  GameSettings,
+  SaveData,
+  UpgradeDefinition,
+  WeaponDefinition,
+} from '../game/types';
 import { dispatchCommand, onUiState, type UiState } from './events';
 
 const root = () => document.getElementById('ui-root');
@@ -56,29 +63,148 @@ function render(state: UiState): void {
 }
 
 function renderAttract(state: Extract<UiState, { screen: 'attract' }>): string {
+  const isDemoMode = state.mode === 'raven-guide' || state.mode === 'field-guide';
+
   return `
     <div class="crt-overlay" aria-hidden="true"></div>
-    <main class="attract-shell">
-      <section class="cabinet-title">
-        <p class="eyebrow">KNOTZ ARCADE SYSTEM 1996</p>
-        <h1><span>Knotz</span><span>Raven</span><span>Mayhem</span></h1>
-        <p class="tagline">Aim sharp. Chain combos. Upgrade the shooter. Outlast the flock.</p>
-      </section>
-      <nav class="arcade-menu" aria-label="Main menu">
-        <button class="primary-command" data-action="start-run">Start Run</button>
-        <button data-action="open-armory">Armory</button>
-        <button data-action="open-records">Records</button>
-        <button data-action="open-options">Options</button>
-        <button data-action="open-credits">Credits</button>
-      </nav>
+    <main class="attract-shell ${isDemoMode ? 'demo-shell' : ''}">
+      ${isDemoMode ? '' : renderCabinetTitle()}
+      ${isDemoMode ? '' : renderMainMenu()}
       ${state.mode === 'armory' ? renderArmory(state.save, state.weapons, state.crosshairs, state.upgrades) : ''}
       ${state.mode === 'records' ? renderRecords(state.save) : ''}
       ${state.mode === 'options' ? renderOptions(state.save.settings) : ''}
       ${state.mode === 'credits' ? renderCredits() : ''}
+      ${state.mode === 'raven-guide' ? renderRavenGuide(state.enemies) : ''}
+      ${state.mode === 'field-guide' ? renderFieldGuide() : ''}
       ${state.mode === 'home' ? renderHomeStats(state.save) : ''}
-      <footer class="coin-line">Press Start or click Start Run. Space pauses during play.</footer>
+      ${isDemoMode ? '' : `<footer class="coin-line">${state.mode === 'home' ? 'Idle cabinet demo starts after 15 seconds.' : 'Press Start or click Start Run. Space pauses during play.'}</footer>`}
     </main>
   `;
+}
+
+function renderCabinetTitle(): string {
+  return `
+    <section class="cabinet-title">
+      <p class="eyebrow">KNOTZ ARCADE SYSTEM 1996</p>
+      <h1><span>Knotz</span><span>Raven</span><span>Mayhem</span></h1>
+      <p class="tagline">Aim sharp. Chain combos. Upgrade the shooter. Outlast the flock.</p>
+    </section>
+  `;
+}
+
+function renderMainMenu(): string {
+  return `
+    <nav class="arcade-menu" aria-label="Main menu">
+      <button class="primary-command" data-action="start-run">Start Run</button>
+      <button data-action="open-armory">Armory</button>
+      <button data-action="open-records">Records</button>
+      <button data-action="open-options">Options</button>
+      <button data-action="open-credits">Credits</button>
+    </nav>
+  `;
+}
+
+function renderRavenGuide(enemies: EnemyDefinition[]): string {
+  return `
+    <section class="arcade-panel attract-demo-panel raven-guide-panel">
+      <header class="panel-header">
+        <div>
+          <p class="eyebrow">Cabinet Demo</p>
+          <h2>Raven Bounty Board</h2>
+        </div>
+        <button data-action="show-home">Home</button>
+      </header>
+      <div class="raven-guide-grid">
+        ${enemies.map((enemy) => renderRavenBountyCard(enemy)).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderRavenBountyCard(enemy: EnemyDefinition): string {
+  const tint = enemy.tint ? `#${enemy.tint.toString(16).padStart(6, '0')}` : '#050711';
+  const chipStyle = `--raven-tint:${tint}; --raven-scale:${getDemoScale(enemy)}; --raven-sprite:url('./assets/raven.png')`;
+
+  return `
+    <article class="raven-bounty-card raven-${enemy.id} raven-behavior-${enemy.behavior}">
+      <div class="raven-chip" style="${chipStyle}">
+        <span class="raven-frame" aria-hidden="true"></span>
+        ${renderEnemyEffectMarks(enemy)}
+      </div>
+      <div>
+        <strong>${enemy.label}</strong>
+        <span>${formatEnemyBehavior(enemy.behavior)}</span>
+      </div>
+      <div class="bounty-values">
+        <span>${enemy.points} pts</span>
+        <span>${enemy.coinValue} coin${enemy.coinValue === 1 ? '' : 's'}</span>
+      </div>
+    </article>
+  `;
+}
+
+function renderEnemyEffectMarks(enemy: EnemyDefinition): string {
+  if (enemy.behavior === 'shield') return '<i class="raven-effect shield-ring" aria-hidden="true"></i>';
+  if (enemy.behavior === 'splitter') return '<i class="raven-effect split-ghost one" aria-hidden="true"></i><i class="raven-effect split-ghost two" aria-hidden="true"></i>';
+  if (enemy.behavior === 'boss') return '<i class="raven-effect boss-crown" aria-hidden="true"></i><i class="raven-effect boss-health" aria-hidden="true"></i>';
+  if (enemy.behavior === 'armored' || enemy.behavior === 'brute') return '<i class="raven-effect armor-plate" aria-hidden="true"></i>';
+  if (enemy.behavior === 'dive') return '<i class="raven-effect dive-line" aria-hidden="true"></i>';
+  if (enemy.behavior === 'wraith') return '<i class="raven-effect wraith-echo one" aria-hidden="true"></i><i class="raven-effect wraith-echo two" aria-hidden="true"></i>';
+
+  return '';
+}
+
+function getDemoScale(enemy: EnemyDefinition): string {
+  const normalizedScale = enemy.scale / 0.55;
+  return Math.max(0.55, Math.min(1.45, normalizedScale)).toFixed(2);
+}
+
+function renderFieldGuide(): string {
+  return `
+    <section class="arcade-panel attract-demo-panel field-guide-panel">
+      <header class="panel-header">
+        <div>
+          <p class="eyebrow">Cabinet Demo</p>
+          <h2>Field Manual</h2>
+        </div>
+        <button data-action="show-home">Home</button>
+      </header>
+      <div class="field-guide-grid">
+        <article>
+          <span>1</span>
+          <strong>Chain clean shots</strong>
+          <p>Combos multiply score. Accuracy feeds the coin payout after the run.</p>
+        </article>
+        <article>
+          <span>2</span>
+          <strong>Watch new flock tricks</strong>
+          <p>Later stages reveal shields, armor, splitters, divers, wraiths, and brutes.</p>
+        </article>
+        <article>
+          <span>3</span>
+          <strong>Spend between runs</strong>
+          <p>Coins buy guns, Assist Chips, lives, cooldown, combo time, and better payouts.</p>
+        </article>
+      </div>
+    </section>
+  `;
+}
+
+function formatEnemyBehavior(behavior: EnemyDefinition['behavior']): string {
+  const labels: Record<EnemyDefinition['behavior'], string> = {
+    straight: 'Basic flight',
+    zigzag: 'Zigzag rush',
+    armored: 'Heavy armor',
+    mini: 'Tiny target',
+    shield: 'Shielded pass',
+    splitter: 'Splits on hit',
+    dive: 'Dive attack',
+    wraith: 'Phase drift',
+    brute: 'Huge health',
+    boss: 'Boss fight',
+  };
+
+  return labels[behavior];
 }
 
 function renderHomeStats(save: SaveData): string {

@@ -1,5 +1,6 @@
 import type {
   CrosshairDefinition,
+  EnemyDefinition,
   RunRewards,
   RunSnapshot,
   SaveData,
@@ -12,11 +13,12 @@ import type {
 export type UiState =
   | {
       screen: 'attract';
-      mode: 'home' | 'armory' | 'records' | 'options' | 'credits';
+      mode: 'home' | 'armory' | 'records' | 'options' | 'credits' | 'raven-guide' | 'field-guide';
       save: SaveData;
       weapons: WeaponDefinition[];
       crosshairs: CrosshairDefinition[];
       upgrades: UpgradeDefinition[];
+      enemies: EnemyDefinition[];
     }
   | {
       screen: 'hud';

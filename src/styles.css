@@ -124,6 +124,13 @@ button:disabled {
   pointer-events: none;
 }
 
+.demo-shell {
+  display: grid;
+  grid-template-rows: 1fr;
+  align-content: stretch;
+  padding: clamp(12px, 2vw, 28px);
+}
+
 .cabinet-title {
   display: grid;
   justify-items: center;
@@ -363,6 +370,285 @@ button:disabled {
 
 .credits-copy strong {
   color: var(--gold);
+}
+
+.attract-demo-panel {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: min(1560px, calc(100vw - 24px));
+  max-height: none;
+  min-height: calc(100vh - clamp(24px, 4vw, 56px));
+}
+
+.attract-demo-panel .panel-header {
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.attract-demo-panel h2 {
+  margin: 2px 0 0;
+  color: var(--cyan);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: clamp(30px, 5vw, 54px);
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 0 16px rgba(32, 242, 255, 0.42);
+}
+
+.raven-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: stretch;
+  gap: 12px;
+}
+
+.raven-bounty-card {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 84px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 7px;
+  padding: 10px 12px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--raven-tint, var(--cyan)) 18%, transparent), transparent 58%),
+    rgba(255, 255, 255, 0.06);
+  text-align: left;
+}
+
+.raven-chip {
+  --raven-tint: #050711;
+  --raven-scale: 1;
+  display: grid;
+  position: relative;
+  width: 66px;
+  height: 66px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--raven-tint) 58%, white);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--raven-tint) 42%, transparent), rgba(255, 255, 255, 0.05) 64%);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--raven-tint) 42%, transparent);
+}
+
+.raven-frame {
+  display: block;
+  width: 58px;
+  height: 42px;
+  background-color: var(--raven-tint);
+  mask-image: var(--raven-sprite);
+  mask-position: 0 0;
+  mask-repeat: no-repeat;
+  mask-size: 348px 42px;
+  -webkit-mask-image: var(--raven-sprite);
+  -webkit-mask-position: 0 0;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 348px 42px;
+  transform: scale(var(--raven-scale));
+  transform-origin: center;
+  filter:
+    drop-shadow(0 0 7px color-mix(in srgb, var(--raven-tint) 85%, white))
+    saturate(1.2);
+}
+
+.raven-normal .raven-frame {
+  background-color: #02030a;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45));
+}
+
+.raven-golden .raven-frame {
+  filter:
+    drop-shadow(0 0 6px #fff181)
+    drop-shadow(0 0 12px #ffd447);
+}
+
+.raven-wraith .raven-frame {
+  opacity: 0.58;
+  filter:
+    drop-shadow(0 0 7px #b58cff)
+    drop-shadow(0 0 16px rgba(181, 140, 255, 0.72));
+}
+
+.raven-brute .raven-chip {
+  box-shadow:
+    0 0 18px rgba(255, 179, 92, 0.5),
+    inset 0 0 18px rgba(255, 179, 92, 0.24);
+}
+
+.raven-boss .raven-chip {
+  border-color: var(--red);
+  box-shadow:
+    0 0 20px rgba(255, 33, 79, 0.7),
+    inset 0 0 24px rgba(255, 33, 79, 0.3);
+}
+
+.raven-effect {
+  position: absolute;
+  pointer-events: none;
+}
+
+.shield-ring {
+  inset: 4px;
+  border: 2px solid rgba(88, 255, 156, 0.78);
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgba(88, 255, 156, 0.54);
+}
+
+.armor-plate {
+  width: 38px;
+  height: 10px;
+  border-top: 2px solid rgba(255, 255, 255, 0.78);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.36);
+  transform: translateY(-1px) rotate(-4deg);
+}
+
+.split-ghost,
+.wraith-echo {
+  width: 26px;
+  height: 19px;
+  background-color: var(--raven-tint);
+  mask-image: var(--raven-sprite);
+  mask-position: 0 0;
+  mask-repeat: no-repeat;
+  mask-size: 156px 19px;
+  -webkit-mask-image: var(--raven-sprite);
+  -webkit-mask-position: 0 0;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 156px 19px;
+  opacity: 0.55;
+}
+
+.split-ghost.one {
+  right: 3px;
+  top: 13px;
+}
+
+.split-ghost.two {
+  right: 5px;
+  bottom: 12px;
+}
+
+.dive-line {
+  width: 54px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--raven-tint));
+  transform: rotate(-32deg) translate(-2px, 10px);
+  box-shadow: 0 0 10px var(--raven-tint);
+}
+
+.wraith-echo {
+  left: 7px;
+  background-color: #d6c7ff;
+}
+
+.wraith-echo.one {
+  transform: translateX(-10px) scale(1.35);
+}
+
+.wraith-echo.two {
+  transform: translateX(10px) scale(1.12);
+  opacity: 0.32;
+}
+
+.boss-crown {
+  top: 7px;
+  width: 30px;
+  height: 12px;
+  background:
+    linear-gradient(135deg, transparent 0 24%, var(--gold) 25% 44%, transparent 45%),
+    linear-gradient(45deg, transparent 0 24%, var(--gold) 25% 44%, transparent 45%),
+    linear-gradient(var(--gold), var(--gold));
+  background-position: 0 0, 13px 0, 5px 8px;
+  background-size: 17px 12px, 17px 12px, 20px 4px;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 6px rgba(255, 229, 106, 0.85));
+}
+
+.boss-health {
+  right: 10px;
+  bottom: 8px;
+  left: 10px;
+  height: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: linear-gradient(90deg, var(--red) 76%, rgba(255, 255, 255, 0.18) 76%);
+}
+
+.raven-mini .raven-chip {
+  border-style: dashed;
+}
+
+.raven-dive .raven-frame {
+  transform: rotate(-16deg) scale(var(--raven-scale));
+}
+
+.raven-bounty-card strong {
+  display: block;
+  color: var(--text);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: 24px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.raven-bounty-card span {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.bounty-values {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.bounty-values span:first-child {
+  color: var(--gold);
+  font-size: 17px;
+}
+
+.field-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  text-align: left;
+}
+
+.field-guide-grid article {
+  display: grid;
+  gap: 8px;
+  min-height: 164px;
+  border: 1px solid rgba(255, 229, 106, 0.22);
+  border-radius: 7px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.field-guide-grid article > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  color: #111018;
+  background: var(--gold);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: 22px;
+}
+
+.field-guide-grid strong {
+  color: var(--cyan);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: 26px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.field-guide-grid p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.4;
 }
 
 .record-grid span {
@@ -675,8 +961,44 @@ button:disabled {
     overflow-y: auto;
   }
 
+  .demo-shell {
+    align-content: stretch;
+  }
+
   .arcade-panel {
     max-height: 54vh;
+  }
+
+  .attract-demo-panel {
+    min-height: calc(100vh - 24px);
+    max-height: none;
+  }
+
+  .raven-guide-grid,
+  .field-guide-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .raven-bounty-card {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+
+  .raven-chip {
+    width: 52px;
+    height: 52px;
+  }
+
+  .raven-frame {
+    width: 46px;
+    height: 33px;
+    mask-size: 276px 33px;
+    -webkit-mask-size: 276px 33px;
+  }
+
+  .bounty-values {
+    grid-column: 2;
+    grid-template-columns: repeat(2, max-content);
+    justify-content: start;
   }
 
   .hud {

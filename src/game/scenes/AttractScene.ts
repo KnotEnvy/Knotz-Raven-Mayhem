@@ -24,13 +24,21 @@ interface MenuRaven {
 }
 
 type AttractMode = 'home' | 'armory' | 'records' | 'options' | 'credits';
+type AttractDemoMode = 'raven-guide' | 'field-guide';
+type AttractUiMode = AttractMode | AttractDemoMode;
+
+const ATTRACT_IDLE_MS = 15000;
+const ATTRACT_DEMO_SLIDE_MS = 10000;
 
 export class AttractScene extends Phaser.Scene {
   private save!: SaveData;
-  private mode: AttractMode = 'home';
+  private mode: AttractUiMode = 'home';
   private ravens: MenuRaven[] = [];
   private unsubscribers: Array<() => void> = [];
   private spawnTimer = 0;
+  private idleTimer = 0;
+  private demoTimer = 0;
+  private demoSlideIndex = 0;
 
   constructor() {
     super('AttractScene');
@@ -42,6 +50,7 @@ export class AttractScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(0x070510);
     this.createBackdrop();
     this.bindCommands();
+    this.bindIdleInput();
     this.renderUi();
     arcadeAudio.startMusic('menu', this.save.settings, 'menu');
 
@@ -53,6 +62,7 @@ export class AttractScene extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     this.spawnTimer += delta;
+    this.updateAttractDemo(delta);
     if (this.spawnTimer > 720) {
       this.spawnTimer = 0;
       this.spawnRaven();
@@ -101,36 +111,43 @@ export class AttractScene extends Phaser.Scene {
   private bindCommands(): void {
     this.unsubscribers.push(
       onCommand('start-run', () => {
+        this.resetAttractIdle();
         arcadeAudio.playMenuConfirm();
         dispatchUiState({ screen: 'blank' });
         this.scene.start('GameScene');
       }),
       onCommand('open-armory', () => {
+        this.resetAttractIdle();
         arcadeAudio.playMenuConfirm();
         this.mode = 'armory';
         this.renderUi();
       }),
       onCommand('open-records', () => {
+        this.resetAttractIdle();
         arcadeAudio.playMenuConfirm();
         this.mode = 'records';
         this.renderUi();
       }),
       onCommand('open-options', () => {
+        this.resetAttractIdle();
         arcadeAudio.playMenuConfirm();
         this.mode = 'options';
         this.renderUi();
       }),
       onCommand('open-credits', () => {
+        this.resetAttractIdle();
         arcadeAudio.playMenuConfirm();
         this.mode = 'credits';
         this.renderUi();
       }),
       onCommand('show-home', () => {
+        this.resetAttractIdle();
         arcadeAudio.playMenuConfirm();
         this.mode = 'home';
         this.renderUi();
       }),
       onCommand('reset-save', () => {
+        this.resetAttractIdle();
         this.save = resetSave();
         arcadeAudio.applySettings(this.save.settings);
         this.mode = 'records';
@@ -138,37 +155,89 @@ export class AttractScene extends Phaser.Scene {
       }),
       onCommand('purchase-weapon', ({ id }) => {
         if (!id) return;
+        this.resetAttractIdle();
         this.save = purchaseWeapon(this.save, id as SaveData['selectedWeapon']);
         this.renderUi();
       }),
       onCommand('select-weapon', ({ id }) => {
         if (!id) return;
+        this.resetAttractIdle();
         this.save = selectWeapon(this.save, id as SaveData['selectedWeapon']);
         this.renderUi();
       }),
       onCommand('purchase-crosshair', ({ id }) => {
         if (!id) return;
+        this.resetAttractIdle();
         this.save = purchaseCrosshair(this.save, id as SaveData['selectedCrosshair']);
         this.renderUi();
       }),
       onCommand('select-crosshair', ({ id }) => {
         if (!id) return;
+        this.resetAttractIdle();
         this.save = selectCrosshair(this.save, id as SaveData['selectedCrosshair']);
         this.renderUi();
       }),
       onCommand('purchase-upgrade', ({ id }) => {
         if (!id) return;
+        this.resetAttractIdle();
         this.save = purchaseUpgrade(this.save, id as keyof SaveData['upgrades']);
         this.renderUi();
       }),
       onCommand('cycle-setting', ({ id }) => {
         if (!id) return;
+        this.resetAttractIdle();
         this.save = cycleSetting(this.save, id as keyof GameSettings);
         arcadeAudio.startMusic('menu', this.save.settings, 'menu');
         arcadeAudio.playMenuConfirm();
         this.renderUi();
       }),
     );
+  }
+
+  private bindIdleInput(): void {
+    this.input.on('pointerdown', () => this.resetAttractIdle());
+    this.input.keyboard?.on('keydown', () => this.resetAttractIdle());
+  }
+
+  private updateAttractDemo(delta: number): void {
+    if (this.isUtilityMode()) {
+      this.idleTimer = 0;
+      this.demoTimer = 0;
+      return;
+    }
+
+    if (this.mode === 'home') {
+      this.idleTimer += delta;
+      if (this.idleTimer >= ATTRACT_IDLE_MS) {
+        this.mode = 'raven-guide';
+        this.demoSlideIndex = 0;
+        this.demoTimer = 0;
+        this.renderUi();
+      }
+      return;
+    }
+
+    this.demoTimer += delta;
+    if (this.demoTimer >= ATTRACT_DEMO_SLIDE_MS) {
+      this.demoTimer = 0;
+      this.demoSlideIndex = (this.demoSlideIndex + 1) % 2;
+      this.mode = this.demoSlideIndex === 0 ? 'raven-guide' : 'field-guide';
+      this.renderUi();
+    }
+  }
+
+  private resetAttractIdle(): void {
+    this.idleTimer = 0;
+    this.demoTimer = 0;
+    this.demoSlideIndex = 0;
+    if (this.mode === 'raven-guide' || this.mode === 'field-guide') {
+      this.mode = 'home';
+      this.renderUi();
+    }
+  }
+
+  private isUtilityMode(): boolean {
+    return this.mode === 'armory' || this.mode === 'records' || this.mode === 'options' || this.mode === 'credits';
   }
 
   private renderUi(): void {
@@ -179,6 +248,7 @@ export class AttractScene extends Phaser.Scene {
       weapons: WEAPONS,
       crosshairs: CROSSHAIRS,
       upgrades: UPGRADES,
+      enemies: Object.values(ENEMIES),
     });
   }
 
