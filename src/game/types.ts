@@ -71,6 +71,7 @@ export interface CrosshairDefinition {
   id: CrosshairId;
   name: string;
   tagline: string;
+  effectLabel: string;
   cost: number;
   color: string;
   radiusBonus: number;

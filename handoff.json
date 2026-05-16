@@ -2,9 +2,9 @@
   "project": {
     "name": "Knotz Raven Mayhem",
     "repo": "KnotEnvy/KnotzBirdShot",
-    "handoffDate": "2026-05-15",
+    "handoffDate": "2026-05-16",
     "currentBranch": "master",
-    "productGoal": "Continue expanding the Phaser arcade shooter into a fuller, deployable browser game. The first gameplay-flow expansion pass is now complete: more content, between-stage flow, armory-forward game over, and richer weapon feedback are implemented.",
+    "productGoal": "Continue expanding the Phaser arcade shooter into a fuller, deployable browser game. The first gameplay-flow expansion pass is now complete and early playtests are positive: more content, between-stage flow, armory-forward game over, and richer weapon feedback are implemented and working well.",
     "v1ScopeDecision": "Local records and local progression only. Online leaderboards and account features are deferred beyond the first public release."
   },
   "currentState": {
@@ -13,15 +13,29 @@
       "stages": "9 named stages with different spawn pools, palettes, speed multipliers, rewards, procedural set dressing, a Jackpot Alley bonus round, and overflow scaling after the final named stage.",
       "enemies": "11 enemy definitions: normal, fast, golden, armored, mini, shield, splitter, dive, wraith, brute, and boss.",
       "weapons": "4 guns: Quarter Pistol, Burst Rifle, Scattergun, Arc Laser.",
-      "crosshairs": "4 aim-mod unlocks: Classic Sight, Neon Dot, Eagle Eye, Wide Net. They still provide stat/readability modifiers, while the live reticle identity now follows the equipped gun.",
+      "assistChips": "4 Assist Chip unlocks: Stock Cabinet, Turbo Capacitor, Threat Scanner, Chaos Net. These are cabinet hardware purchases that tune recharge feel and target forgiveness while the live reticle identity follows the equipped gun.",
       "upgrades": "4 permanent upgrade tracks: cooldown, combo window, starting lives, payout scaling.",
       "powerups": "6 powerups: slow-mo, multi-shot, score boost, extra life, overdrive, coin rush.",
       "audio": "Procedural WebAudio with menu/run/boss modes, stage-aware motifs, weapon-specific shots, enemy-specific hit cues, powerup cues, boss warning/defeat stings, stage clear, miss, and game over.",
-      "visuals": "Seed raven/explosion assets plus procedural stage set dressing, mobile particle caps, stronger death sequence, cabinet-style HUD framing, weapon-driven reticles, cooldown feedback, projectile traces, multishot chain traces, shotgun spread visualization, and laser lane feedback.",
+      "visuals": "Seed raven/explosion assets plus procedural stage set dressing, mobile particle caps, stronger death sequence, cabinet-style HUD framing, weapon-driven reticles, Assist Chip effect labels, cooldown feedback, projectile traces, multishot chain traces, shotgun spread visualization, and laser lane feedback.",
       "releaseOps": "Release verification scripts, balance report, served dist smoke, GitHub Actions CI, and manual GitHub Pages workflow are in place."
     },
+    "latestPlaytestUpdate": {
+      "date": "2026-05-16",
+      "summary": "Recent playtests have been working well. The between-stage screens are functioning as intended, and the game-over push toward the armory now makes progression spending feel natural.",
+      "validatedSignals": [
+        "Between-stage interstitials are no longer a theory item; they are working well in playtests.",
+        "Game-over-to-armory flow makes sense to players and supports the intended progression loop.",
+        "The latest gameplay-flow changes should be treated as accepted baseline behavior unless new bugs appear."
+      ],
+      "remainingValidation": [
+        "Full release QA checklist still needs an end-to-end pass.",
+        "Final balance sign-off across the full 9-stage arc still needs continued play-session confirmation.",
+        "Real mobile/touch-device validation and public GitHub Pages deployment validation remain open."
+      ]
+    },
     "knownUnfinishedAreas": [
-      "Manual play-session balance is still required.",
+      "Recent playtests are positive, but final balance sign-off across the full 9-stage arc is still required before public release.",
       "Final browser/manual QA checklist has not been executed end to end.",
       "Remote GitHub Actions and public GitHub Pages deployment have not been validated from GitHub.",
       "Final original production visuals are still open: raven variants, boss sprite work, richer UI cabinet art, and optional recorded audio.",
@@ -29,33 +43,33 @@
     ]
   },
   "nextTeamPrimaryFocus": {
-    "theme": "Manual validation, tuning, and production polish after the gameplay-flow expansion pass.",
+    "theme": "Final balance sign-off, mobile validation, production polish, and deployment prep after positive gameplay-flow playtests.",
     "priorityOrder": [
       {
         "priority": 1,
-        "title": "Balance the 9-stage arc from real play sessions",
+        "title": "Finish final balance sign-off",
         "details": [
+          "Do not rework the between-stage or armory-forward flows unless a new bug appears; recent playtests say those flows are working well.",
           "Use DOCS/BALANCE-NOTES.md and npm run balance:report as the numeric baseline.",
-          "Verify Jackpot Alley feels like a reward spike and not a difficulty wall.",
-          "Tune Wraith Raven, Brute Raven, boss health, stage pressure, powerup drop rates, stage length, rewards, and unlock timing from real play sessions."
+          "Continue play-session confirmation for Jackpot Alley payout, Stage 8/9 pressure, Wraith/Brute readability, boss health, powerup drop rates, stage length, rewards, and unlock timing."
         ]
       },
       {
         "priority": 2,
-        "title": "Validate new run-flow UX",
+        "title": "Complete release QA checklist",
         "details": [
-          "Confirm stage-clear interstitials pause stage advancement and continue cleanly.",
-          "Confirm game over routes naturally to Armory and still supports Run It Back.",
-          "Check desktop and mobile layouts for stage-clear, game-over recommendations, and armory aim-mod wording."
+          "Run DOCS/RELEASE-QA-CHECKLIST.md end to end against a production preview or deployment candidate.",
+          "Include fresh-save and returning-save checks.",
+          "Confirm all menu, armory, records, options, credits, pause, stage-clear, game-over, weapon, enemy, powerup, bonus round, and boss flows."
         ]
       },
       {
         "priority": 3,
-        "title": "Validate weapon feedback readability",
+        "title": "Validate mobile and touch-device feel",
         "details": [
-          "Verify each weapon has distinct aim/cooldown feedback.",
-          "Verify Burst Rifle, Scattergun, Arc Laser, and Multi-Shot traces are readable without covering targets.",
-          "Tune reticle scale, trace alpha, and cooldown feedback if mobile play feels crowded."
+          "Test the current HUD, stage-clear screens, armory recommendations, touch hit radius, and pause affordance on real phones or tablets.",
+          "Tune reticle scale, trace alpha, particle caps, and HUD density only if real-device play feels crowded.",
+          "Keep desktop behavior stable while making mobile-specific tuning changes."
         ]
       },
       {
@@ -71,15 +85,15 @@
   },
   "currentBacklogFromDocs": [
     "Finish or replace final production visuals: raven variants, boss sprite work, richer UI cabinet art, optional recorded music/SFX.",
-    "Validate economy and difficulty from real play sessions.",
+    "Complete final economy and difficulty sign-off from real play sessions; latest playtests are positive but not full release QA.",
     "Run DOCS/RELEASE-QA-CHECKLIST.md end to end.",
     "Validate mobile-specific tuning on real touch devices.",
     "Run remote GitHub Actions and manual GitHub Pages deploy workflow before public release."
   ],
   "recommendedFirstSprint": [
     {
-      "slice": "Manual balance and UX validation",
-      "reason": "The four requested gameplay slices are now implemented; the next risk is whether the new 9-stage pacing, bonus payout, weapon feedback, and armory-forward loop feel right in real play.",
+      "slice": "Final release QA and balance sign-off",
+      "reason": "The four requested gameplay slices are implemented and early playtests say the between-stage screens and armory-forward flow are working well. The next risk is release completeness: full-arc balance, mobile/device confidence, production assets, and deployment validation.",
       "likelyFiles": [
         "src/game/scenes/GameScene.ts",
         "src/game/data/stages.ts",
@@ -90,9 +104,9 @@
         "DOCS/RELEASE-QA-CHECKLIST.md"
       ],
       "acceptance": [
-        "Manual play sessions confirm Stage 7 bonus pacing, Stage 8/9 pressure, and new enemy readability.",
-        "Weapon traces and cooldown reticles are readable on desktop and mobile without cluttering the playfield.",
-        "Game-over recommendations lead to useful armory spending decisions.",
+        "Manual play sessions continue to confirm Stage 7 bonus pacing, Stage 8/9 pressure, and new enemy readability.",
+        "Full release QA checklist is completed against a production preview or deployment candidate.",
+        "Real touch-device validation confirms HUD density, touch hit radius, stage-clear screens, and game-over armory recommendations.",
         "DOCS/BALANCE-NOTES.md is updated if tuning changes materially.",
         "npm run release:verify passes."
       ]
@@ -120,6 +134,11 @@
   },
   "verificationStatusAtHandoff": {
     "lastKnownPassingGate": "npm.cmd run release:verify",
+    "recentManualPlaytestSignals": [
+      "General playtests have been working well.",
+      "Between-stage screens work well.",
+      "The game-over push to Armory now makes sense."
+    ],
     "releaseVerifyCoverage": [
       "balance report",
       "TypeScript build",
@@ -129,7 +148,7 @@
     ],
     "manualValidationStillRequired": [
       "Full release QA checklist",
-      "Real play-session balance",
+      "Final full-arc balance sign-off",
       "Real mobile/touch-device validation",
       "Remote GitHub Actions run",
       "Manual GitHub Pages deployment through the Deploy GitHub Pages workflow_dispatch event",
@@ -156,11 +175,11 @@
     },
     {
       "name": "Run Flow And Progression Agent",
-      "focus": "Between-stage UI, stronger game-over-to-armory flow, save-safe progression surfaces."
+      "focus": "Protect the now-validated between-stage UI and game-over-to-armory flow while checking save-safe progression surfaces."
     },
     {
       "name": "Combat Feel And Weapon FX Agent",
-      "focus": "Gun identity, crosshair redesign, projectile/tracer feedback, shotgun and multibullet effects, cooldown readability."
+      "focus": "Gun identity, Assist Chip tuning, projectile/tracer feedback, shotgun and multibullet effects, cooldown readability."
     },
     {
       "name": "Release QA And Deployment Agent",
@@ -176,16 +195,14 @@
   "implementationGuidance": [
     "Keep gameplay rules and tunables in data/system modules where possible instead of burying values in scene code.",
     "Use DOM overlays for text-heavy UI such as between-stage summaries, armory prompts, upgrade recommendations, and end-game progression prompts.",
-    "Use Phaser graphics/sprites for playfield effects, projectile traces, impact bursts, crosshair animation, and stage/boss presentation.",
+    "Use Phaser graphics/sprites for playfield effects, projectile traces, impact bursts, gun-driven reticle animation, and stage/boss presentation.",
     "When save shape changes, update normalization in src/game/save.ts and test returning-save behavior manually.",
     "After content or tuning changes, rerun npm run balance:report and update DOCS/BALANCE-NOTES.md if the baseline changes materially.",
     "After runtime, asset, or release-script changes, run npm run release:verify before handoff."
   ],
   "openDesignQuestions": [
-    "Should current purchasable crosshairs be removed from the economy, converted into weapon mods, or preserved as accessibility/readability options?",
-    "Should bonus levels be deterministic after certain stages or performance-triggered?",
-    "How many stages should the first public content target include beyond the current six?",
-    "Should stage interstitials allow armory purchases between stages, or should armory remain between runs only?",
+    "Should Assist Chips stay as one-installed-at-a-time cabinet hardware for v1, or should later releases add multiple chip slots?",
+    "Should the deterministic Jackpot Alley bonus round remain the v1 bonus model, or should performance-triggered bonus rounds wait for post-v1?",
     "What is the desired full-armory completion time for an average player?"
   ]
 }

@@ -82,7 +82,7 @@ Use these subagent roles to parallelize Beta-release work. Each subagent should 
 
 ## 4. Combat Feel And Weapon FX Agent
 
-**Mission:** Make guns, crosshairs, cooldowns, and projectile feedback feel much stronger.
+**Mission:** Make guns, Assist Chips, cooldowns, and projectile feedback feel much stronger.
 
 **Owns:**
 
@@ -93,8 +93,8 @@ Use these subagent roles to parallelize Beta-release work. Each subagent should 
 
 **Responsibilities:**
 
-- Rework crosshairs so they follow gun identity instead of purchasable cosmetic skins.
-- Improve Burst Rifle and Scattergun readability with visible pellets, traces, muzzle fan effects, or exaggerated crosshair states.
+- Protect the current gun-driven reticle identity while tuning Assist Chips as cabinet hardware purchases.
+- Improve Burst Rifle and Scattergun readability with visible pellets, traces, muzzle fan effects, or exaggerated reticle states.
 - Convey cooldowns vividly with meters, recharge animation, cabinet lights, or failed-trigger feedback.
 - Keep effects readable on mobile and during dense waves.
 

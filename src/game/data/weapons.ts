@@ -58,8 +58,9 @@ export const WEAPONS: WeaponDefinition[] = [
 export const CROSSHAIRS: CrosshairDefinition[] = [
   {
     id: 'classic',
-    name: 'Classic Sight',
-    tagline: 'Cabinet-standard precision.',
+    name: 'Stock Cabinet',
+    tagline: 'Factory wiring with honest aim and no extra draw.',
+    effectLabel: 'Baseline handling',
     cost: 0,
     color: '#ffffff',
     radiusBonus: 0,
@@ -67,8 +68,9 @@ export const CROSSHAIRS: CrosshairDefinition[] = [
   },
   {
     id: 'neonDot',
-    name: 'Neon Dot',
-    tagline: 'Smaller visual footprint, faster follow-up.',
+    name: 'Turbo Capacitor',
+    tagline: 'Overclocks the trigger loop for faster follow-up shots.',
+    effectLabel: 'Faster recharge, tighter pickup',
     cost: 90,
     color: '#20f2ff',
     radiusBonus: -2,
@@ -76,8 +78,9 @@ export const CROSSHAIRS: CrosshairDefinition[] = [
   },
   {
     id: 'eagleEye',
-    name: 'Eagle Eye',
-    tagline: 'A forgiving ring for armored targets.',
+    name: 'Threat Scanner',
+    tagline: 'Widens the acquisition window for armored and twitchy targets.',
+    effectLabel: 'Wider hits, slower recharge',
     cost: 160,
     color: '#ffe56a',
     radiusBonus: 8,
@@ -85,8 +88,9 @@ export const CROSSHAIRS: CrosshairDefinition[] = [
   },
   {
     id: 'wideNet',
-    name: 'Wide Net',
-    tagline: 'Messier, broader, made for chaos waves.',
+    name: 'Chaos Net',
+    tagline: 'Stabilizes messy waves with a broad cabinet assist field.',
+    effectLabel: 'Max forgiveness, heavy recharge',
     cost: 260,
     color: '#ff5fbb',
     radiusBonus: 14,

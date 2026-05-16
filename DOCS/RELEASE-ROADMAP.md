@@ -4,7 +4,7 @@
 
 - Phaser + TypeScript + Vite runtime with static GitHub Pages-friendly output.
 - Arcade attract screen, armory, records, options, credits, HUD, pause, and game-over overlays.
-- Run-based progression with stages, bosses, coins, unlockable guns/crosshairs, upgrades, and local saves.
+- Run-based progression with stages, bosses, coins, unlockable guns, Assist Chips, upgrades, and local saves.
 - Enemy roster, powerups, combo scoring, stage rewards, high score tracking, and reward payout.
 - Stage-clear interstitials with reward, accuracy, combo, next-stage preview, bonus-round warning, and new enemy warnings.
 - Armory-forward game-over flow with affordable upgrade/unlock recommendations.

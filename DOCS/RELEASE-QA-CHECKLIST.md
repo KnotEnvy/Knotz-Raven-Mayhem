@@ -14,8 +14,8 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 
 ## Save States
 
-- [ ] New save starts on the attract screen with 0 coins, Stage 1 as best stage, Quarter Pistol, and Classic Sight.
-- [ ] Returning save preserves coins, high score, best stage, best combo, selected weapon, selected aim mod, upgrades, and settings.
+- [ ] New save starts on the attract screen with 0 coins, Stage 1 as best stage, Quarter Pistol, and Stock Cabinet.
+- [ ] Returning save preserves coins, high score, best stage, best combo, selected weapon, selected Assist Chip, upgrades, and settings.
 - [ ] Reset Save clears progress and immediately refreshes the Records screen.
 
 ## Menu Flow
@@ -30,7 +30,7 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 
 - [ ] Each weapon can be purchased when the save has enough coins: Burst Rifle, Scattergun, and Arc Laser.
 - [ ] Purchased weapons can be equipped and are reflected in the HUD.
-- [ ] Each aim mod can be purchased and equipped: Neon Dot, Eagle Eye, and Wide Net.
+- [ ] Each Assist Chip can be purchased and installed: Turbo Capacitor, Threat Scanner, and Chaos Net.
 - [ ] Each permanent upgrade can be purchased to max rank and stops charging coins at max rank.
 - [ ] Coin rewards after a run feel sufficient for an early upgrade or unlock within the first few successful runs.
 - [ ] Manual playtest observations still agree with the baseline in `DOCS/BALANCE-NOTES.md`, or the tuning constants have been adjusted and the report rerun.

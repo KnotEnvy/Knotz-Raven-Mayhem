@@ -298,6 +298,20 @@ button:disabled {
   line-height: 1.3;
 }
 
+.loadout-card .effect-line {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 8px;
+  border: 1px solid rgba(32, 242, 255, 0.24);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--cyan);
+  background: rgba(32, 242, 255, 0.08);
+  font-size: 11px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
 .record-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

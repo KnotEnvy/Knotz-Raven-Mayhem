@@ -5,7 +5,7 @@ Knotz Raven Mayhem is now a Phaser + TypeScript + Vite arcade shooter built from
 ## Current Game Loop
 
 - Start from the animated arcade attract screen.
-- Pick or unlock guns, aim mods, and permanent stat upgrades in the armory.
+- Pick or unlock guns, Assist Chips, and permanent stat upgrades in the armory.
 - Tune music, SFX, motion, and screen shake from Options.
 - Enter a run and clear escalating raven stages with stage-clear interstitials between rounds.
 - Shoot enemies, chain combos, collect powerups, and survive missed ravens.
@@ -76,7 +76,7 @@ The Vite config uses `base: './'`, so `dist/` can be deployed as static GitHub P
 - 9 named stages with different spawn pools, palettes, speeds, rewards, and a Jackpot Alley bonus round.
 - 11 enemy definitions including fast, golden, armored, mini, shield, splitter, dive, wraith, brute, and boss ravens.
 - 4 guns: Quarter Pistol, Burst Rifle, Scattergun, and Arc Laser.
-- 4 aim mods with stat identity; live reticle color, scale, cooldown, and firing feedback now follow the equipped gun.
+- 4 Assist Chips: Stock Cabinet, Turbo Capacitor, Threat Scanner, and Chaos Net. These are cabinet hardware purchases that tune recharge feel and target forgiveness while the live reticle still follows the equipped gun.
 - 4 permanent upgrades: cooldown, combo window, starting lives, and payout scaling.
 - 6 powerups: slow-mo, multi-shot, score boost, extra life, overdrive, and coin rush.
 - Local records for high score, best stage, best combo, lifetime kills, unlocked gear, and coins.

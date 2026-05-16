@@ -61,7 +61,7 @@ function validateContent() {
   }
 
   if (WEAPONS.filter((item) => item.cost === 0).length === 0) failures.push('No free starter weapon exists.');
-  if (CROSSHAIRS.filter((item) => item.cost === 0).length === 0) failures.push('No free starter crosshair exists.');
+  if (CROSSHAIRS.filter((item) => item.cost === 0).length === 0) failures.push('No free starter Assist Chip exists.');
   if (POWERUP_TUNING.dropChance <= 0 || POWERUP_TUNING.dropChance >= 1) {
     warnings.push(`Powerup drop chance is ${(POWERUP_TUNING.dropChance * 100).toFixed(0)}%; confirm this feels right in playtests.`);
   }
@@ -153,8 +153,8 @@ function describeEconomy() {
 
   return [
     { label: 'Cheapest first upgrade/unlock', value: firstUnlockCost },
-    { label: 'Cheapest paid weapon/crosshair', value: paidUnlocks[0]?.cost ?? 0 },
-    { label: 'All paid weapons + crosshairs', value: allUnlockCost },
+    { label: 'Cheapest paid weapon/Assist Chip', value: paidUnlocks[0]?.cost ?? 0 },
+    { label: 'All paid weapons + Assist Chips', value: allUnlockCost },
     { label: 'All permanent upgrade ranks', value: allUpgradeCost },
     { label: 'Full armory economy', value: allUnlockCost + allUpgradeCost },
   ];
@@ -192,7 +192,7 @@ function calculateReward(snapshot, bossKills) {
 
 function printReport(stageRows, runRows, economyRows) {
   console.log('Knotz Raven Mayhem Balance Report');
-  console.log(`stages=${STAGES.length} weapons=${WEAPONS.length} crosshairs=${CROSSHAIRS.length} upgrades=${UPGRADES.length}`);
+  console.log(`stages=${STAGES.length} weapons=${WEAPONS.length} assistChips=${CROSSHAIRS.length} upgrades=${UPGRADES.length}`);
 
   console.log('\nStage pacing and payout estimates');
   console.table(stageRows);

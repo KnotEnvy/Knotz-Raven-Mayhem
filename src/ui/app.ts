@@ -193,9 +193,9 @@ function renderArmory(
           ${weapons.map((weapon) => renderWeaponCard(save, weapon)).join('')}
         </div>
         <div>
-          <h3>Aim Mods</h3>
-          <p class="column-note">Readability tuning. The live reticle now follows the equipped gun.</p>
-          ${crosshairs.map((crosshair) => renderCrosshairCard(save, crosshair)).join('')}
+          <h3>Assist Chips</h3>
+          <p class="column-note">Cabinet hardware that changes recharge feel and target forgiveness. The live reticle still follows the equipped gun.</p>
+          ${crosshairs.map((crosshair) => renderAssistChipCard(save, crosshair)).join('')}
         </div>
         <div>
           <h3>Stats</h3>
@@ -223,19 +223,26 @@ function renderWeaponCard(save: SaveData, weapon: WeaponDefinition): string {
   `;
 }
 
-function renderCrosshairCard(save: SaveData, crosshair: CrosshairDefinition): string {
-  const unlocked = save.unlockedCrosshairs.includes(crosshair.id);
-  const selected = save.selectedCrosshair === crosshair.id;
+function renderAssistChipCard(save: SaveData, chip: CrosshairDefinition): string {
+  const unlocked = save.unlockedCrosshairs.includes(chip.id);
+  const selected = save.selectedCrosshair === chip.id;
   const action = unlocked ? 'select-crosshair' : 'purchase-crosshair';
-  const label = selected ? 'Equipped' : unlocked ? 'Equip' : `Buy ${crosshair.cost}`;
+  const label = selected ? 'Installed' : unlocked ? 'Install' : `Buy ${chip.cost}`;
+  const radiusText = chip.radiusBonus === 0 ? '0 aim' : `${chip.radiusBonus > 0 ? '+' : ''}${chip.radiusBonus} aim`;
+  const rechargeText = chip.cooldownMultiplier === 1
+    ? 'stock'
+    : chip.cooldownMultiplier < 1
+      ? `${Math.round((1 - chip.cooldownMultiplier) * 100)}% faster`
+      : `${Math.round((chip.cooldownMultiplier - 1) * 100)}% slower`;
 
   return `
     <article class="loadout-card ${selected ? 'selected' : ''}">
       <div>
-        <strong>${crosshair.name}</strong>
-        <span>${crosshair.tagline}</span>
+        <strong>${chip.name}</strong>
+        <span>${chip.tagline}</span>
+        <small class="effect-line">${chip.effectLabel} / ${radiusText} / ${rechargeText}</small>
       </div>
-      <button data-action="${action}" data-id="${crosshair.id}" ${selected ? 'disabled' : ''}>${label}</button>
+      <button data-action="${action}" data-id="${chip.id}" ${selected ? 'disabled' : ''}>${label}</button>
     </article>
   `;
 }
@@ -419,7 +426,7 @@ function renderArmoryRecommendations(save: SaveData): string {
     ...CROSSHAIRS.filter((crosshair) => !save.unlockedCrosshairs.includes(crosshair.id)).map((crosshair) => ({
       label: crosshair.name,
       cost: crosshair.cost,
-      type: 'Aim Mod',
+      type: 'Assist Chip',
     })),
   ]
     .filter((item): item is { label: string; cost: number; type: string } => item !== null)

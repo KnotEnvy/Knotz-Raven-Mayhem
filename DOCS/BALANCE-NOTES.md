@@ -5,8 +5,8 @@ Use `npm run balance:report` before manual tuning sessions. The report reads the
 ## Current Baseline
 
 - Cheapest first upgrade or unlock: 50 coins.
-- Cheapest paid weapon or crosshair: 90 coins.
-- All paid weapons and crosshairs: 1230 coins.
+- Cheapest paid weapon or Assist Chip: 90 coins.
+- All paid weapons and Assist Chips: 1230 coins.
 - All permanent upgrade ranks: 2745 coins.
 - Full armory economy: 3975 coins.
 - Solid Stage 1 clear estimate: 76 coins.
@@ -18,7 +18,7 @@ Use `npm run balance:report` before manual tuning sessions. The report reads the
 ## Release Interpretation
 
 - A solid first-stage clear should buy the first permanent upgrade immediately.
-- The first paid weapon or crosshair should be reachable after roughly two solid Stage 1 clears, or sooner after deeper runs.
+- The first paid weapon or Assist Chip should be reachable after roughly two solid Stage 1 clears, or sooner after deeper runs.
 - A full six-stage clear should unlock meaningful armory progress without exhausting the whole economy.
 - A full nine-stage clear should buy several upgrades or one major weapon path, but still leaves room for repeat-run progression.
 - Jackpot Alley is a no-life-loss bonus round after Stage 6; verify it feels like a payout spike rather than a difficulty wall.
@@ -28,7 +28,7 @@ Use `npm run balance:report` before manual tuning sessions. The report reads the
 
 - Player stats, economy, powerups, mobile hit forgiveness, and presentation caps: `src/game/data/tuning.ts`.
 - Stage length, spawn pools, rewards, and bosses: `src/game/data/stages.ts`.
-- Weapon and crosshair prices or identities: `src/game/data/weapons.ts`.
+- Weapon and Assist Chip prices or identities: `src/game/data/weapons.ts`.
 - Permanent upgrade costs and ranks: `src/game/data/upgrades.ts`.
 
 ## Current Content Notes
