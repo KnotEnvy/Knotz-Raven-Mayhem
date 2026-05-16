@@ -1,4 +1,5 @@
 import type { StageDefinition } from '../types';
+import { ENEMIES } from './enemies';
 import { STAGE_OVERFLOW_TUNING } from './tuning';
 
 export const STAGES: StageDefinition[] = [
@@ -139,6 +140,76 @@ export const STAGES: StageDefinition[] = [
     ],
     boss: 'boss',
   },
+  {
+    id: 'jackpot-alley',
+    title: 'Jackpot Alley',
+    subtitle: 'Bonus round: grab coins, keep the streak, no lives lost.',
+    targetKills: 22,
+    spawnEveryMs: 430,
+    speedMultiplier: 1.38,
+    rewardCoins: 70,
+    bonus: true,
+    palette: {
+      skyTop: 0x1a0827,
+      skyBottom: 0x3a2100,
+      neon: 0xffd447,
+      haze: 0xff7a1f,
+    },
+    enemyPool: [
+      { id: 'golden', weight: 36 },
+      { id: 'mini', weight: 26 },
+      { id: 'fast', weight: 18 },
+      { id: 'wraith', weight: 20 },
+    ],
+  },
+  {
+    id: 'cinder-viaduct',
+    title: 'Cinder Viaduct',
+    subtitle: 'Wraiths fade across the tracks while brutes soak shots.',
+    targetKills: 58,
+    spawnEveryMs: 430,
+    speedMultiplier: 1.86,
+    rewardCoins: 98,
+    palette: {
+      skyTop: 0x150810,
+      skyBottom: 0x39110b,
+      neon: 0xff8738,
+      haze: 0x49e7ff,
+    },
+    enemyPool: [
+      { id: 'fast', weight: 20 },
+      { id: 'shield', weight: 14 },
+      { id: 'splitter', weight: 16 },
+      { id: 'dive', weight: 12 },
+      { id: 'wraith', weight: 22 },
+      { id: 'brute', weight: 16 },
+    ],
+  },
+  {
+    id: 'clocktower-apex',
+    title: 'Clocktower Apex',
+    subtitle: 'Final loop pressure with every flock trick in play.',
+    targetKills: 66,
+    spawnEveryMs: 395,
+    speedMultiplier: 2,
+    rewardCoins: 120,
+    palette: {
+      skyTop: 0x020918,
+      skyBottom: 0x25145a,
+      neon: 0x5ee7ff,
+      haze: 0xff3fb4,
+    },
+    enemyPool: [
+      { id: 'fast', weight: 18 },
+      { id: 'armored', weight: 12 },
+      { id: 'shield', weight: 14 },
+      { id: 'splitter', weight: 16 },
+      { id: 'dive', weight: 14 },
+      { id: 'wraith', weight: 16 },
+      { id: 'brute', weight: 10 },
+    ],
+    boss: 'boss',
+  },
 ];
 
 export function getStage(index: number): StageDefinition {
@@ -159,4 +230,18 @@ export function getStage(index: number): StageDefinition {
     speedMultiplier: finalStage.speedMultiplier + overflow * STAGE_OVERFLOW_TUNING.speedMultiplierPerLoop,
     rewardCoins: finalStage.rewardCoins + overflow * STAGE_OVERFLOW_TUNING.rewardCoinsPerLoop,
   };
+}
+
+export function getNewEnemyLabelsForStage(index: number): string[] {
+  if (index < 0 || index >= STAGES.length) return [];
+
+  const seen = new Set(STAGES.slice(0, index).flatMap((stage) => stage.enemyPool.map((entry) => entry.id)));
+  if (STAGES.slice(0, index).some((stage) => stage.boss)) seen.add('boss');
+
+  const current = new Set(STAGES[index].enemyPool.map((entry) => entry.id));
+  if (STAGES[index].boss) current.add(STAGES[index].boss);
+
+  return [...current]
+    .filter((id) => !seen.has(id))
+    .map((id) => ENEMIES[id].label);
 }

@@ -83,7 +83,8 @@ button:disabled {
 
 .ui-attract .arcade-panel,
 .ui-pause .modal-screen,
-.ui-gameover .modal-screen {
+.ui-gameover .modal-screen,
+.ui-stage-clear .modal-screen {
   touch-action: pan-y;
 }
 
@@ -246,6 +247,13 @@ button:disabled {
   margin: 0;
   font-family: Impact, Haettenschweiler, sans-serif;
   text-transform: uppercase;
+}
+
+.column-note {
+  margin: 2px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .panel-header p {
@@ -544,6 +552,11 @@ button:disabled {
   text-shadow: 0 0 18px rgba(255, 49, 90, 0.72);
 }
 
+.stage-clear-card h2 {
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 229, 106, 0.5);
+}
+
 .final-score {
   margin: 8px 0 12px;
   font-size: clamp(56px, 12vw, 120px);
@@ -565,6 +578,81 @@ button:disabled {
 .reward-line strong {
   color: var(--green);
   font-size: 28px;
+}
+
+.next-stage-card,
+.recommendation-panel {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 20px;
+  border: 1px solid rgba(32, 242, 255, 0.24);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  text-align: left;
+}
+
+.next-stage-card > span,
+.recommendation-panel > strong {
+  color: var(--gold);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: 18px;
+  text-transform: uppercase;
+}
+
+.next-stage-card strong {
+  color: var(--cyan);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: clamp(30px, 6vw, 52px);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.next-stage-card p {
+  margin: 0;
+  color: var(--text);
+}
+
+.threat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.threat-chips span {
+  border: 1px solid rgba(255, 229, 106, 0.28);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--text);
+  background: rgba(255, 229, 106, 0.1);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.recommendation-panel > div {
+  display: grid;
+  gap: 8px;
+}
+
+.recommendation-panel div div {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 8px;
+}
+
+.recommendation-panel span,
+.recommendation-panel em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+.recommendation-panel strong {
+  color: var(--text);
 }
 
 @media (max-width: 860px) {

@@ -50,6 +50,7 @@ export const POWERUP_TUNING: {
     scoreBoost: 6000,
     extraLife: 0,
     overdrive: 4500,
+    coinRush: 7000,
   },
 };
 

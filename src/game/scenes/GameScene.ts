@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { AUDIO_KEYS, SPRITE_KEYS } from '../data/assets';
 import { ENEMIES } from '../data/enemies';
-import { getStage } from '../data/stages';
+import { getNewEnemyLabelsForStage, getStage } from '../data/stages';
 import { CROSSHAIRS, WEAPONS } from '../data/weapons';
 import { INPUT_TUNING, POWERUP_TUNING, PRESENTATION_TUNING } from '../data/tuning';
 import { applyRunRewards, calculateRunRewards, loadSave } from '../save';
@@ -9,7 +9,7 @@ import { getLoadout } from '../systems/progression';
 import { RunState, powerupLabel } from '../systems/RunState';
 import { WaveDirector } from '../systems/WaveDirector';
 import { arcadeAudio } from '../systems/ArcadeAudio';
-import type { EnemyDefinition, EnemyId, PowerupId, RunRewards, SaveData, StageDefinition, WeaponDefinition } from '../types';
+import type { EnemyDefinition, EnemyId, PowerupId, RunRewards, SaveData, StageClearSummary, StageDefinition, WeaponDefinition } from '../types';
 import { dispatchUiState, onCommand } from '../../ui/events';
 
 interface EnemyActor {
@@ -42,11 +42,12 @@ export class GameScene extends Phaser.Scene {
   private powerups: PowerupActor[] = [];
   private unsubscribers: Array<() => void> = [];
   private weapon!: WeaponDefinition;
-  private crosshairColor = '#ffffff';
   private crosshairRadiusBonus = 0;
   private nextShotAt = 0;
+  private lastCooldownFeedbackAt = 0;
   private pausedByUi = false;
   private stageTransition = false;
+  private completedStageSummary?: StageClearSummary;
   private bossSpawned = false;
   private bossKills = 0;
   private gameEnded = false;
@@ -62,7 +63,6 @@ export class GameScene extends Phaser.Scene {
     this.save = loadSave();
     const loadout = getLoadout(this.save);
     this.weapon = loadout.weapon;
-    this.crosshairColor = loadout.crosshair.color;
     this.crosshairRadiusBonus = loadout.crosshair.radiusBonus;
     this.run = new RunState(loadout.stats, loadout.weapon, loadout.crosshair);
     this.stage = getStage(0);
@@ -72,6 +72,7 @@ export class GameScene extends Phaser.Scene {
     this.bossKills = 0;
     this.bossSpawned = false;
     this.stageTransition = false;
+    this.completedStageSummary = undefined;
     this.pausedByUi = false;
 
     this.cameras.main.setRoundPixels(false);
@@ -106,6 +107,11 @@ export class GameScene extends Phaser.Scene {
     this.unsubscribers.push(
       onCommand('pause', () => this.pauseRun()),
       onCommand('resume', () => this.resumeRun()),
+      onCommand('continue-stage', () => this.continueToNextStage()),
+      onCommand('open-armory', () => {
+        dispatchUiState({ screen: 'blank' });
+        this.scene.start('AttractScene', { mode: 'armory' });
+      }),
       onCommand('return-menu', () => {
         dispatchUiState({ screen: 'blank' });
         this.scene.start('AttractScene');
@@ -124,12 +130,14 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.input.keyboard?.on('keydown-SPACE', () => {
-      if (this.pausedByUi) this.resumeRun();
+      if (this.stageTransition) this.continueToNextStage();
+      else if (this.pausedByUi) this.resumeRun();
       else this.pauseRun();
     });
 
     this.input.keyboard?.on('keydown-P', () => {
-      if (this.pausedByUi) this.resumeRun();
+      if (this.stageTransition) this.continueToNextStage();
+      else if (this.pausedByUi) this.resumeRun();
       else this.pauseRun();
     });
 
@@ -204,6 +212,15 @@ export class GameScene extends Phaser.Scene {
         break;
       case 'raven-kings-nest':
         this.drawRavenNestBackdrop(width, height);
+        break;
+      case 'jackpot-alley':
+        this.drawJackpotBackdrop(width, height);
+        break;
+      case 'cinder-viaduct':
+        this.drawCinderBackdrop(width, height);
+        break;
+      case 'clocktower-apex':
+        this.drawClocktowerBackdrop(width, height);
         break;
     }
   }
@@ -332,6 +349,62 @@ export class GameScene extends Phaser.Scene {
     this.background.lineBetween(width * 0.69, horizon - 250, width * 0.75, horizon - 250);
   }
 
+  private drawJackpotBackdrop(width: number, height: number): void {
+    const horizon = height * 0.72;
+
+    this.background.fillStyle(0xffd447, 0.22);
+    for (let index = 0; index < 7; index++) {
+      const x = width * 0.08 + index * width * 0.13;
+      this.background.fillRoundedRect(x, horizon - 118 - (index % 2) * 32, 62, 96, 10);
+      this.background.fillStyle(index % 2 === 0 ? 0xffd447 : 0xff7a1f, 0.42);
+      this.background.fillCircle(x + 31, horizon - 70 - (index % 2) * 32, 20);
+      this.background.fillStyle(0xffd447, 0.22);
+    }
+
+    this.background.lineStyle(4, 0xffd447, 0.4);
+    this.background.lineBetween(0, horizon - 18, width, horizon - 58);
+    this.background.lineStyle(2, 0xffffff, 0.24);
+    for (let x = 0; x < width; x += 84) {
+      this.background.strokeCircle(x, horizon - 46, 12);
+    }
+  }
+
+  private drawCinderBackdrop(width: number, height: number): void {
+    const horizon = height * 0.72;
+
+    this.background.lineStyle(7, 0xff8738, 0.28);
+    this.background.lineBetween(0, horizon - 68, width, horizon - 22);
+    this.background.lineStyle(3, 0x49e7ff, 0.28);
+    for (let x = -60; x < width + 80; x += 92) {
+      this.background.lineBetween(x, horizon - 120, x + 74, horizon + 20);
+      this.background.fillStyle(0x06030a, 0.62);
+      this.background.fillRect(x + 18, horizon - 185, 42, 134);
+      this.background.fillStyle(0xff8738, 0.24);
+      this.background.fillRect(x + 25, horizon - 170, 28, 8);
+    }
+
+    this.background.fillStyle(0xffb35c, 0.13);
+    this.background.fillCircle(width * 0.18, height * 0.18, Math.min(width, height) * 0.13);
+  }
+
+  private drawClocktowerBackdrop(width: number, height: number): void {
+    const horizon = height * 0.72;
+    const towerX = width * 0.56;
+
+    this.background.fillStyle(0x05030d, 0.72);
+    this.background.fillRect(towerX, horizon - 330, 126, 330);
+    this.background.fillTriangle(towerX - 28, horizon - 330, towerX + 63, horizon - 430, towerX + 154, horizon - 330);
+    this.background.lineStyle(5, 0x5ee7ff, 0.35);
+    this.background.strokeCircle(towerX + 63, horizon - 238, 46);
+    this.background.lineBetween(towerX + 63, horizon - 238, towerX + 63, horizon - 268);
+    this.background.lineBetween(towerX + 63, horizon - 238, towerX + 92, horizon - 224);
+
+    this.background.lineStyle(2, 0xff3fb4, 0.26);
+    for (let x = 0; x < width; x += 110) {
+      this.background.lineBetween(x, horizon - 16, x + 68, horizon - 112);
+    }
+  }
+
   private updateBackground(delta: number): void {
     for (const star of this.starfield) {
       star.x -= delta * 0.018;
@@ -350,17 +423,47 @@ export class GameScene extends Phaser.Scene {
 
   private updateCrosshair(): void {
     const pointer = this.input.activePointer;
-    const radius = 18 + this.crosshairRadiusBonus * 0.4 + this.touchAimBonus * INPUT_TUNING.mobileCrosshairVisualBonus;
-    const color = Phaser.Display.Color.HexStringToColor(this.crosshairColor).color;
+    const cooldownMs = Math.max(1, this.run?.weaponCooldownMs ?? this.weapon.cooldownMs);
+    const cooldownProgress = Phaser.Math.Clamp(1 - Math.max(0, this.nextShotAt - this.time.now) / cooldownMs, 0, 1);
+    const radius = this.weaponCrosshairRadius + this.crosshairRadiusBonus * 0.25 + this.touchAimBonus * INPUT_TUNING.mobileCrosshairVisualBonus;
+    const weaponColor = Phaser.Display.Color.HexStringToColor(this.weapon.color).color;
+    const readyColor = cooldownProgress >= 1 ? weaponColor : 0xff315a;
+    const alpha = cooldownProgress >= 1 ? 0.95 : 0.56;
 
     this.crosshair.clear();
-    this.crosshair.lineStyle(2, color, 0.95);
+    this.crosshair.lineStyle(2, readyColor, alpha);
     this.crosshair.strokeCircle(pointer.x, pointer.y, radius);
-    this.crosshair.lineBetween(pointer.x - radius - 8, pointer.y, pointer.x - radius + 4, pointer.y);
-    this.crosshair.lineBetween(pointer.x + radius - 4, pointer.y, pointer.x + radius + 8, pointer.y);
-    this.crosshair.lineBetween(pointer.x, pointer.y - radius - 8, pointer.x, pointer.y - radius + 4);
-    this.crosshair.lineBetween(pointer.x, pointer.y + radius - 4, pointer.x, pointer.y + radius + 8);
-    this.crosshair.fillStyle(color, 0.8);
+
+    if (cooldownProgress < 1) {
+      this.crosshair.lineStyle(4, weaponColor, 0.86);
+      this.crosshair.beginPath();
+      this.crosshair.arc(pointer.x, pointer.y, radius + 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * cooldownProgress);
+      this.crosshair.strokePath();
+    }
+
+    if (this.weapon.id === 'scattergun') {
+      this.crosshair.lineBetween(pointer.x - radius - 10, pointer.y, pointer.x - 4, pointer.y);
+      this.crosshair.lineBetween(pointer.x + 4, pointer.y, pointer.x + radius + 10, pointer.y);
+      this.crosshair.lineBetween(pointer.x - radius * 0.7, pointer.y - radius * 0.7, pointer.x - 8, pointer.y - 8);
+      this.crosshair.lineBetween(pointer.x + 8, pointer.y + 8, pointer.x + radius * 0.7, pointer.y + radius * 0.7);
+      this.crosshair.lineBetween(pointer.x - radius * 0.7, pointer.y + radius * 0.7, pointer.x - 8, pointer.y + 8);
+      this.crosshair.lineBetween(pointer.x + 8, pointer.y - 8, pointer.x + radius * 0.7, pointer.y - radius * 0.7);
+    } else if (this.weapon.id === 'burstRifle') {
+      this.crosshair.strokeCircle(pointer.x - 14, pointer.y, 5);
+      this.crosshair.strokeCircle(pointer.x, pointer.y, 5);
+      this.crosshair.strokeCircle(pointer.x + 14, pointer.y, 5);
+    } else if (this.weapon.id === 'arcLaser') {
+      this.crosshair.lineBetween(pointer.x - radius - 18, pointer.y, pointer.x + radius + 18, pointer.y);
+      this.crosshair.lineBetween(pointer.x, pointer.y - radius * 0.55, pointer.x, pointer.y + radius * 0.55);
+      this.crosshair.strokeRect(pointer.x - radius * 0.9, pointer.y - 5, radius * 1.8, 10);
+    } else {
+      this.crosshair.lineBetween(pointer.x - radius - 8, pointer.y, pointer.x - radius + 4, pointer.y);
+      this.crosshair.lineBetween(pointer.x + radius - 4, pointer.y, pointer.x + radius + 8, pointer.y);
+      this.crosshair.lineBetween(pointer.x, pointer.y - radius - 8, pointer.x, pointer.y - radius + 4);
+      this.crosshair.lineBetween(pointer.x, pointer.y + radius - 4, pointer.x, pointer.y + radius + 8);
+    }
+
+    this.crosshair.fillStyle(readyColor, cooldownProgress >= 1 ? 0.8 : 0.38);
     this.crosshair.fillCircle(pointer.x, pointer.y, 2.5);
   }
 
@@ -428,6 +531,15 @@ export class GameScene extends Phaser.Scene {
         actor.sprite.angle = Math.sin(t * 5) * 12;
       }
 
+      if (actor.def.behavior === 'wraith') {
+        actor.sprite.y += Math.sin(t * 7.2) * 0.78 * delta * slow;
+        actor.sprite.alpha = 0.52 + Math.sin(t * 8) * 0.28;
+      }
+
+      if (actor.def.behavior === 'brute') {
+        actor.sprite.scale = actor.def.scale + Math.sin(t * 4) * 0.035;
+      }
+
       if (actor.boss) {
         actor.sprite.x = Math.max(this.scale.width - 260, actor.sprite.x);
         actor.sprite.y += Math.sin(t * 2) * 0.5 * delta;
@@ -439,10 +551,15 @@ export class GameScene extends Phaser.Scene {
 
       if (!actor.boss && actor.sprite.x < -160) {
         this.destroyEnemyActor(actor);
-        this.floatText(120, this.scale.height - 120, 'MISSED', '#ff315a', 34);
-        arcadeAudio.playMiss();
-        this.shakeCamera(250, 0.01);
-        if (this.run.loseLife()) this.endRun();
+        if (this.stage.bonus) {
+          this.floatText(120, this.scale.height - 120, 'BONUS LOST', '#ffe56a', 30);
+          arcadeAudio.playMiss();
+        } else {
+          this.floatText(120, this.scale.height - 120, 'MISSED', '#ff315a', 34);
+          arcadeAudio.playMiss();
+          this.shakeCamera(250, 0.01);
+          if (this.run.loseLife()) this.endRun();
+        }
         continue;
       }
 
@@ -467,22 +584,32 @@ export class GameScene extends Phaser.Scene {
   }
 
   private fireWeapon(x: number, y: number, now: number): void {
-    if (now < this.nextShotAt) return;
+    if (now < this.nextShotAt) {
+      this.showCooldownFeedback(x, y, now);
+      return;
+    }
 
     this.nextShotAt = now + this.run.weaponCooldownMs;
     this.run.recordShot();
     arcadeAudio.playShot(this.weapon.id);
     this.drawMuzzleFlash(x, y);
+    const probes = this.createShotProbes(x, y);
+    this.drawWeaponTraces(x, y, probes);
 
     const powerupHit = this.collectPowerupAt(x, y);
-    const hitActors = this.resolveWeaponHits(x, y);
+    const hitActors = this.resolveWeaponHits(x, y, probes);
 
     if (this.run.isPowerupActive('multishot') && hitActors.length > 0) {
       const anchor = hitActors[0].sprite;
+      const chained: EnemyActor[] = [];
       for (const actor of this.enemies) {
         const distance = Phaser.Math.Distance.Between(anchor.x, anchor.y, actor.sprite.x, actor.sprite.y);
-        if (!hitActors.includes(actor) && distance < POWERUP_TUNING.multishotChainRadius) hitActors.push(actor);
+        if (!hitActors.includes(actor) && distance < POWERUP_TUNING.multishotChainRadius) {
+          hitActors.push(actor);
+          chained.push(actor);
+        }
       }
+      this.drawChainTraces(anchor.x, anchor.y, chained);
     }
 
     if (hitActors.length === 0 && !powerupHit) {
@@ -499,18 +626,23 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private resolveWeaponHits(x: number, y: number): EnemyActor[] {
+  private resolveWeaponHits(x: number, y: number, probes: Array<{ x: number; y: number }>): EnemyActor[] {
     const hitActors: EnemyActor[] = [];
-    const probes = this.weapon.pellets <= 1 ? [{ x, y }] : this.createSpreadProbes(x, y);
     const radius = this.weapon.radius + this.crosshairRadiusBonus + this.touchAimBonus * INPUT_TUNING.mobileHitRadiusBonus;
+
+    if (this.weapon.id === 'arcLaser') {
+      return this.enemies
+        .filter((actor) => Math.abs(actor.sprite.y - y) <= actor.radius + radius && actor.sprite.x >= x - 90)
+        .sort((a, b) => a.sprite.x - b.sprite.x)
+        .slice(0, this.weapon.pierce);
+    }
 
     for (const probe of probes) {
       const candidates = this.enemies
         .filter((actor) => Phaser.Math.Distance.Between(probe.x, probe.y, actor.sprite.x, actor.sprite.y) <= actor.radius + radius)
         .sort((a, b) => Phaser.Math.Distance.Between(probe.x, probe.y, a.sprite.x, a.sprite.y) - Phaser.Math.Distance.Between(probe.x, probe.y, b.sprite.x, b.sprite.y));
 
-      const pierceCount = this.weapon.id === 'arcLaser' ? this.weapon.pierce : 1;
-      for (const actor of candidates.slice(0, pierceCount)) {
+      for (const actor of candidates.slice(0, 1)) {
         if (!hitActors.includes(actor)) hitActors.push(actor);
       }
     }
@@ -518,7 +650,17 @@ export class GameScene extends Phaser.Scene {
     return hitActors;
   }
 
-  private createSpreadProbes(x: number, y: number): Array<{ x: number; y: number }> {
+  private createShotProbes(x: number, y: number): Array<{ x: number; y: number }> {
+    if (this.weapon.pellets <= 1) return [{ x, y }];
+
+    if (this.weapon.id === 'burstRifle') {
+      return [
+        { x: x - this.weapon.spread * 0.45, y: y - 8 },
+        { x, y },
+        { x: x + this.weapon.spread * 0.45, y: y + 8 },
+      ];
+    }
+
     const probes: Array<{ x: number; y: number }> = [];
     for (let index = 0; index < this.weapon.pellets; index++) {
       const angle = (Math.PI * 2 * index) / this.weapon.pellets + Math.random() * 0.24;
@@ -610,7 +752,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnPowerup(x: number, y: number): void {
-    const id = Phaser.Math.RND.pick<PowerupId>(['slowmo', 'multishot', 'scoreBoost', 'extraLife', 'overdrive']);
+    const id = Phaser.Math.RND.pick<PowerupId>(['slowmo', 'multishot', 'scoreBoost', 'extraLife', 'overdrive', 'coinRush']);
     const label = powerupLabel(id);
     const color = powerupColor(id);
     const body = this.add.rectangle(0, 0, 42, 42, color, 0.92).setStrokeStyle(2, 0xffffff, 0.9);
@@ -654,25 +796,57 @@ export class GameScene extends Phaser.Scene {
     if (this.stageTransition || this.gameEnded) return;
 
     this.stageTransition = true;
+    const clearedStageIndex = this.run.stageIndex;
+    const currentStage = this.stage;
+    const nextStage = getStage(clearedStageIndex);
     this.run.coinsEarned += this.stage.rewardCoins;
     arcadeAudio.playStageClear(this.run.stageIndex);
     this.floatText(this.scale.width / 2, this.scale.height * 0.38, `STAGE CLEAR +${this.stage.rewardCoins}`, '#ffe56a', 36);
     if (!this.save.settings.reducedMotion) this.cameras.main.flash(220, 255, 225, 106, false);
 
-    this.time.delayedCall(1800, () => {
-      this.stage = getStage(this.run.stageIndex);
-      this.run.startStage(this.run.stageIndex + 1, this.stage.targetKills);
-      this.waveDirector.reset();
-      this.bossSpawned = false;
-      this.stageTransition = false;
-      this.drawBackground();
-      arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
-      this.showStageBanner(this.stage.title, this.stage.subtitle);
+    this.completedStageSummary = {
+      snapshot: this.run.snapshot(this.stage.title),
+      currentStage,
+      nextStage,
+      rewardCoins: currentStage.rewardCoins,
+      newEnemyLabels: getNewEnemyLabelsForStage(clearedStageIndex),
+      nextStageIsBonus: nextStage.bonus === true,
+    };
+
+    this.time.delayedCall(900, () => {
+      if (this.gameEnded || !this.completedStageSummary) return;
+      this.pausedByUi = true;
+      dispatchUiState({ screen: 'stage-clear', summary: this.completedStageSummary });
     });
   }
 
+  private continueToNextStage(): void {
+    if (!this.stageTransition || !this.completedStageSummary || this.gameEnded) return;
+
+    const nextStage = this.completedStageSummary.nextStage;
+    this.stage = nextStage;
+    this.run.startStage(this.run.stageIndex + 1, nextStage.targetKills);
+    this.waveDirector.reset();
+    this.bossSpawned = false;
+    this.stageTransition = false;
+    this.pausedByUi = false;
+    this.completedStageSummary = undefined;
+    this.clearActorsForStageAdvance();
+    this.drawBackground();
+    arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
+    this.renderHud();
+    this.showStageBanner(this.stage.bonus ? 'Bonus Stage' : this.stage.title, this.stage.subtitle);
+  }
+
+  private clearActorsForStageAdvance(): void {
+    for (const enemy of this.enemies) this.destroyEnemyActor(enemy);
+    this.enemies = [];
+    for (const powerup of this.powerups) powerup.container.destroy();
+    this.powerups = [];
+  }
+
   private pauseRun(): void {
-    if (this.gameEnded || this.pausedByUi) return;
+    if (this.gameEnded || this.pausedByUi || this.stageTransition) return;
     this.pausedByUi = true;
     dispatchUiState({
       screen: 'pause',
@@ -828,6 +1002,63 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private drawWeaponTraces(x: number, y: number, probes: Array<{ x: number; y: number }>): void {
+    const color = Phaser.Display.Color.HexStringToColor(this.weapon.color).color;
+    const graphics = this.add.graphics().setDepth(68);
+    graphics.lineStyle(this.weapon.id === 'scattergun' ? 3 : 2, color, this.weapon.id === 'arcLaser' ? 0.82 : 0.62);
+
+    if (this.weapon.id === 'arcLaser') {
+      graphics.lineStyle(5, color, 0.78);
+      graphics.lineBetween(x - 80, y, this.scale.width + 80, y);
+      graphics.lineStyle(1, 0xffffff, 0.7);
+      graphics.lineBetween(x - 42, y - 6, this.scale.width + 40, y - 6);
+      graphics.lineBetween(x - 42, y + 6, this.scale.width + 40, y + 6);
+    } else {
+      for (const probe of probes) {
+        graphics.lineBetween(x, y, probe.x, probe.y);
+        graphics.strokeCircle(probe.x, probe.y, this.weapon.id === 'scattergun' ? 10 : 6);
+      }
+    }
+
+    this.tweens.add({
+      targets: graphics,
+      alpha: 0,
+      duration: this.save.settings.reducedMotion ? 70 : 150,
+      onComplete: () => graphics.destroy(),
+    });
+  }
+
+  private drawChainTraces(x: number, y: number, actors: EnemyActor[]): void {
+    if (actors.length === 0) return;
+    const graphics = this.add.graphics().setDepth(67);
+    graphics.lineStyle(2, 0xff8a32, 0.74);
+    for (const actor of actors) {
+      graphics.lineBetween(x, y, actor.sprite.x, actor.sprite.y);
+      graphics.strokeCircle(actor.sprite.x, actor.sprite.y, actor.radius * 0.45);
+    }
+    this.tweens.add({
+      targets: graphics,
+      alpha: 0,
+      duration: this.save.settings.reducedMotion ? 80 : 180,
+      onComplete: () => graphics.destroy(),
+    });
+  }
+
+  private showCooldownFeedback(x: number, y: number, now: number): void {
+    if (now - this.lastCooldownFeedbackAt < 220) return;
+    this.lastCooldownFeedbackAt = now;
+    this.floatText(x, y - 22, 'RECHARGE', '#ff315a', 18);
+    const color = Phaser.Display.Color.HexStringToColor(this.weapon.color).color;
+    const ring = this.add.circle(x, y, this.weaponCrosshairRadius + 10).setStrokeStyle(2, color, 0.56).setDepth(75);
+    this.tweens.add({
+      targets: ring,
+      alpha: 0,
+      scale: 0.72,
+      duration: 160,
+      onComplete: () => ring.destroy(),
+    });
+  }
+
   private floatText(x: number, y: number, text: string, color: string, size: number): void {
     const label = this.add.text(x, y, text, {
       fontFamily: 'Impact, Haettenschweiler, sans-serif',
@@ -910,6 +1141,13 @@ export class GameScene extends Phaser.Scene {
     return this.isCompactPlayfield() || this.isCoarsePointer() ? 1 : 0;
   }
 
+  private get weaponCrosshairRadius(): number {
+    if (this.weapon.id === 'scattergun') return 28 + this.weapon.spread * 0.08;
+    if (this.weapon.id === 'burstRifle') return 24;
+    if (this.weapon.id === 'arcLaser') return 21;
+    return 18;
+  }
+
   private isCompactPlayfield(): boolean {
     return this.scale.width <= INPUT_TUNING.compactViewportWidth || this.scale.height <= INPUT_TUNING.compactViewportHeight;
   }
@@ -931,6 +1169,8 @@ function powerupColor(id: PowerupId): number {
       return 0x9dff57;
     case 'overdrive':
       return 0xff5fbb;
+    case 'coinRush':
+      return 0xffd447;
   }
 }
 
@@ -946,5 +1186,7 @@ function powerupGlyph(id: PowerupId): string {
       return '+';
     case 'overdrive':
       return 'O';
+    case 'coinRush':
+      return '$';
   }
 }

@@ -15,7 +15,7 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 ## Save States
 
 - [ ] New save starts on the attract screen with 0 coins, Stage 1 as best stage, Quarter Pistol, and Classic Sight.
-- [ ] Returning save preserves coins, high score, best stage, best combo, selected weapon, selected crosshair, upgrades, and settings.
+- [ ] Returning save preserves coins, high score, best stage, best combo, selected weapon, selected aim mod, upgrades, and settings.
 - [ ] Reset Save clears progress and immediately refreshes the Records screen.
 
 ## Menu Flow
@@ -30,7 +30,7 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 
 - [ ] Each weapon can be purchased when the save has enough coins: Burst Rifle, Scattergun, and Arc Laser.
 - [ ] Purchased weapons can be equipped and are reflected in the HUD.
-- [ ] Each crosshair can be purchased and equipped: Neon Dot, Eagle Eye, and Wide Net.
+- [ ] Each aim mod can be purchased and equipped: Neon Dot, Eagle Eye, and Wide Net.
 - [ ] Each permanent upgrade can be purchased to max rank and stops charging coins at max rank.
 - [ ] Coin rewards after a run feel sufficient for an early upgrade or unlock within the first few successful runs.
 - [ ] Manual playtest observations still agree with the baseline in `DOCS/BALANCE-NOTES.md`, or the tuning constants have been adjusted and the report rerun.
@@ -38,19 +38,26 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 ## Gameplay
 
 - [ ] Mouse input fires, respects cooldown, hides the default cursor during play, and restores it on game over.
+- [ ] Cooldown feedback is readable through the gun-driven reticle and "RECHARGE" feedback when firing too early.
+- [ ] Burst Rifle, Scattergun, and Arc Laser show distinct projectile, spread, or lane traces.
 - [ ] Touch input fires on a phone-sized viewport.
 - [ ] Music changes between menu, normal stage runs, and boss fights without ignoring Music or SFX volume settings.
 - [ ] Weapon shots, enemy hits, powerups, boss warning/defeat, stage clear, miss, and game-over cues are audible and distinct.
 - [ ] Pause and resume work from the HUD button, Space, P, and Esc.
+- [ ] Stage-clear interstitial shows reward, accuracy, best combo, total coins, next-stage preview, and a Continue action.
+- [ ] Continue, Space, or P advances from stage-clear to the next stage without spawning enemies underneath the overlay.
 - [ ] Missed ravens remove lives and trigger game over at 0 lives.
-- [ ] Normal, fast, golden, armored, mini, shield, splitter, and dive ravens appear across the staged run.
-- [ ] Slow-Mo, Multi-Shot, Score Boost, Extra Life, and Overdrive can drop, be collected, and affect the HUD or run state.
+- [ ] Normal, fast, golden, armored, mini, shield, splitter, dive, wraith, and brute ravens appear across the staged run.
+- [ ] Slow-Mo, Multi-Shot, Score Boost, Extra Life, Overdrive, and Coin Rush can drop, be collected, and affect the HUD or run state.
 - [ ] Stage 3 spawns and resolves the Raven King boss.
 - [ ] Stage 6 spawns and resolves the Raven King boss.
+- [ ] Stage 7 Jackpot Alley behaves as a bonus round where missed enemies do not remove lives.
+- [ ] Stage 9 spawns and resolves the Raven King boss.
 - [ ] Stage clear rewards and stage progression continue after boss stages.
 - [ ] Game over sequence plays before the final summary.
+- [ ] Game over shows newly earned coins and useful armory recommendations.
 - [ ] Run It Back starts a fresh run from the game-over screen.
-- [ ] Armory/Menu returns to the attract screen from the game-over screen.
+- [ ] Open Armory routes directly to the Armory from the game-over screen, and Menu returns to the attract screen.
 
 ## Mobile And Accessibility
 

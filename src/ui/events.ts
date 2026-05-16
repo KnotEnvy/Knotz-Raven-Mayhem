@@ -3,6 +3,7 @@ import type {
   RunRewards,
   RunSnapshot,
   SaveData,
+  StageClearSummary,
   StageDefinition,
   UpgradeDefinition,
   WeaponDefinition,
@@ -30,6 +31,10 @@ export type UiState =
       stage: StageDefinition;
     }
   | {
+      screen: 'stage-clear';
+      summary: StageClearSummary;
+    }
+  | {
       screen: 'gameover';
       snapshot: RunSnapshot;
       rewards: RunRewards;
@@ -50,6 +55,7 @@ export type CommandName =
   | 'return-menu'
   | 'pause'
   | 'resume'
+  | 'continue-stage'
   | 'reset-save'
   | 'purchase-weapon'
   | 'select-weapon'

@@ -122,7 +122,9 @@ function describeRunProfile(profile) {
     clearStage1: milestones[0].coins,
     clearStage3: milestones[2].coins,
     clearStage6: milestones[5].coins,
+    clearFinal: milestones[milestones.length - 1].coins,
     scoreStage6: milestones[5].score,
+    scoreFinal: milestones[milestones.length - 1].score,
   };
 }
 

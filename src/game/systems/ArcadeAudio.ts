@@ -133,6 +133,7 @@ class ArcadeAudio {
       scoreBoost: [660, 990, 1320],
       extraLife: [392, 523, 784],
       overdrive: [740, 1110, 1480],
+      coinRush: [880, 1175, 1760],
     };
 
     roots[id].forEach((frequency, index) => {

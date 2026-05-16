@@ -23,9 +23,11 @@ interface MenuRaven {
   velocityY: number;
 }
 
+type AttractMode = 'home' | 'armory' | 'records' | 'options' | 'credits';
+
 export class AttractScene extends Phaser.Scene {
   private save!: SaveData;
-  private mode: 'home' | 'armory' | 'records' | 'options' | 'credits' = 'home';
+  private mode: AttractMode = 'home';
   private ravens: MenuRaven[] = [];
   private unsubscribers: Array<() => void> = [];
   private spawnTimer = 0;
@@ -34,9 +36,9 @@ export class AttractScene extends Phaser.Scene {
     super('AttractScene');
   }
 
-  create(): void {
+  create(data: { mode?: AttractMode } = {}): void {
     this.save = loadSave();
-    this.mode = 'home';
+    this.mode = data.mode ?? 'home';
     this.cameras.main.setBackgroundColor(0x070510);
     this.createBackdrop();
     this.bindCommands();

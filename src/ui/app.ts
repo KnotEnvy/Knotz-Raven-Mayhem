@@ -1,4 +1,5 @@
-import { getUpgradeCost } from '../game/data/upgrades';
+import { getUpgradeCost, UPGRADES } from '../game/data/upgrades';
+import { CROSSHAIRS, WEAPONS } from '../game/data/weapons';
 import type { CrosshairDefinition, GameSettings, SaveData, UpgradeDefinition, WeaponDefinition } from '../game/types';
 import { dispatchCommand, onUiState, type UiState } from './events';
 
@@ -43,6 +44,11 @@ function render(state: UiState): void {
 
   if (state.screen === 'pause') {
     uiRoot.innerHTML = renderPause(state);
+    return;
+  }
+
+  if (state.screen === 'stage-clear') {
+    uiRoot.innerHTML = renderStageClear(state);
     return;
   }
 
@@ -187,7 +193,8 @@ function renderArmory(
           ${weapons.map((weapon) => renderWeaponCard(save, weapon)).join('')}
         </div>
         <div>
-          <h3>Crosshairs</h3>
+          <h3>Aim Mods</h3>
+          <p class="column-note">Readability tuning. The live reticle now follows the equipped gun.</p>
           ${crosshairs.map((crosshair) => renderCrosshairCard(save, crosshair)).join('')}
         </div>
         <div>
@@ -323,8 +330,47 @@ function renderPause(state: Extract<UiState, { screen: 'pause' }>): string {
   `;
 }
 
+function renderStageClear(state: Extract<UiState, { screen: 'stage-clear' }>): string {
+  const { summary } = state;
+  const { snapshot, currentStage, nextStage } = summary;
+  const newThreats = summary.newEnemyLabels.length
+    ? summary.newEnemyLabels.map((label) => `<span>${label}</span>`).join('')
+    : '<span>Known flock mix</span>';
+
+  return `
+    ${renderHud({ screen: 'hud', snapshot, stage: currentStage, weapon: { name: snapshot.weaponName } as WeaponDefinition, crosshair: { name: snapshot.crosshairName } as CrosshairDefinition })}
+    <section class="modal-screen stage-clear-screen">
+      <div class="modal-card stage-clear-card">
+        <p class="eyebrow">${summary.nextStageIsBonus ? 'Bonus Round Incoming' : 'Stage Clear'}</p>
+        <h2>${currentStage.title}</h2>
+        <div class="reward-line">
+          <span>Stage reward</span>
+          <strong>+${summary.rewardCoins}</strong>
+        </div>
+        <div class="record-grid">
+          <div><span>Accuracy</span><strong>${snapshot.accuracy}%</strong></div>
+          <div><span>Best Combo</span><strong>${snapshot.bestCombo}x</strong></div>
+          <div><span>Total Coins</span><strong>+${snapshot.coinsEarned}</strong></div>
+          <div><span>Kills</span><strong>${snapshot.kills}</strong></div>
+        </div>
+        <section class="next-stage-card">
+          <span>Next</span>
+          <strong>${nextStage.title}</strong>
+          <p>${nextStage.subtitle}</p>
+          <div class="threat-chips">${newThreats}</div>
+        </section>
+        <div class="modal-actions">
+          <button class="primary-command" data-action="continue-stage">Continue</button>
+          <button data-action="return-menu">Quit Run</button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 function renderGameOver(state: Extract<UiState, { screen: 'gameover' }>): string {
-  const { snapshot, rewards } = state;
+  const { snapshot, rewards, save } = state;
+  const recommendations = renderArmoryRecommendations(save);
   return `
     <div class="crt-overlay heavy" aria-hidden="true"></div>
     <section class="modal-screen gameover-screen">
@@ -342,11 +388,59 @@ function renderGameOver(state: Extract<UiState, { screen: 'gameover' }>): string
           <span>Coins earned</span>
           <strong>+${rewards.totalCoins}</strong>
         </div>
+        ${recommendations}
         <div class="modal-actions">
-          <button class="primary-command" data-action="restart-run">Run It Back</button>
-          <button data-action="return-menu">Armory/Menu</button>
+          <button class="primary-command" data-action="open-armory">Open Armory</button>
+          <button data-action="restart-run">Run It Back</button>
+          <button data-action="return-menu">Menu</button>
         </div>
       </div>
+    </section>
+  `;
+}
+
+function renderArmoryRecommendations(save: SaveData): string {
+  const recommendations = [
+    ...UPGRADES.map((upgrade) => {
+      const rank = save.upgrades[upgrade.id] ?? 0;
+      return rank >= upgrade.maxRank
+        ? null
+        : {
+            label: `${upgrade.name} ${rank + 1}/${upgrade.maxRank}`,
+            cost: getUpgradeCost(upgrade, rank),
+            type: 'Upgrade',
+          };
+    }),
+    ...WEAPONS.filter((weapon) => !save.unlockedWeapons.includes(weapon.id)).map((weapon) => ({
+      label: weapon.name,
+      cost: weapon.cost,
+      type: 'Gun',
+    })),
+    ...CROSSHAIRS.filter((crosshair) => !save.unlockedCrosshairs.includes(crosshair.id)).map((crosshair) => ({
+      label: crosshair.name,
+      cost: crosshair.cost,
+      type: 'Aim Mod',
+    })),
+  ]
+    .filter((item): item is { label: string; cost: number; type: string } => item !== null)
+    .sort((a, b) => a.cost - b.cost);
+
+  const affordable = recommendations.filter((item) => item.cost <= save.coins).slice(0, 3);
+  const near = recommendations.filter((item) => item.cost > save.coins).slice(0, 2);
+
+  if (affordable.length === 0 && near.length === 0) {
+    return '<section class="recommendation-panel"><strong>Armory complete</strong><span>Spend-free run. Chase records.</span></section>';
+  }
+
+  const rows = (affordable.length ? affordable : near)
+    .map((item) => `<div><span>${item.type}</span><strong>${item.label}</strong><em>${item.cost} coins</em></div>`)
+    .join('');
+  const title = affordable.length ? 'Ready to buy' : 'Next targets';
+
+  return `
+    <section class="recommendation-panel">
+      <strong>${title}</strong>
+      <div>${rows}</div>
     </section>
   `;
 }

@@ -75,7 +75,7 @@ export class RunState {
     this.comboTimerMs = this.stats.comboWindowMs;
     this.kills++;
     this.stageKills++;
-    this.coinsEarned += enemy.coinValue;
+    this.coinsEarned += enemy.coinValue * (this.isPowerupActive('coinRush') ? 2 : 1);
 
     const points = Math.round(enemy.points * this.comboMultiplier * this.stats.scoreMultiplier * this.powerupScoreMultiplier);
     this.score += points;
@@ -170,5 +170,7 @@ export function powerupLabel(id: PowerupId): string {
       return 'Extra Life';
     case 'overdrive':
       return 'Overdrive';
+    case 'coinRush':
+      return 'Coin Rush';
   }
 }

@@ -4,20 +4,20 @@
     "repo": "KnotEnvy/KnotzBirdShot",
     "handoffDate": "2026-05-15",
     "currentBranch": "master",
-    "productGoal": "Continue expanding the Phaser arcade shooter into a fuller, deployable browser game with more gameplay content, stronger between-stage and end-game flows, richer weapon feedback, and tighter pacing.",
+    "productGoal": "Continue expanding the Phaser arcade shooter into a fuller, deployable browser game. The first gameplay-flow expansion pass is now complete: more content, between-stage flow, armory-forward game over, and richer weapon feedback are implemented.",
     "v1ScopeDecision": "Local records and local progression only. Online leaderboards and account features are deferred beyond the first public release."
   },
   "currentState": {
-    "summary": "The original raven click-target prototype has been rebuilt into a Phaser 3 + TypeScript + Vite arcade shooter with staged runs, bosses, armory progression, persistent local saves, DOM overlays, procedural stage art, stage-aware procedural audio, release verification scripts, and GitHub Actions workflow scaffolding.",
+    "summary": "The original raven click-target prototype has been rebuilt into a Phaser 3 + TypeScript + Vite arcade shooter with staged runs, bosses, bonus round pacing, between-stage interstitials, armory-forward game over, armory progression, persistent local saves, DOM overlays, procedural stage art, stage-aware procedural audio, release verification scripts, and GitHub Actions workflow scaffolding.",
     "implementedContent": {
-      "stages": "6 named stages with different spawn pools, palettes, speed multipliers, rewards, procedural set dressing, and overflow scaling after the final named stage.",
-      "enemies": "9 enemy definitions: normal, fast, golden, armored, mini, shield, splitter, dive, and boss.",
+      "stages": "9 named stages with different spawn pools, palettes, speed multipliers, rewards, procedural set dressing, a Jackpot Alley bonus round, and overflow scaling after the final named stage.",
+      "enemies": "11 enemy definitions: normal, fast, golden, armored, mini, shield, splitter, dive, wraith, brute, and boss.",
       "weapons": "4 guns: Quarter Pistol, Burst Rifle, Scattergun, Arc Laser.",
-      "crosshairs": "4 current crosshair unlocks: Classic Sight, Neon Dot, Eagle Eye, Wide Net. These are still treated like purchasable loadout items and should be revisited per the new direction below.",
+      "crosshairs": "4 aim-mod unlocks: Classic Sight, Neon Dot, Eagle Eye, Wide Net. They still provide stat/readability modifiers, while the live reticle identity now follows the equipped gun.",
       "upgrades": "4 permanent upgrade tracks: cooldown, combo window, starting lives, payout scaling.",
-      "powerups": "5 powerups: slow-mo, multi-shot, score boost, extra life, overdrive.",
+      "powerups": "6 powerups: slow-mo, multi-shot, score boost, extra life, overdrive, coin rush.",
       "audio": "Procedural WebAudio with menu/run/boss modes, stage-aware motifs, weapon-specific shots, enemy-specific hit cues, powerup cues, boss warning/defeat stings, stage clear, miss, and game over.",
-      "visuals": "Seed raven/explosion assets plus procedural stage set dressing, mobile particle caps, stronger death sequence, and cabinet-style HUD framing.",
+      "visuals": "Seed raven/explosion assets plus procedural stage set dressing, mobile particle caps, stronger death sequence, cabinet-style HUD framing, weapon-driven reticles, cooldown feedback, projectile traces, multishot chain traces, shotgun spread visualization, and laser lane feedback.",
       "releaseOps": "Release verification scripts, balance report, served dist smoke, GitHub Actions CI, and manual GitHub Pages workflow are in place."
     },
     "knownUnfinishedAreas": [
@@ -29,80 +29,42 @@
     ]
   },
   "nextTeamPrimaryFocus": {
-    "theme": "Gameplay content expansion and stronger run flow.",
+    "theme": "Manual validation, tuning, and production polish after the gameplay-flow expansion pass.",
     "priorityOrder": [
       {
         "priority": 1,
-        "title": "Add more gameplay content",
+        "title": "Balance the 9-stage arc from real play sessions",
         "details": [
-          "Add more named stages beyond the current six-stage arc.",
-          "Add new enemy archetypes with clear introduction pacing.",
-          "Add more powerups and scoring effects that change moment-to-moment play.",
-          "Add shader or graphics effects that make hits, combos, boss moments, stage clears, and powerup states feel more dramatic.",
-          "Keep new content data-driven through src/game/data where possible."
+          "Use DOCS/BALANCE-NOTES.md and npm run balance:report as the numeric baseline.",
+          "Verify Jackpot Alley feels like a reward spike and not a difficulty wall.",
+          "Tune Wraith Raven, Brute Raven, boss health, stage pressure, powerup drop rates, stage length, rewards, and unlock timing from real play sessions."
         ]
       },
       {
         "priority": 2,
-        "title": "Add between-stage session UI",
+        "title": "Validate new run-flow UX",
         "details": [
-          "Create an interstitial UI between stage clears and the next stage start.",
-          "Use it to show stage rewards, coins gained, accuracy/combo highlights, next-stage preview, new enemy warnings, and a clear continue action.",
-          "This should reduce the current abrupt transition from one stage to the next."
+          "Confirm stage-clear interstitials pause stage advancement and continue cleanly.",
+          "Confirm game over routes naturally to Armory and still supports Run It Back.",
+          "Check desktop and mobile layouts for stage-clear, game-over recommendations, and armory aim-mod wording."
         ]
       },
       {
         "priority": 3,
-        "title": "Strengthen end-game flow toward the armory",
+        "title": "Validate weapon feedback readability",
         "details": [
-          "After game over, push players directly toward useful armory actions instead of making them discover the armory from the menu.",
-          "Show newly earned coins, affordable upgrades, unlock recommendations, and a prominent Armory action.",
-          "Keep Run It Back available, but make progression spending feel like the natural next step."
+          "Verify each weapon has distinct aim/cooldown feedback.",
+          "Verify Burst Rifle, Scattergun, Arc Laser, and Multi-Shot traces are readable without covering targets.",
+          "Tune reticle scale, trace alpha, and cooldown feedback if mobile play feels crowded."
         ]
       },
       {
         "priority": 4,
-        "title": "Rework gun and crosshair identity",
+        "title": "Production assets and release QA",
         "details": [
-          "Crosshairs should become gun-related effects/readability tools, not separate skins players buy.",
-          "Gun effects should drive the crosshair look and behavior.",
-          "Evaluate whether current purchasable crosshairs should be removed, folded into weapons, or converted into weapon mods."
-        ]
-      },
-      {
-        "priority": 5,
-        "title": "Improve multi-bullet and shotgun feel",
-        "details": [
-          "Burst Rifle and Scattergun need more exaggerated animations.",
-          "Brainstorm larger/dynamic crosshairs, visible pellets, short-lived bullet traces, muzzle fan effects, or impact ripples.",
-          "Make multi-shot and shotgun behavior obvious at a glance without cluttering the playfield."
-        ]
-      },
-      {
-        "priority": 6,
-        "title": "Add bonus levels",
-        "details": [
-          "Prototype bonus stages that break the standard survival rhythm.",
-          "Possible patterns: golden raven jackpot rounds, target-gallery streak rounds, no-miss precision rounds, powerup frenzy rounds, or boss-vulnerability bonus windows.",
-          "Decide whether bonus levels are scheduled after specific stages, triggered by performance, or purchased/unlocked from progression."
-        ]
-      },
-      {
-        "priority": 7,
-        "title": "Convey gun cooldowns more vividly",
-        "details": [
-          "Current cooldown is mechanically enforced but not vivid enough.",
-          "Add weapon-specific cooldown meters, crosshair recharge animation, muzzle/cabinet light, or click feedback when firing too early.",
-          "Make cooldown readable on desktop and mobile."
-        ]
-      },
-      {
-        "priority": 8,
-        "title": "Tighten difficulty pacing and enemy introductions",
-        "details": [
-          "Use DOCS/BALANCE-NOTES.md and npm run balance:report as the numeric baseline.",
-          "Ensure new enemy types are introduced with readable first encounters before being mixed into harder pools.",
-          "Tune boss health, stage pressure, powerup drop rates, stage length, rewards, and unlock timing from real play sessions."
+          "Finish or replace final raven variants, boss sprite work, richer UI cabinet art, and optional recorded audio.",
+          "Run DOCS/RELEASE-QA-CHECKLIST.md end to end.",
+          "Validate mobile touch devices, remote GitHub Actions, and manual GitHub Pages deployment before public release."
         ]
       }
     ]
@@ -116,54 +78,23 @@
   ],
   "recommendedFirstSprint": [
     {
-      "slice": "Between-stage session UI",
-      "reason": "It improves pacing immediately, creates a natural place to introduce new enemies/stages, and supports future bonus levels.",
+      "slice": "Manual balance and UX validation",
+      "reason": "The four requested gameplay slices are now implemented; the next risk is whether the new 9-stage pacing, bonus payout, weapon feedback, and armory-forward loop feel right in real play.",
       "likelyFiles": [
         "src/game/scenes/GameScene.ts",
-        "src/ui/app.ts",
-        "src/ui/events.ts",
+        "src/game/data/stages.ts",
+        "src/game/data/enemies.ts",
+        "src/game/data/tuning.ts",
         "src/styles.css",
-        "src/game/types.ts"
+        "DOCS/BALANCE-NOTES.md",
+        "DOCS/RELEASE-QA-CHECKLIST.md"
       ],
       "acceptance": [
-        "Stage clear pauses into a DOM interstitial instead of immediately starting the next stage.",
-        "Interstitial shows reward, stage stats, next stage title/subtitle, and any new enemy/boss warning.",
-        "Continue action starts the next stage cleanly.",
-        "Pause/restart/return-menu behavior remains stable.",
+        "Manual play sessions confirm Stage 7 bonus pacing, Stage 8/9 pressure, and new enemy readability.",
+        "Weapon traces and cooldown reticles are readable on desktop and mobile without cluttering the playfield.",
+        "Game-over recommendations lead to useful armory spending decisions.",
+        "DOCS/BALANCE-NOTES.md is updated if tuning changes materially.",
         "npm run release:verify passes."
-      ]
-    },
-    {
-      "slice": "Armory-forward game-over flow",
-      "reason": "It strengthens the core progression loop and makes coins feel valuable.",
-      "likelyFiles": [
-        "src/ui/app.ts",
-        "src/ui/events.ts",
-        "src/game/scenes/AttractScene.ts",
-        "src/game/scenes/GameScene.ts",
-        "src/styles.css"
-      ],
-      "acceptance": [
-        "Game-over screen prominently shows coins earned and affordable upgrades/unlocks.",
-        "Primary action routes to Armory/Menu or a direct armory mode instead of leaving discovery to the player.",
-        "Run It Back remains available as a secondary action.",
-        "Returning to menu preserves updated save and records."
-      ]
-    },
-    {
-      "slice": "Weapon feedback pass",
-      "reason": "It addresses several requested items together: gun-specific crosshair identity, bullets/traces, shotgun/multibullet readability, and cooldown communication.",
-      "likelyFiles": [
-        "src/game/data/weapons.ts",
-        "src/game/scenes/GameScene.ts",
-        "src/game/systems/ArcadeAudio.ts",
-        "src/styles.css"
-      ],
-      "acceptance": [
-        "Each weapon has distinct aim/cooldown feedback.",
-        "Burst and scatter shots show visible multi-projectile or trace effects.",
-        "Cooldown state is readable without firing repeatedly.",
-        "Crosshair behavior follows equipped gun identity rather than purchasable cosmetic skin identity."
       ]
     }
   ],
@@ -171,7 +102,7 @@
     "runtime": "src/main.ts creates Phaser game with BootScene, AttractScene, and GameScene.",
     "gameplayScene": "src/game/scenes/GameScene.ts owns active run spawning, input, hit resolution, stage flow, boss flow, background set dressing, effects, and HUD dispatch.",
     "menuScene": "src/game/scenes/AttractScene.ts owns attract screen state, armory/records/options/credits commands, save mutations, and menu music.",
-    "uiLayer": "src/ui/app.ts renders DOM overlays for attract, armory, records, options, HUD, pause, and game over. src/ui/events.ts is the scene/UI command bridge.",
+    "uiLayer": "src/ui/app.ts renders DOM overlays for attract, armory, records, options, HUD, stage clear, pause, and game over. src/ui/events.ts is the scene/UI command bridge.",
     "data": "src/game/data/stages.ts, enemies.ts, weapons.ts, upgrades.ts, tuning.ts are the main data/tuning entry points.",
     "save": "src/game/save.ts normalizes localStorage save data and applies purchases/rewards.",
     "balance": "scripts/report-balance.mjs reads live TypeScript data and estimates stage pacing, rewards, and economy costs.",

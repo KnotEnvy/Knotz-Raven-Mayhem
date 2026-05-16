@@ -7,12 +7,14 @@ export type EnemyId =
   | 'shield'
   | 'splitter'
   | 'dive'
+  | 'wraith'
+  | 'brute'
   | 'boss';
 
 export type WeaponId = 'pistol' | 'burstRifle' | 'scattergun' | 'arcLaser';
 export type CrosshairId = 'classic' | 'neonDot' | 'eagleEye' | 'wideNet';
 export type UpgradeId = 'steadyHands' | 'comboCore' | 'thickJacket' | 'bountyChip';
-export type PowerupId = 'slowmo' | 'multishot' | 'scoreBoost' | 'extraLife' | 'overdrive';
+export type PowerupId = 'slowmo' | 'multishot' | 'scoreBoost' | 'extraLife' | 'overdrive' | 'coinRush';
 
 export interface WeightedEntry<TId extends string> {
   id: TId;
@@ -28,7 +30,7 @@ export interface EnemyDefinition {
   scale: number;
   tint?: number;
   radius: number;
-  behavior: 'straight' | 'zigzag' | 'armored' | 'mini' | 'shield' | 'splitter' | 'dive' | 'boss';
+  behavior: 'straight' | 'zigzag' | 'armored' | 'mini' | 'shield' | 'splitter' | 'dive' | 'wraith' | 'brute' | 'boss';
   coinValue: number;
 }
 
@@ -48,6 +50,7 @@ export interface StageDefinition {
   };
   enemyPool: WeightedEntry<EnemyId>[];
   boss?: EnemyId;
+  bonus?: boolean;
 }
 
 export interface WeaponDefinition {
@@ -151,4 +154,13 @@ export interface RunRewards {
   totalCoins: number;
   newHighScore: boolean;
   newBestStage: boolean;
+}
+
+export interface StageClearSummary {
+  snapshot: RunSnapshot;
+  currentStage: StageDefinition;
+  nextStage: StageDefinition;
+  rewardCoins: number;
+  newEnemyLabels: string[];
+  nextStageIsBonus: boolean;
 }

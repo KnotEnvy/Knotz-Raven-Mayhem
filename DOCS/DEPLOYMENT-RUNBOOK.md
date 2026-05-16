@@ -21,7 +21,7 @@ The final deploy should not proceed until these areas are checked:
 
 - Fresh save and returning save behavior.
 - Menu, armory, records, options, credits, pause, and game-over navigation.
-- Every weapon, crosshair, upgrade, enemy family, powerup, and boss stage.
+- Every weapon, aim mod, upgrade, enemy family, powerup, bonus round, and boss stage.
 - Desktop and mobile viewport layout.
 - Reduced motion and screen shake settings.
 
