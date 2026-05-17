@@ -45,6 +45,7 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 - [ ] Weapon shots, enemy hits, powerups, boss warning/defeat, stage clear, miss, and game-over cues are audible and distinct.
 - [ ] Pause and resume work from the HUD button, Space, P, and Esc.
 - [ ] Stage-clear interstitial shows reward, accuracy, best combo, total coins, next-stage preview, and a Continue action.
+- [ ] Stage-clear interstitial waits until the stage quota has spawned and all active ravens and field powerups are gone.
 - [ ] Continue, Space, or P advances from stage-clear to the next stage without spawning enemies underneath the overlay.
 - [ ] Missed ravens remove lives and trigger game over at 0 lives.
 - [ ] Normal, fast, golden, armored, mini, shield, splitter, dive, wraith, and brute ravens appear across the staged run.

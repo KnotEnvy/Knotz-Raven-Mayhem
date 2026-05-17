@@ -48,7 +48,9 @@ export class GameScene extends Phaser.Scene {
   private pausedByUi = false;
   private stageTransition = false;
   private completedStageSummary?: StageClearSummary;
+  private stageEnemiesSpawned = 0;
   private bossSpawned = false;
+  private bossDefeated = false;
   private bossKills = 0;
   private gameEnded = false;
   private crosshair!: Phaser.GameObjects.Graphics;
@@ -71,6 +73,8 @@ export class GameScene extends Phaser.Scene {
     this.gameEnded = false;
     this.bossKills = 0;
     this.bossSpawned = false;
+    this.bossDefeated = false;
+    this.stageEnemiesSpawned = 0;
     this.stageTransition = false;
     this.completedStageSummary = undefined;
     this.pausedByUi = false;
@@ -468,10 +472,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private maybeSpawnEnemy(delta: number): void {
-    if (this.stageTransition || this.bossSpawned || this.run.stageKills >= this.stage.targetKills) return;
+    if (this.stageTransition || this.bossSpawned || this.stageEnemiesSpawned >= this.stage.targetKills) return;
 
     const enemyId = this.waveDirector.update(delta, this.stage);
-    if (enemyId) this.spawnEnemy(enemyId);
+    if (enemyId) {
+      this.stageEnemiesSpawned++;
+      this.spawnEnemy(enemyId);
+    }
   }
 
   private spawnEnemy(enemyId: EnemyId, x = this.scale.width + 120, y?: number, splitDepth = 0): void {
@@ -727,9 +734,8 @@ export class GameScene extends Phaser.Scene {
 
     if (bossKilled) {
       this.bossKills++;
-      this.bossSpawned = false;
+      this.bossDefeated = true;
       arcadeAudio.playBossDefeated();
-      this.clearStage();
     }
   }
 
@@ -778,18 +784,26 @@ export class GameScene extends Phaser.Scene {
 
   private checkStageFlow(): void {
     if (this.stageTransition || this.gameEnded) return;
-    if (this.run.stageKills < this.stage.targetKills) return;
+    if (this.stageEnemiesSpawned < this.stage.targetKills) return;
 
     const bossActive = this.enemies.some((enemy) => enemy.boss);
-    if (this.stage.boss && !this.bossSpawned && !bossActive) {
+    const fieldClear = this.isStageFieldClear();
+
+    if (this.stage.boss && !this.bossSpawned && !this.bossDefeated && fieldClear) {
       this.bossSpawned = true;
       this.spawnEnemy(this.stage.boss);
       return;
     }
 
-    if (!this.stage.boss && !bossActive) {
+    if (this.stage.boss && (!this.bossDefeated || bossActive)) return;
+
+    if (fieldClear) {
       this.clearStage();
     }
+  }
+
+  private isStageFieldClear(): boolean {
+    return this.enemies.length === 0 && this.powerups.length === 0;
   }
 
   private clearStage(): void {
@@ -827,7 +841,9 @@ export class GameScene extends Phaser.Scene {
     this.stage = nextStage;
     this.run.startStage(this.run.stageIndex + 1, nextStage.targetKills);
     this.waveDirector.reset();
+    this.stageEnemiesSpawned = 0;
     this.bossSpawned = false;
+    this.bossDefeated = false;
     this.stageTransition = false;
     this.pausedByUi = false;
     this.completedStageSummary = undefined;
