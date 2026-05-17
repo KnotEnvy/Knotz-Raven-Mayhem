@@ -30,11 +30,13 @@ type AttractUiMode = AttractMode | AttractDemoMode;
 const ATTRACT_IDLE_MS = 15000;
 const ATTRACT_DEMO_SLIDE_MS = 10000;
 const ATTRACT_DEMO_SEQUENCE: AttractDemoMode[] = ['raven-guide', 'field-guide', 'upgrade-guide', 'armory-guide'];
+const MENU_RAVEN_POOL_LIMIT = 18;
 
 export class AttractScene extends Phaser.Scene {
   private save!: SaveData;
   private mode: AttractUiMode = 'home';
   private ravens: MenuRaven[] = [];
+  private ravenPool: Phaser.GameObjects.Sprite[] = [];
   private unsubscribers: Array<() => void> = [];
   private spawnTimer = 0;
   private idleTimer = 0;
@@ -48,6 +50,8 @@ export class AttractScene extends Phaser.Scene {
   create(data: { mode?: AttractMode } = {}): void {
     this.save = loadSave();
     this.mode = data.mode ?? 'home';
+    this.ravens = [];
+    this.ravenPool = [];
     this.cameras.main.setBackgroundColor(0x070510);
     this.createBackdrop();
     this.bindCommands();
@@ -78,7 +82,7 @@ export class AttractScene extends Phaser.Scene {
       }
 
       if (raven.sprite.x < -220 || raven.sprite.x > this.scale.width + 220) {
-        raven.sprite.destroy();
+        this.releaseMenuRaven(raven.sprite);
       }
     }
 
@@ -260,7 +264,8 @@ export class AttractScene extends Phaser.Scene {
   private spawnRaven(): void {
     const fromLeft = Math.random() > 0.5;
     const enemy = Math.random() > 0.82 ? ENEMIES.golden : Math.random() > 0.62 ? ENEMIES.fast : ENEMIES.normal;
-    const sprite = this.add.sprite(fromLeft ? -120 : this.scale.width + 120, Phaser.Math.Between(50, this.scale.height - 80), SPRITE_KEYS.raven);
+    const sprite = this.acquireMenuRaven();
+    sprite.setPosition(fromLeft ? -120 : this.scale.width + 120, Phaser.Math.Between(50, this.scale.height - 80));
     sprite.play('raven-flap');
     sprite.setScale(enemy.scale * Phaser.Math.FloatBetween(0.8, 1.25));
     sprite.setAlpha(0.5);
@@ -273,5 +278,29 @@ export class AttractScene extends Phaser.Scene {
       velocityX: (fromLeft ? 1 : -1) * Phaser.Math.FloatBetween(0.05, 0.16),
       velocityY: Phaser.Math.FloatBetween(-0.035, 0.035),
     });
+  }
+
+  private acquireMenuRaven(): Phaser.GameObjects.Sprite {
+    const sprite = this.ravenPool.pop() ?? this.add.sprite(0, 0, SPRITE_KEYS.raven);
+    sprite.setActive(true);
+    sprite.setVisible(true);
+    sprite.clearTint();
+    sprite.setBlendMode(Phaser.BlendModes.NORMAL);
+    sprite.setAngle(0);
+    sprite.setAlpha(1);
+    sprite.setFlipX(false);
+    return sprite;
+  }
+
+  private releaseMenuRaven(sprite: Phaser.GameObjects.Sprite): void {
+    sprite.setActive(false);
+    sprite.setVisible(false);
+    sprite.stop();
+    sprite.clearTint();
+    if (this.ravenPool.length < MENU_RAVEN_POOL_LIMIT) {
+      this.ravenPool.push(sprite);
+    } else {
+      sprite.destroy();
+    }
   }
 }

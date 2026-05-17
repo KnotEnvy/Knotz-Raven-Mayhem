@@ -30,8 +30,16 @@ interface PowerupActor {
   label: string;
   container: Phaser.GameObjects.Container;
   body: Phaser.GameObjects.Rectangle;
+  glyph: Phaser.GameObjects.Text;
   bornMs: number;
 }
+
+const ENEMY_SPRITE_POOL_LIMIT = 32;
+const EXPLOSION_POOL_LIMIT = 18;
+const FEATHER_POOL_LIMIT = 96;
+const TEXT_POOL_LIMIT = 32;
+const GRAPHICS_POOL_LIMIT = 24;
+const POWERUP_POOL_LIMIT = 12;
 
 export class GameScene extends Phaser.Scene {
   private save!: SaveData;
@@ -56,6 +64,12 @@ export class GameScene extends Phaser.Scene {
   private crosshair!: Phaser.GameObjects.Graphics;
   private background!: Phaser.GameObjects.Graphics;
   private starfield: Phaser.GameObjects.Arc[] = [];
+  private enemySpritePool: Phaser.GameObjects.Sprite[] = [];
+  private explosionPool: Phaser.GameObjects.Sprite[] = [];
+  private featherPool: Phaser.GameObjects.Rectangle[] = [];
+  private textPool: Phaser.GameObjects.Text[] = [];
+  private graphicsPool: Phaser.GameObjects.Graphics[] = [];
+  private powerupPool: PowerupActor[] = [];
 
   constructor() {
     super('GameScene');
@@ -78,6 +92,12 @@ export class GameScene extends Phaser.Scene {
     this.stageTransition = false;
     this.completedStageSummary = undefined;
     this.pausedByUi = false;
+    this.enemySpritePool = [];
+    this.explosionPool = [];
+    this.featherPool = [];
+    this.textPool = [];
+    this.graphicsPool = [];
+    this.powerupPool = [];
 
     this.cameras.main.setRoundPixels(false);
     this.createBackground();
@@ -484,7 +504,7 @@ export class GameScene extends Phaser.Scene {
   private spawnEnemy(enemyId: EnemyId, x = this.scale.width + 120, y?: number, splitDepth = 0): void {
     const def = ENEMIES[enemyId];
     const spawnY = y ?? Phaser.Math.Between(80, this.scale.height - 90);
-    const sprite = this.add.sprite(x, spawnY, SPRITE_KEYS.raven);
+    const sprite = this.acquireEnemySprite(x, spawnY);
     sprite.play('raven-flap');
     sprite.setScale(def.scale);
     sprite.setDepth(def.behavior === 'boss' ? 22 : 10);
@@ -583,7 +603,7 @@ export class GameScene extends Phaser.Scene {
       powerup.container.rotation += delta * POWERUP_TUNING.rotationSpeedPerMs;
 
       if (powerup.container.y > this.scale.height + 50) {
-        powerup.container.destroy();
+        this.releasePowerup(powerup);
       }
     }
 
@@ -741,7 +761,7 @@ export class GameScene extends Phaser.Scene {
 
   private collectPowerupAt(x: number, y: number): boolean {
     const collectRadius = POWERUP_TUNING.collectRadius + this.touchAimBonus * POWERUP_TUNING.mobileCollectRadiusBonus;
-    const powerup = this.powerups.find((item) => Phaser.Math.Distance.Between(x, y, item.container.x, item.container.y) < collectRadius);
+    const powerup = this.powerups.find((item) => item.container.active && Phaser.Math.Distance.Between(x, y, item.container.x, item.container.y) < collectRadius);
     if (!powerup) return false;
 
     if (powerup.id === 'extraLife') {
@@ -753,7 +773,7 @@ export class GameScene extends Phaser.Scene {
     this.floatText(powerup.container.x, powerup.container.y - 32, powerup.label, '#9dff57', 24);
     this.createFeathers(powerup.container.x, powerup.container.y, 0x9dff57, 16);
     arcadeAudio.playPowerup(powerup.id);
-    powerup.container.destroy();
+    this.releasePowerup(powerup);
     return true;
   }
 
@@ -761,25 +781,60 @@ export class GameScene extends Phaser.Scene {
     const id = Phaser.Math.RND.pick<PowerupId>(['slowmo', 'multishot', 'scoreBoost', 'extraLife', 'overdrive', 'coinRush']);
     const label = powerupLabel(id);
     const color = powerupColor(id);
-    const body = this.add.rectangle(0, 0, 42, 42, color, 0.92).setStrokeStyle(2, 0xffffff, 0.9);
-    const text = this.add.text(0, 1, powerupGlyph(id), {
-      fontFamily: 'Impact, Haettenschweiler, sans-serif',
-      fontSize: '24px',
-      color: '#08101c',
-    });
-    text.setOrigin(0.5);
-
-    const container = this.add.container(x, y, [body, text]);
-    container.setDepth(50);
+    const powerup = this.acquirePowerup(x, y, id, label, color);
     this.tweens.add({
-      targets: container,
+      targets: powerup.container,
       scale: 1.12,
       duration: 260,
       yoyo: true,
       repeat: -1,
     });
 
-    this.powerups.push({ id, label, container, body, bornMs: this.time.now });
+    this.powerups.push(powerup);
+  }
+
+  private acquirePowerup(x: number, y: number, id: PowerupId, label: string, color: number): PowerupActor {
+    const powerup = this.powerupPool.pop() ?? this.createPowerupActor();
+    powerup.id = id;
+    powerup.label = label;
+    powerup.bornMs = this.time.now;
+    powerup.body.setFillStyle(color, 0.92);
+    powerup.glyph.setText(powerupGlyph(id));
+    powerup.container.setPosition(x, y);
+    powerup.container.setRotation(0);
+    powerup.container.setScale(1);
+    powerup.container.setAlpha(1);
+    powerup.container.setDepth(50);
+    powerup.container.setActive(true);
+    powerup.container.setVisible(true);
+    return powerup;
+  }
+
+  private createPowerupActor(): PowerupActor {
+    const body = this.add.rectangle(0, 0, 42, 42, 0xffffff, 0.92).setStrokeStyle(2, 0xffffff, 0.9);
+    const glyph = this.add.text(0, 1, '', {
+      fontFamily: 'Impact, Haettenschweiler, sans-serif',
+      fontSize: '24px',
+      color: '#08101c',
+    });
+    glyph.setOrigin(0.5);
+
+    const container = this.add.container(0, 0, [body, glyph]);
+    container.setDepth(50);
+    container.setActive(false);
+    container.setVisible(false);
+    return { id: 'slowmo', label: powerupLabel('slowmo'), container, body, glyph, bornMs: 0 };
+  }
+
+  private releasePowerup(powerup: PowerupActor): void {
+    this.tweens.killTweensOf(powerup.container);
+    powerup.container.setActive(false);
+    powerup.container.setVisible(false);
+    if (this.powerupPool.length < POWERUP_POOL_LIMIT) {
+      this.powerupPool.push(powerup);
+    } else {
+      powerup.container.destroy();
+    }
   }
 
   private checkStageFlow(): void {
@@ -857,7 +912,7 @@ export class GameScene extends Phaser.Scene {
   private clearActorsForStageAdvance(): void {
     for (const enemy of this.enemies) this.destroyEnemyActor(enemy);
     this.enemies = [];
-    for (const powerup of this.powerups) powerup.container.destroy();
+    for (const powerup of this.powerups) this.releasePowerup(powerup);
     this.powerups = [];
   }
 
@@ -966,16 +1021,66 @@ export class GameScene extends Phaser.Scene {
   private destroyEnemyActor(actor: EnemyActor): void {
     actor.healthBar?.destroy();
     actor.healthBar = undefined;
-    actor.sprite.destroy();
+    this.releaseEnemySprite(actor.sprite);
+  }
+
+  private acquireEnemySprite(x: number, y: number): Phaser.GameObjects.Sprite {
+    const sprite = this.enemySpritePool.pop() ?? this.add.sprite(0, 0, SPRITE_KEYS.raven);
+    sprite.setPosition(x, y);
+    sprite.setActive(true);
+    sprite.setVisible(true);
+    sprite.clearTint();
+    sprite.setBlendMode(Phaser.BlendModes.NORMAL);
+    sprite.setAlpha(1);
+    sprite.setAngle(0);
+    sprite.setScale(1);
+    sprite.setFlipX(false);
+    return sprite;
+  }
+
+  private releaseEnemySprite(sprite: Phaser.GameObjects.Sprite): void {
+    this.tweens.killTweensOf(sprite);
+    sprite.stop();
+    sprite.clearTint();
+    sprite.setBlendMode(Phaser.BlendModes.NORMAL);
+    sprite.setActive(false);
+    sprite.setVisible(false);
+    if (this.enemySpritePool.length < ENEMY_SPRITE_POOL_LIMIT) {
+      this.enemySpritePool.push(sprite);
+    } else {
+      sprite.destroy();
+    }
   }
 
   private createExplosion(x: number, y: number, scale: number): void {
-    const explosion = this.add.sprite(x, y, SPRITE_KEYS.explosion);
+    const explosion = this.acquireExplosion(x, y);
     explosion.setScale(Math.max(0.55, scale * 1.05));
     explosion.setDepth(60);
     explosion.play('boom-pop');
     this.sound.play(AUDIO_KEYS.boom, { volume: 0.22 * this.save.settings.sfxVolume });
-    explosion.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => explosion.destroy());
+    explosion.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.releaseExplosion(explosion));
+  }
+
+  private acquireExplosion(x: number, y: number): Phaser.GameObjects.Sprite {
+    const explosion = this.explosionPool.pop() ?? this.add.sprite(0, 0, SPRITE_KEYS.explosion);
+    explosion.setPosition(x, y);
+    explosion.setActive(true);
+    explosion.setVisible(true);
+    explosion.setAlpha(1);
+    explosion.setAngle(0);
+    explosion.clearTint();
+    return explosion;
+  }
+
+  private releaseExplosion(explosion: Phaser.GameObjects.Sprite): void {
+    explosion.stop();
+    explosion.setActive(false);
+    explosion.setVisible(false);
+    if (this.explosionPool.length < EXPLOSION_POOL_LIMIT) {
+      this.explosionPool.push(explosion);
+    } else {
+      explosion.destroy();
+    }
   }
 
   private createFeathers(x: number, y: number, color: number, count: number): void {
@@ -986,7 +1091,7 @@ export class GameScene extends Phaser.Scene {
         : PRESENTATION_TUNING.desktopFeatherCap;
 
     for (let index = 0; index < Math.min(count, cap); index++) {
-      const particle = this.add.rectangle(x, y, Phaser.Math.Between(4, 12), Phaser.Math.Between(2, 5), color, 0.88);
+      const particle = this.acquireFeatherParticle(x, y, Phaser.Math.Between(4, 12), Phaser.Math.Between(2, 5), color);
       particle.setDepth(55);
       particle.rotation = Phaser.Math.FloatBetween(0, Math.PI);
       this.tweens.add({
@@ -997,30 +1102,55 @@ export class GameScene extends Phaser.Scene {
         rotation: particle.rotation + Phaser.Math.FloatBetween(-2, 2),
         duration: Phaser.Math.Between(380, 780),
         ease: 'Cubic.easeOut',
-        onComplete: () => particle.destroy(),
+        onComplete: () => this.releaseFeatherParticle(particle),
       });
+    }
+  }
+
+  private acquireFeatherParticle(x: number, y: number, width: number, height: number, color: number): Phaser.GameObjects.Rectangle {
+    const particle = this.featherPool.pop() ?? this.add.rectangle(0, 0, width, height, color, 0.88);
+    particle.setPosition(x, y);
+    particle.setSize(width, height);
+    particle.setFillStyle(color, 0.88);
+    particle.setActive(true);
+    particle.setVisible(true);
+    particle.setAlpha(1);
+    particle.setScale(1);
+    particle.setAngle(0);
+    return particle;
+  }
+
+  private releaseFeatherParticle(particle: Phaser.GameObjects.Rectangle): void {
+    this.tweens.killTweensOf(particle);
+    particle.setActive(false);
+    particle.setVisible(false);
+    if (this.featherPool.length < FEATHER_POOL_LIMIT) {
+      this.featherPool.push(particle);
+    } else {
+      particle.destroy();
     }
   }
 
   private drawMuzzleFlash(x: number, y: number): void {
     const color = Phaser.Display.Color.HexStringToColor(this.weapon.color).color;
-    const flash = this.add.circle(x, y, 10, color, 0.8).setDepth(70);
-    const line = this.add.rectangle(x - 30, y, 54, 3, color, 0.55).setDepth(69);
+    const flash = this.acquireTransientGraphics(70);
+    flash.setPosition(x, y);
+    flash.fillStyle(color, 0.8);
+    flash.fillCircle(0, 0, 10);
+    flash.fillStyle(color, 0.55);
+    flash.fillRect(-57, -1.5, 54, 3);
     this.tweens.add({
-      targets: [flash, line],
+      targets: flash,
       alpha: 0,
       scale: 2.1,
       duration: 120,
-      onComplete: () => {
-        flash.destroy();
-        line.destroy();
-      },
+      onComplete: () => this.releaseTransientGraphics(flash),
     });
   }
 
   private drawWeaponTraces(x: number, y: number, probes: Array<{ x: number; y: number }>): void {
     const color = Phaser.Display.Color.HexStringToColor(this.weapon.color).color;
-    const graphics = this.add.graphics().setDepth(68);
+    const graphics = this.acquireTransientGraphics(68);
     graphics.lineStyle(this.weapon.id === 'scattergun' ? 3 : 2, color, this.weapon.id === 'arcLaser' ? 0.82 : 0.62);
 
     if (this.weapon.id === 'arcLaser') {
@@ -1040,13 +1170,13 @@ export class GameScene extends Phaser.Scene {
       targets: graphics,
       alpha: 0,
       duration: this.save.settings.reducedMotion ? 70 : 150,
-      onComplete: () => graphics.destroy(),
+      onComplete: () => this.releaseTransientGraphics(graphics),
     });
   }
 
   private drawChainTraces(x: number, y: number, actors: EnemyActor[]): void {
     if (actors.length === 0) return;
-    const graphics = this.add.graphics().setDepth(67);
+    const graphics = this.acquireTransientGraphics(67);
     graphics.lineStyle(2, 0xff8a32, 0.74);
     for (const actor of actors) {
       graphics.lineBetween(x, y, actor.sprite.x, actor.sprite.y);
@@ -1056,7 +1186,7 @@ export class GameScene extends Phaser.Scene {
       targets: graphics,
       alpha: 0,
       duration: this.save.settings.reducedMotion ? 80 : 180,
-      onComplete: () => graphics.destroy(),
+      onComplete: () => this.releaseTransientGraphics(graphics),
     });
   }
 
@@ -1065,24 +1195,45 @@ export class GameScene extends Phaser.Scene {
     this.lastCooldownFeedbackAt = now;
     this.floatText(x, y - 22, 'RECHARGE', '#ff315a', 18);
     const color = Phaser.Display.Color.HexStringToColor(this.weapon.color).color;
-    const ring = this.add.circle(x, y, this.weaponCrosshairRadius + 10).setStrokeStyle(2, color, 0.56).setDepth(75);
+    const ring = this.acquireTransientGraphics(75);
+    ring.setPosition(x, y);
+    ring.lineStyle(2, color, 0.56);
+    ring.strokeCircle(0, 0, this.weaponCrosshairRadius + 10);
     this.tweens.add({
       targets: ring,
       alpha: 0,
       scale: 0.72,
       duration: 160,
-      onComplete: () => ring.destroy(),
+      onComplete: () => this.releaseTransientGraphics(ring),
     });
   }
 
+  private acquireTransientGraphics(depth: number): Phaser.GameObjects.Graphics {
+    const graphics = this.graphicsPool.pop() ?? this.add.graphics();
+    graphics.clear();
+    graphics.setDepth(depth);
+    graphics.setActive(true);
+    graphics.setVisible(true);
+    graphics.setAlpha(1);
+    graphics.setScale(1);
+    graphics.setPosition(0, 0);
+    return graphics;
+  }
+
+  private releaseTransientGraphics(graphics: Phaser.GameObjects.Graphics): void {
+    this.tweens.killTweensOf(graphics);
+    graphics.clear();
+    graphics.setActive(false);
+    graphics.setVisible(false);
+    if (this.graphicsPool.length < GRAPHICS_POOL_LIMIT) {
+      this.graphicsPool.push(graphics);
+    } else {
+      graphics.destroy();
+    }
+  }
+
   private floatText(x: number, y: number, text: string, color: string, size: number): void {
-    const label = this.add.text(x, y, text, {
-      fontFamily: 'Impact, Haettenschweiler, sans-serif',
-      fontSize: `${size}px`,
-      color,
-      stroke: '#070510',
-      strokeThickness: 5,
-    });
+    const label = this.acquireFloatText(x, y, text, color, size);
     label.setOrigin(0.5);
     label.setDepth(120);
     this.tweens.add({
@@ -1092,8 +1243,44 @@ export class GameScene extends Phaser.Scene {
       scale: 1.2,
       duration: 760,
       ease: 'Quad.easeOut',
-      onComplete: () => label.destroy(),
+      onComplete: () => this.releaseFloatText(label),
     });
+  }
+
+  private acquireFloatText(x: number, y: number, text: string, color: string, size: number): Phaser.GameObjects.Text {
+    const label = this.textPool.pop() ?? this.add.text(0, 0, '', {
+      fontFamily: 'Impact, Haettenschweiler, sans-serif',
+      fontSize: `${size}px`,
+      color,
+      stroke: '#070510',
+      strokeThickness: 5,
+    });
+    label.setText(text);
+    label.setStyle({
+      fontFamily: 'Impact, Haettenschweiler, sans-serif',
+      fontSize: `${size}px`,
+      color,
+      stroke: '#070510',
+      strokeThickness: 5,
+    });
+    label.setPosition(x, y);
+    label.setActive(true);
+    label.setVisible(true);
+    label.setAlpha(1);
+    label.setScale(1);
+    label.setAngle(0);
+    return label;
+  }
+
+  private releaseFloatText(label: Phaser.GameObjects.Text): void {
+    this.tweens.killTweensOf(label);
+    label.setActive(false);
+    label.setVisible(false);
+    if (this.textPool.length < TEXT_POOL_LIMIT) {
+      this.textPool.push(label);
+    } else {
+      label.destroy();
+    }
   }
 
   private playDeathSequence(onComplete: () => void): void {

@@ -17,7 +17,7 @@
       "upgrades": "4 permanent upgrade tracks: cooldown, combo window, starting lives, payout scaling.",
       "powerups": "6 powerups: slow-mo, multi-shot, score boost, extra life, overdrive, coin rush.",
       "audio": "Procedural WebAudio with menu/run/boss modes, stage-aware motifs, weapon-specific shots, enemy-specific hit cues, powerup cues, boss warning/defeat stings, stage clear, miss, and game over.",
-      "visuals": "Seed raven/explosion assets plus procedural stage set dressing, mobile particle caps, stronger death sequence, cabinet-style HUD framing, weapon-driven reticles, Assist Chip effect labels, cooldown feedback, projectile traces, multishot chain traces, shotgun spread visualization, and laser lane feedback.",
+      "visuals": "Seed raven/explosion assets plus procedural stage set dressing, mobile particle caps, stronger death sequence, cabinet-style HUD framing, weapon-driven reticles, Assist Chip effect labels, cooldown feedback, projectile traces, multishot chain traces, shotgun spread visualization, laser lane feedback, and pooled transient effects for long-session performance.",
       "releaseOps": "Release verification scripts, balance report, served dist smoke, GitHub Actions CI, and manual GitHub Pages workflow are in place."
     },
     "latestPlaytestUpdate": {

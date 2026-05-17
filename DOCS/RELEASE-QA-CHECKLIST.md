@@ -65,6 +65,7 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 
 - [ ] Attract screen, armory, records, options, pause, HUD, and game over fit at 390x844 without overlapping controls.
 - [ ] HUD remains readable at 390x844 while targets are still hittable.
+- [ ] Long-running attract mode and late-stage runs do not visibly slow down from accumulated ravens, powerups, traces, text, or particle effects.
 - [ ] Reduced Motion disables major flash/shake effects and procedural music.
 - [ ] Screen Shake off prevents camera shake while preserving core hit feedback.
 
