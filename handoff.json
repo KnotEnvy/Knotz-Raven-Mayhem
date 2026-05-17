@@ -2,13 +2,13 @@
   "project": {
     "name": "Knotz Raven Mayhem",
     "repo": "KnotEnvy/KnotzBirdShot",
-    "handoffDate": "2026-05-16",
+    "handoffDate": "2026-05-17",
     "currentBranch": "master",
-    "productGoal": "Continue expanding the Phaser arcade shooter into a fuller, deployable browser game. The first gameplay-flow expansion pass is now complete and early playtests are positive: more content, between-stage flow, armory-forward game over, and richer weapon feedback are implemented and working well.",
+    "productGoal": "Prepare Knotz Raven Mayhem for public release. Core gameplay, progression, staged run flow, cabinet demo screens, performance pooling, and release verification scripts are in place; the next team should focus on SEO, web kit/release shell polish, final release QA, and GitHub Pages deployment validation.",
     "v1ScopeDecision": "Local records and local progression only. Online leaderboards and account features are deferred beyond the first public release."
   },
   "currentState": {
-    "summary": "The original raven click-target prototype has been rebuilt into a Phaser 3 + TypeScript + Vite arcade shooter with staged runs, bosses, bonus round pacing, between-stage interstitials, armory-forward game over, armory progression, persistent local saves, DOM overlays, procedural stage art, stage-aware procedural audio, release verification scripts, and GitHub Actions workflow scaffolding.",
+    "summary": "The original raven click-target prototype has been rebuilt into a Phaser 3 + TypeScript + Vite arcade shooter with staged runs, bosses, bonus round pacing, between-stage interstitials, armory-forward game over, armory progression, persistent local saves, DOM overlays, idle cabinet demo/tutorial screens, procedural stage art, stage-aware procedural audio, pooled transient effects, release verification scripts, and GitHub Actions workflow scaffolding.",
     "implementedContent": {
       "stages": "9 named stages with different spawn pools, palettes, speed multipliers, rewards, procedural set dressing, a Jackpot Alley bonus round, overflow scaling after the final named stage, and field-drain stage transitions that wait for active ravens and powerups before showing stage clear.",
       "enemies": "11 enemy definitions: normal, fast, golden, armored, mini, shield, splitter, dive, wraith, brute, and boss. Stage pools now reveal enemy types gradually across the full 9-stage arc instead of front-loading most variants early.",
@@ -21,37 +21,42 @@
       "releaseOps": "Release verification scripts, balance report, served dist smoke, GitHub Actions CI, and manual GitHub Pages workflow are in place."
     },
     "latestPlaytestUpdate": {
-      "date": "2026-05-16",
-      "summary": "Recent playtests have been working well. The between-stage screens are functioning as intended, and the game-over push toward the armory now makes progression spending feel natural.",
+      "date": "2026-05-17",
+      "summary": "Recent playtests have been working well. The between-stage screens, game-over push toward the armory, cabinet demo/tutorial screens, staggered raven reveal curve, field-drain stage endings, and performance pooling pass should be treated as accepted baseline behavior unless new bugs appear.",
       "validatedSignals": [
         "Between-stage interstitials are no longer a theory item; they are working well in playtests.",
         "Game-over-to-armory flow makes sense to players and supports the intended progression loop.",
-        "The latest gameplay-flow changes should be treated as accepted baseline behavior unless new bugs appear."
+        "The latest gameplay-flow changes should be treated as accepted baseline behavior unless new bugs appear.",
+        "Idle cabinet demo screens now explain ravens, field basics, upgrades, and armory/loadout concepts.",
+        "Stage flow now waits for active ravens and field powerups to clear before showing stage-clear.",
+        "A quick pooling pass now reuses title-screen ravens and high-churn gameplay effects for better long-session performance."
       ],
       "remainingValidation": [
         "Full release QA checklist still needs an end-to-end pass.",
+        "SEO and web kit/release shell metadata need to be completed before public sharing.",
         "Final balance sign-off across the full 9-stage arc still needs continued play-session confirmation.",
         "Real mobile/touch-device validation and public GitHub Pages deployment validation remain open."
       ]
     },
     "knownUnfinishedAreas": [
-      "Recent playtests are positive, but final balance sign-off across the full 9-stage arc is still required before public release.",
+      "SEO and web kit/release shell polish are still required: page title/description, Open Graph/Twitter metadata, favicon/app icons, web manifest, social preview image, canonical/public URL decisions, and any iOS/mobile web app tags.",
       "Final browser/manual QA checklist has not been executed end to end.",
       "Remote GitHub Actions and public GitHub Pages deployment have not been validated from GitHub.",
-      "Final original production visuals are still open: raven variants, boss sprite work, richer UI cabinet art, and optional recorded audio.",
+      "Recent playtests are positive, but final balance sign-off across the full 9-stage arc is still required before public release.",
+      "Final original production visuals remain optional release polish: raven variants, boss sprite work, richer UI cabinet art, and optional recorded audio.",
       "Mobile tuning was implemented in code but still needs real touch-device validation."
     ]
   },
   "nextTeamPrimaryFocus": {
-    "theme": "Final balance sign-off, mobile validation, production polish, and deployment prep after positive gameplay-flow playtests.",
+    "theme": "Public release preparation: SEO, web kit/release shell polish, final release QA, and GitHub Pages deployment validation after positive gameplay playtests.",
     "priorityOrder": [
       {
         "priority": 1,
-        "title": "Finish final balance sign-off",
+        "title": "Complete SEO and web kit release shell",
         "details": [
-          "Do not rework the between-stage or armory-forward flows unless a new bug appears; recent playtests say those flows are working well.",
-          "Use DOCS/BALANCE-NOTES.md and npm run balance:report as the numeric baseline.",
-          "Continue play-session confirmation for the staggered enemy reveal curve, Jackpot Alley payout, Stage 8/9 pressure, Wraith/Brute readability, boss health, powerup drop rates, stage length, rewards, and unlock timing."
+          "Update index.html and any public release assets with production-ready title, meta description, Open Graph/Twitter tags, favicon/app icons, web manifest, theme color, and mobile/iOS web app tags.",
+          "Create or add a social preview image that represents the actual game instead of a generic placeholder.",
+          "Confirm all release metadata works from the GitHub Pages project path and does not assume a root-domain deployment unless the final URL supports it."
         ]
       },
       {
@@ -60,53 +65,56 @@
         "details": [
           "Run DOCS/RELEASE-QA-CHECKLIST.md end to end against a production preview or deployment candidate.",
           "Include fresh-save and returning-save checks.",
-          "Confirm all menu, armory, records, options, credits, pause, stage-clear, game-over, weapon, enemy, powerup, bonus round, and boss flows."
+          "Confirm all menu, armory, records, options, credits, idle demo, pause, stage-clear, game-over, weapon, enemy, powerup, bonus round, boss, and performance-pooling flows."
         ]
       },
       {
         "priority": 3,
-        "title": "Validate mobile and touch-device feel",
+        "title": "Finish final balance and mobile sign-off",
         "details": [
-          "Test the current HUD, stage-clear screens, armory recommendations, touch hit radius, and pause affordance on real phones or tablets.",
-          "Tune reticle scale, trace alpha, particle caps, and HUD density only if real-device play feels crowded.",
-          "Keep desktop behavior stable while making mobile-specific tuning changes."
+          "Do not rework the between-stage or armory-forward flows unless a new bug appears; recent playtests say those flows are working well.",
+          "Use DOCS/BALANCE-NOTES.md and npm run balance:report as the numeric baseline.",
+          "Continue play-session confirmation for the staggered enemy reveal curve, Jackpot Alley payout, Stage 8/9 pressure, Wraith/Brute readability, boss health, powerup drop rates, stage length, rewards, unlock timing, and real mobile/touch-device feel."
         ]
       },
       {
         "priority": 4,
-        "title": "Production assets and release QA",
+        "title": "Validate deployment and public build",
         "details": [
-          "Finish or replace final raven variants, boss sprite work, richer UI cabinet art, and optional recorded audio.",
-          "Run DOCS/RELEASE-QA-CHECKLIST.md end to end.",
-          "Validate mobile touch devices, remote GitHub Actions, and manual GitHub Pages deployment before public release."
+          "Run npm run release:verify locally before handing off a release candidate.",
+          "Confirm the remote Release Verification workflow is green on the release commit.",
+          "Run the manual Deploy GitHub Pages workflow from master and validate the published URL with fresh and returning local saves."
         ]
       }
     ]
   },
   "currentBacklogFromDocs": [
-    "Finish or replace final production visuals: raven variants, boss sprite work, richer UI cabinet art, optional recorded music/SFX.",
-    "Complete final economy and difficulty sign-off from real play sessions; latest playtests are positive but not full release QA.",
+    "Complete SEO and web kit/release shell polish: title, description, Open Graph/Twitter metadata, favicon/app icons, web manifest, theme color, social preview image, and mobile/iOS web app tags.",
     "Run DOCS/RELEASE-QA-CHECKLIST.md end to end.",
+    "Complete final economy and difficulty sign-off from real play sessions; latest playtests are positive but not full release QA.",
     "Validate mobile-specific tuning on real touch devices.",
-    "Run remote GitHub Actions and manual GitHub Pages deploy workflow before public release."
+    "Run remote GitHub Actions and manual GitHub Pages deploy workflow before public release.",
+    "Optional: finish or replace final production visuals such as raven variants, boss sprite work, richer UI cabinet art, and optional recorded music/SFX."
   ],
   "recommendedFirstSprint": [
     {
-      "slice": "Final release QA and balance sign-off",
-      "reason": "The four requested gameplay slices are implemented and early playtests say the between-stage screens and armory-forward flow are working well. The next risk is release completeness: full-arc balance, mobile/device confidence, production assets, and deployment validation.",
+      "slice": "SEO, web kit, and final release QA",
+      "reason": "Gameplay and progression are now in release-candidate shape after the staggered enemy balance pass, idle cabinet demo screens, field-drain stage flow, and pooling optimization pass. The next risk is public-release readiness: web metadata, share previews, app icons/manifest, final QA, mobile validation, and deployment confidence.",
       "likelyFiles": [
-        "src/game/scenes/GameScene.ts",
-        "src/game/data/stages.ts",
-        "src/game/data/enemies.ts",
-        "src/game/data/tuning.ts",
-        "src/styles.css",
+        "index.html",
+        "vite.config.ts",
+        "public/",
+        "README.md",
+        "DOCS/DEPLOYMENT-RUNBOOK.md",
         "DOCS/BALANCE-NOTES.md",
         "DOCS/RELEASE-QA-CHECKLIST.md"
       ],
       "acceptance": [
-        "Manual play sessions continue to confirm the slower enemy introduction curve, Stage 7 bonus pacing, Stage 8/9 pressure, and new enemy readability.",
+        "SEO and social metadata are production-ready and point at the intended public GitHub Pages URL.",
+        "Favicon/app icons, web manifest, theme color, and mobile/iOS web app tags are present and load from the deployed project path.",
         "Full release QA checklist is completed against a production preview or deployment candidate.",
-        "Real touch-device validation confirms HUD density, touch hit radius, stage-clear screens, and game-over armory recommendations.",
+        "Manual play sessions continue to confirm the slower enemy introduction curve, Stage 7 bonus pacing, Stage 8/9 pressure, new enemy readability, field-drain stage endings, and long-session performance.",
+        "Real touch-device validation confirms HUD density, touch hit radius, stage-clear screens, idle demo readability, and game-over armory recommendations.",
         "DOCS/BALANCE-NOTES.md is updated if tuning changes materially.",
         "npm run release:verify passes."
       ]
@@ -115,8 +123,9 @@
   "architecturePointers": {
     "runtime": "src/main.ts creates Phaser game with BootScene, AttractScene, and GameScene.",
     "gameplayScene": "src/game/scenes/GameScene.ts owns active run spawning, input, hit resolution, stage flow, boss flow, background set dressing, effects, and HUD dispatch.",
-    "menuScene": "src/game/scenes/AttractScene.ts owns attract screen state, armory/records/options/credits commands, save mutations, and menu music.",
+    "menuScene": "src/game/scenes/AttractScene.ts owns attract screen state, idle cabinet demo rotation, armory/records/options/credits commands, save mutations, menu music, and pooled title-screen ravens.",
     "uiLayer": "src/ui/app.ts renders DOM overlays for attract, armory, records, options, HUD, stage clear, pause, and game over. src/ui/events.ts is the scene/UI command bridge.",
+    "releaseShell": "index.html and public/ are the primary places for SEO, Open Graph/Twitter metadata, favicon/app icons, web manifest, social preview images, and mobile web app tags.",
     "data": "src/game/data/stages.ts, enemies.ts, weapons.ts, upgrades.ts, tuning.ts are the main data/tuning entry points.",
     "save": "src/game/save.ts normalizes localStorage save data and applies purchases/rewards.",
     "balance": "scripts/report-balance.mjs reads live TypeScript data and estimates stage pacing, rewards, and economy costs.",
@@ -147,6 +156,7 @@
       "served dist smoke from /KnotzBirdShot/"
     ],
     "manualValidationStillRequired": [
+      "SEO and web kit/release shell validation",
       "Full release QA checklist",
       "Final full-arc balance sign-off",
       "Real mobile/touch-device validation",
@@ -161,13 +171,15 @@
     "balanceNotes": "DOCS/BALANCE-NOTES.md",
     "deploymentRunbook": "DOCS/DEPLOYMENT-RUNBOOK.md",
     "subagentRoster": "DOCS/SUBAGENTS.md",
+    "entryHtml": "index.html",
+    "publicAssets": "public/",
     "ciWorkflow": ".github/workflows/ci.yml",
     "pagesWorkflow": ".github/workflows/pages.yml"
   },
   "recommendedSubagents": [
     {
-      "name": "Content Expansion Agent",
-      "focus": "Stages, enemies, powerups, scoring effects, bonus levels, and content pacing."
+      "name": "SEO And Web Kit Agent",
+      "focus": "Production title/description, Open Graph/Twitter metadata, favicon/app icons, web manifest, social preview image, theme color, iOS/mobile web app tags, and deployed path validation."
     },
     {
       "name": "Mobile Performance Agent",
@@ -175,7 +187,7 @@
     },
     {
       "name": "Run Flow And Progression Agent",
-      "focus": "Protect the now-validated between-stage UI and game-over-to-armory flow while checking save-safe progression surfaces."
+      "focus": "Protect the now-validated between-stage UI, field-drain stage endings, idle cabinet demo, and game-over-to-armory flow while checking save-safe progression surfaces."
     },
     {
       "name": "Combat Feel And Weapon FX Agent",
@@ -183,7 +195,7 @@
     },
     {
       "name": "Release QA And Deployment Agent",
-      "focus": "Release gates, GitHub Pages Actions deployment, published-build validation, and final checklist tracking."
+      "focus": "Release gates, final QA checklist tracking, GitHub Pages Actions deployment, published-build validation, fresh-save and returning-save checks, and release notes."
     }
   ],
   "githubPagesDeploymentNote": {
@@ -196,6 +208,7 @@
     "Keep gameplay rules and tunables in data/system modules where possible instead of burying values in scene code.",
     "Use DOM overlays for text-heavy UI such as between-stage summaries, armory prompts, upgrade recommendations, and end-game progression prompts.",
     "Use Phaser graphics/sprites for playfield effects, projectile traces, impact bursts, gun-driven reticle animation, and stage/boss presentation.",
+    "Treat SEO and web kit work as release work: validate metadata, icons, manifest, and share previews from the deployed GitHub Pages path, not only from local dev.",
     "When save shape changes, update normalization in src/game/save.ts and test returning-save behavior manually.",
     "After content or tuning changes, rerun npm run balance:report and update DOCS/BALANCE-NOTES.md if the baseline changes materially.",
     "After runtime, asset, or release-script changes, run npm run release:verify before handoff."
