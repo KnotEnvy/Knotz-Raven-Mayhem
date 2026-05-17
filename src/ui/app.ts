@@ -179,17 +179,38 @@ function renderFieldGuide(): string {
         <article>
           <span>1</span>
           <strong>Chain clean shots</strong>
-          <p>Combos multiply score. Accuracy feeds the coin payout after the run.</p>
+          <p>Hits build combo and raise score. Misses reset the chain, so wait for the reticle to recharge before panic firing.</p>
+          <div class="manual-chip-row">
+            <em>Combo = score climb</em>
+            <em>Accuracy = payout</em>
+          </div>
         </article>
         <article>
           <span>2</span>
           <strong>Watch new flock tricks</strong>
-          <p>Later stages reveal shields, armor, splitters, divers, wraiths, and brutes.</p>
+          <p>Each stage adds pressure slowly. Shields need cleaner aim, armor needs extra hits, splitters become minis, and late wraiths drift in and out.</p>
+          <div class="manual-chip-row">
+            <em>Read the warning</em>
+            <em>Prioritize odd birds</em>
+          </div>
         </article>
         <article>
           <span>3</span>
+          <strong>Finish the field</strong>
+          <p>Stages do not end until the flock quota has spawned and every active raven or field powerup has cleared the screen.</p>
+          <div class="manual-chip-row">
+            <em>Clear stragglers</em>
+            <em>Grab drops</em>
+          </div>
+        </article>
+        <article>
+          <span>4</span>
           <strong>Spend between runs</strong>
-          <p>Coins buy guns, Assist Chips, lives, cooldown, combo time, and better payouts.</p>
+          <p>Coins persist locally. Buy a gun for shot identity, install one Assist Chip for handling, then stack upgrades for deeper stage pushes.</p>
+          <div class="manual-chip-row">
+            <em>Guns change shots</em>
+            <em>Upgrades persist</em>
+          </div>
         </article>
       </div>
     </section>
