@@ -1,0 +1,36 @@
+{
+  "name": "Knotz Raven Mayhem",
+  "short_name": "Raven Mayhem",
+  "description": "A 1990s-inspired arcade raven shooter with staged runs, boss fights, local records, and armory upgrades.",
+  "id": "https://knotenvy.github.io/Knotz-Raven-Mayhem/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#12131d",
+  "theme_color": "#181923",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "./social-preview.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Knotz Raven Mayhem social preview"
+    }
+  ]
+}

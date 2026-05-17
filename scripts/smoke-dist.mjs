@@ -4,8 +4,20 @@ import { extname, join, normalize, sep } from 'node:path';
 
 const root = process.cwd();
 const distDir = join(root, 'dist');
-const basePath = '/KnotzBirdShot/';
+const basePath = '/Knotz-Raven-Mayhem/';
 const failures = [];
+const releaseShellAssets = [
+  'favicon.svg',
+  'favicon-16x16.png',
+  'favicon-32x32.png',
+  'apple-touch-icon.png',
+  'manifest.webmanifest',
+  'robots.txt',
+  'sitemap.xml',
+  'social-preview.png',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+];
 
 if (!existsSync(join(distDir, 'index.html'))) {
   fail('dist/index.html is missing. Run npm run build before npm run release:smoke.');
@@ -58,8 +70,14 @@ try {
     await fetchOk(new URL(`./assets/${seedAsset}`, pageUrl).toString(), `seed asset ${seedAsset}`);
   }
 
+  for (const asset of releaseShellAssets) {
+    await fetchOk(new URL(`./${asset}`, pageUrl).toString(), `release shell asset ${asset}`);
+  }
+
   if (failures.length === 0) {
-    console.log(`Dist smoke passed: basePath=${basePath} linkedAssets=${linkedAssets.length} seedAssets=4`);
+    console.log(
+      `Dist smoke passed: basePath=${basePath} linkedAssets=${linkedAssets.length} seedAssets=4 releaseShellAssets=${releaseShellAssets.length}`,
+    );
   }
 } finally {
   server.close();
@@ -83,6 +101,14 @@ function contentType(filePath) {
       return 'text/css; charset=utf-8';
     case '.png':
       return 'image/png';
+    case '.svg':
+      return 'image/svg+xml; charset=utf-8';
+    case '.webmanifest':
+      return 'application/manifest+json; charset=utf-8';
+    case '.txt':
+      return 'text/plain; charset=utf-8';
+    case '.xml':
+      return 'application/xml; charset=utf-8';
     case '.wav':
       return 'audio/wav';
     case '.mp3':

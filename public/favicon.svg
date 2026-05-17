@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Knotz Raven Mayhem</title>
+  <desc id="desc">Neon arcade raven target icon.</desc>
+  <defs>
+    <linearGradient id="bg" x1="14" y1="10" x2="114" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#171826" />
+      <stop offset="0.58" stop-color="#35134a" />
+      <stop offset="1" stop-color="#12131d" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="20" fill="url(#bg)" />
+  <circle cx="64" cy="64" r="46" fill="none" stroke="#42f2d6" stroke-width="8" />
+  <path d="M20 64h25M83 64h25M64 20v25M64 83v25" stroke="#42f2d6" stroke-width="7" stroke-linecap="round" />
+  <path
+    d="M31 67c17-17 34-25 51-22 8 1 15 5 21 11l18 5-18 8c-7 13-20 20-39 22 7-7 10-14 9-22-11 10-27 15-42 16 5-6 7-12 7-18H31Z"
+    fill="#101119"
+  />
+  <path d="m100 55 20 6-20 7c3-5 3-9 0-13Z" fill="#f8c537" />
+  <circle cx="91" cy="55" r="3.5" fill="#f8c537" />
+</svg>

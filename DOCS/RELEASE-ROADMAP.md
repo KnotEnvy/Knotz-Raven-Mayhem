@@ -16,9 +16,10 @@
 - First-pass mobile tuning for touch hit forgiveness, compact HUD layout, touch-action handling, and mobile/reduced-motion particle caps.
 - First-pass production-feel art pass with procedural set dressing for all six named stages and stronger cabinet HUD framing.
 - Production audio polish with stage-aware procedural music motifs plus distinct weapon, enemy, powerup, boss warning, boss defeat, and stage-clear cues.
-- Static release verification through `npm run release:verify`, including build output, deployable asset-link checks, and served `dist/` smoke coverage from a simulated GitHub Pages subpath.
+- Release-shell SEO and web kit: canonical URL, production title/description, Open Graph/Twitter cards, favicons, app icons, web manifest, robots file, sitemap, and social preview image.
+- Static release verification through `npm run release:verify`, including build output, deployable asset-link checks, release-shell asset checks, and served `dist/` smoke coverage from a simulated GitHub Pages project path.
 - Deterministic balance report through `npm run balance:report`, with the current baseline recorded in `DOCS/BALANCE-NOTES.md`.
-- GitHub Actions release verification and manual GitHub Pages deployment workflow documented in `DOCS/DEPLOYMENT-RUNBOOK.md`.
+- GitHub Actions release verification and manual GitHub Pages deployment workflow documented in `DOCS/DEPLOYMENT-RUNBOOK.md`; the live Pages deployment has been user-confirmed at `https://knotenvy.github.io/Knotz-Raven-Mayhem/`.
 - V1 scope decision: local records only; online leaderboard and account features are deferred beyond the first public release.
 - Manual release QA checklist in `DOCS/RELEASE-QA-CHECKLIST.md`.
 
@@ -26,11 +27,11 @@
 
 - Add final original production visuals: final raven variants, boss sprite work, and richer UI cabinet art. Optional recorded music beds or SFX can replace the procedural audio if desired.
 - Validate the economy and difficulty curve from real play sessions using `DOCS/BALANCE-NOTES.md` and the named tuning constants: early unlock timing, boss health, staggered enemy reveal pacing, Jackpot Alley payout feel, late Wraith/Brute readability, powerup drop rates, stage length, and coin payouts.
-- Run the release QA checklist: first-load, new save, returning save, all menu buttons, every weapon, every powerup, boss stage, game over, mobile layout, `npm run release:verify`, and GitHub Pages deploy.
+- Run the remaining manual release QA checklist: first-load, new save, returning save, all menu buttons, every weapon, every powerup, boss stage, game over, mobile layout, and `npm run release:verify`.
 - Validate mobile-specific tuning on real touch devices: hit radius, HUD density, pause affordance, and performance particle caps.
 
 ## Next Recommended Build Slices
 
 1. Manual balance pass on the new 9-stage arc using `src/game/data/tuning.ts`, `src/game/data/stages.ts`, and the release QA checklist.
 2. Final production asset pass using the existing raven/explosion assets, new Wraith/Brute color identities, and procedural stage art as seed references.
-3. Mobile polish and deploy rehearsal.
+3. Mobile polish and final checklist pass.

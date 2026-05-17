@@ -11,6 +11,8 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 - [ ] Run `npm run release:check`, `npm run release:smoke`, or `npm run release:verify` for the full build-and-served-output gate.
 - [ ] Serve the production build with `npm run preview` or an equivalent static server.
 - [ ] Confirm first load has no console errors and all seed assets load from the deployed base path.
+- [ ] Confirm release-shell assets load from the deployed base path: favicon, app icons, manifest, social preview image, robots file, and sitemap.
+- [ ] Confirm the page source contains the canonical URL, production title/description, Open Graph tags, Twitter card tags, theme color, and mobile/iOS web app tags.
 
 ## Save States
 
@@ -72,10 +74,11 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 ## Release Deployment
 
 - [ ] `dist/` contains `index.html` and static assets after `npm run build`.
-- [ ] Production build works from a non-root static path; `npm run release:check` and `npm run release:smoke` pass and Vite `base: './'` is preserved.
+- [ ] Production build works from the `/Knotz-Raven-Mayhem/` project path; `npm run release:check` and `npm run release:smoke` pass and Vite `base: './'` is preserved.
 - [ ] GitHub Pages settings use Source: `GitHub Actions`, not the classic branch/folder Pages source.
 - [ ] The `Release Verification` GitHub Actions workflow is green on the release commit.
 - [ ] The `Deploy GitHub Pages` workflow has been run manually from `master` and the run event is `workflow_dispatch`.
+- [ ] Published URL is `https://knotenvy.github.io/Knotz-Raven-Mayhem/`.
 - [ ] Published build first-loads in a fresh browser profile with an empty local save.
 - [ ] Published build loads with an existing local save from the prior release candidate.
 - [ ] Final release notes list any remaining asset, mobile, leaderboard, or balance caveats.

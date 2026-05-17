@@ -1,6 +1,6 @@
 # Knotz Raven Mayhem Deployment Runbook
 
-This repo is prepared for static GitHub Pages deployment from the Vite `dist/` output. The release path is local records only for v1; online leaderboards and account features are deferred.
+This repo is prepared for static GitHub Pages deployment from the Vite `dist/` output at `https://knotenvy.github.io/Knotz-Raven-Mayhem/`. The release path is local records only for v1; online leaderboards and account features are deferred.
 
 ## Pre-Deploy Gates
 
@@ -11,7 +11,7 @@ npm install
 npm run release:verify
 ```
 
-`release:verify` runs the deterministic balance report, the production build, the static `dist/` verifier, and an HTTP smoke test that serves the built files from a simulated GitHub Pages subpath.
+`release:verify` runs the deterministic balance report, the production build, the static `dist/` verifier, release-shell asset checks, and an HTTP smoke test that serves the built files from a simulated `/Knotz-Raven-Mayhem/` GitHub Pages project path.
 
 ## Manual QA
 
@@ -39,6 +39,8 @@ The final deploy should not proceed until these areas are checked:
 5. Confirm the run shows the `workflow_dispatch` event. That manual event is the intended deployment trigger for `.github/workflows/pages.yml`.
 6. After deployment, open the workflow-provided Pages URL.
 7. Run the published-build checks from `DOCS/RELEASE-QA-CHECKLIST.md`.
+
+Current release note: the project has been user-confirmed live on GitHub Pages at `https://knotenvy.github.io/Knotz-Raven-Mayhem/`. Future release candidates should still repeat the workflow checks above.
 
 If the Pages site shows a blank white screen after a successful build, first confirm the repository is using the `GitHub Actions` Pages source. The classic branch/folder source can serve stale or mismatched files after the Vite stack migration.
 
