@@ -28,9 +28,7 @@
     {
       "src": "./social-preview.png",
       "sizes": "1200x630",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Knotz Raven Mayhem social preview"
+      "type": "image/png"
     }
   ]
 }
