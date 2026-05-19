@@ -10,9 +10,13 @@ import type {
 } from '../game/types';
 import { dispatchCommand, onUiState, type UiState } from './events';
 
+const ARCADE_HOME_URL = 'https://knotenvy.github.io/';
+const RAVEN_MAYHEM_URL = 'https://knotenvy.github.io/Knotz-Raven-Mayhem/';
+
 const root = () => document.getElementById('ui-root');
 
 export function initializeUi(): void {
+  document.body.classList.add('game-shell-ready');
   onUiState(render);
 
   document.addEventListener('click', (event) => {
@@ -79,6 +83,7 @@ function renderAttract(state: Extract<UiState, { screen: 'attract' }>): string {
       ${state.mode === 'upgrade-guide' ? renderUpgradeGuide(state.upgrades) : ''}
       ${state.mode === 'armory-guide' ? renderArmoryGuide(state.weapons, state.crosshairs) : ''}
       ${state.mode === 'home' ? renderHomeStats(state.save) : ''}
+      ${state.mode === 'home' ? renderPlatformRoutes() : ''}
       <footer class="coin-line">${state.mode === 'home' ? 'Idle cabinet demo starts after 15 seconds.' : 'Press Start or click Start Run. Space pauses during play.'}</footer>
     </main>
   `;
@@ -106,6 +111,15 @@ function renderMainMenu(): string {
       <button data-action="open-records">Records</button>
       <button data-action="open-options">Options</button>
       <button data-action="open-credits">Credits</button>
+    </nav>
+  `;
+}
+
+function renderPlatformRoutes(): string {
+  return `
+    <nav class="platform-route-row" aria-label="Arcade platform links">
+      <a href="${ARCADE_HOME_URL}" rel="home">Arcade Home</a>
+      <a href="${RAVEN_MAYHEM_URL}" aria-current="page">Raven Mayhem</a>
     </nav>
   `;
 }
@@ -385,6 +399,7 @@ function renderCredits(): string {
       <div class="credits-copy">
         <p><strong>Knotz Raven Mayhem</strong> is built from the original raven click-target prototype and expanded into a Phaser-powered arcade run game.</p>
         <p>Original seed assets: raven sprite, explosion sheet, and boom audio. Current build: Phaser runtime, roguelite progression, DOM arcade UI, procedural cabinet audio, and local save progression.</p>
+        <p class="platform-copy"><a href="${ARCADE_HOME_URL}" rel="home">KnotEnvy Arcade home</a> / <a href="${RAVEN_MAYHEM_URL}">Raven Mayhem release page</a></p>
       </div>
     </section>
   `;

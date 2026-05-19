@@ -31,6 +31,7 @@ const ATTRACT_IDLE_MS = 15000;
 const ATTRACT_DEMO_SLIDE_MS = 10000;
 const ATTRACT_DEMO_SEQUENCE: AttractDemoMode[] = ['raven-guide', 'field-guide', 'upgrade-guide', 'armory-guide'];
 const MENU_RAVEN_POOL_LIMIT = 18;
+const ARMORY_SPARK_POOL_LIMIT = 90;
 
 export class AttractScene extends Phaser.Scene {
   private save!: SaveData;
@@ -42,6 +43,7 @@ export class AttractScene extends Phaser.Scene {
   private idleTimer = 0;
   private demoTimer = 0;
   private demoSlideIndex = 0;
+  private armorySparkPool: Phaser.GameObjects.Arc[] = [];
 
   constructor() {
     super('AttractScene');
@@ -52,6 +54,7 @@ export class AttractScene extends Phaser.Scene {
     this.mode = data.mode ?? 'home';
     this.ravens = [];
     this.ravenPool = [];
+    this.armorySparkPool = [];
     this.cameras.main.setBackgroundColor(0x070510);
     this.createBackdrop();
     this.bindCommands();
@@ -161,31 +164,42 @@ export class AttractScene extends Phaser.Scene {
       onCommand('purchase-weapon', ({ id }) => {
         if (!id) return;
         this.resetAttractIdle();
+        const previous = this.save;
         this.save = purchaseWeapon(this.save, id as SaveData['selectedWeapon']);
+        this.playArmoryTransactionFx(this.save !== previous, this.loadoutFxColor(id), this.save !== previous ? 'Gun unlocked' : 'Need more coins', 'loadout');
         this.renderUi();
       }),
       onCommand('select-weapon', ({ id }) => {
         if (!id) return;
         this.resetAttractIdle();
+        const previous = this.save;
         this.save = selectWeapon(this.save, id as SaveData['selectedWeapon']);
+        this.playArmoryTransactionFx(this.save !== previous, this.loadoutFxColor(id), 'Gun equipped', 'loadout');
         this.renderUi();
       }),
       onCommand('purchase-crosshair', ({ id }) => {
         if (!id) return;
         this.resetAttractIdle();
+        const previous = this.save;
         this.save = purchaseCrosshair(this.save, id as SaveData['selectedCrosshair']);
+        this.playArmoryTransactionFx(this.save !== previous, this.loadoutFxColor(id), this.save !== previous ? 'Assist chip online' : 'Need more coins', 'loadout');
         this.renderUi();
       }),
       onCommand('select-crosshair', ({ id }) => {
         if (!id) return;
         this.resetAttractIdle();
+        const previous = this.save;
         this.save = selectCrosshair(this.save, id as SaveData['selectedCrosshair']);
+        this.playArmoryTransactionFx(this.save !== previous, this.loadoutFxColor(id), 'Assist chip installed', 'loadout');
         this.renderUi();
       }),
       onCommand('purchase-upgrade', ({ id }) => {
         if (!id) return;
         this.resetAttractIdle();
+        const previousRank = this.save.upgrades[id as keyof SaveData['upgrades']] ?? 0;
         this.save = purchaseUpgrade(this.save, id as keyof SaveData['upgrades']);
+        const nextRank = this.save.upgrades[id as keyof SaveData['upgrades']] ?? 0;
+        this.playArmoryTransactionFx(nextRank > previousRank, upgradeFxColor(id), nextRank > previousRank ? `Upgrade rank ${nextRank}` : 'Need more coins', 'upgrade');
         this.renderUi();
       }),
       onCommand('cycle-setting', ({ id }) => {
@@ -261,6 +275,123 @@ export class AttractScene extends Phaser.Scene {
     });
   }
 
+  private playArmoryTransactionFx(success: boolean, color: number, label: string, intensity: 'loadout' | 'upgrade'): void {
+    const activeColor = success ? color : 0xff315a;
+    const centerX = this.scale.width / 2;
+    const centerY = this.scale.height * 0.55;
+    const radius = intensity === 'upgrade' ? 142 : 104;
+    const ring = this.add.graphics().setDepth(8);
+
+    ring.setPosition(centerX, centerY);
+    ring.lineStyle(success ? 5 : 3, activeColor, success ? 0.86 : 0.7);
+    ring.strokeCircle(0, 0, radius);
+    ring.lineStyle(2, 0xffffff, success ? 0.38 : 0.22);
+    ring.strokeCircle(0, 0, radius * 0.72);
+    ring.lineStyle(2, activeColor, 0.44);
+
+    const spokes = intensity === 'upgrade' ? 12 : 8;
+    for (let index = 0; index < spokes; index++) {
+      const angle = (Math.PI * 2 * index) / spokes;
+      ring.lineBetween(Math.cos(angle) * radius * 0.42, Math.sin(angle) * radius * 0.42, Math.cos(angle) * radius * 1.08, Math.sin(angle) * radius * 1.08);
+    }
+
+    if (intensity === 'upgrade') {
+      for (let index = 0; index < 4; index++) {
+        const y = -64 + index * 42;
+        ring.strokeRoundedRect(-170 + index * 12, y, 340 - index * 24, 18, 6);
+      }
+    }
+
+    const text = this.add.text(centerX, centerY - radius - 28, label.toUpperCase(), {
+      fontFamily: 'Impact, Haettenschweiler, sans-serif',
+      fontSize: intensity === 'upgrade' ? '34px' : '26px',
+      color: success ? '#ffe56a' : '#ff315a',
+      stroke: '#070510',
+      strokeThickness: 6,
+      align: 'center',
+    });
+    text.setOrigin(0.5);
+    text.setDepth(9);
+
+    if (!this.save.settings.reducedMotion) {
+      this.emitArmorySparks(centerX, centerY, activeColor, success ? (intensity === 'upgrade' ? 42 : 26) : 12, radius * 1.25);
+    }
+
+    this.tweens.add({
+      targets: ring,
+      alpha: 0,
+      scale: success ? 1.22 : 0.86,
+      duration: this.save.settings.reducedMotion ? 180 : 520,
+      ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
+    });
+    this.tweens.add({
+      targets: text,
+      y: text.y - 26,
+      alpha: 0,
+      duration: this.save.settings.reducedMotion ? 280 : 760,
+      ease: 'Quad.easeOut',
+      onComplete: () => text.destroy(),
+    });
+  }
+
+  private emitArmorySparks(x: number, y: number, color: number, count: number, spread: number): void {
+    const capped = this.scale.width <= 860 ? Math.ceil(count * 0.62) : count;
+
+    for (let index = 0; index < capped; index++) {
+      const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+      const distance = Phaser.Math.FloatBetween(spread * 0.34, spread);
+      const spark = this.acquireArmorySpark(x, y, Phaser.Math.FloatBetween(3, 6), color);
+      spark.setDepth(9);
+      spark.setBlendMode(Phaser.BlendModes.ADD);
+
+      this.tweens.add({
+        targets: spark,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance * 0.74,
+        alpha: 0,
+        scale: 0.18,
+        duration: Phaser.Math.Between(360, 720),
+        ease: 'Cubic.easeOut',
+        onComplete: () => this.releaseArmorySpark(spark),
+      });
+    }
+  }
+
+  private acquireArmorySpark(x: number, y: number, radius: number, color: number): Phaser.GameObjects.Arc {
+    const spark = this.armorySparkPool.pop() ?? this.add.circle(0, 0, radius, color, 0.9);
+    spark.setPosition(x, y);
+    spark.setRadius(radius);
+    spark.setFillStyle(color, 0.9);
+    spark.setActive(true);
+    spark.setVisible(true);
+    spark.setAlpha(1);
+    spark.setScale(1);
+    return spark;
+  }
+
+  private releaseArmorySpark(spark: Phaser.GameObjects.Arc): void {
+    this.tweens.killTweensOf(spark);
+    spark.setActive(false);
+    spark.setVisible(false);
+    spark.setBlendMode(Phaser.BlendModes.NORMAL);
+    if (this.armorySparkPool.length < ARMORY_SPARK_POOL_LIMIT) {
+      this.armorySparkPool.push(spark);
+    } else {
+      spark.destroy();
+    }
+  }
+
+  private loadoutFxColor(id: string): number {
+    const weapon = WEAPONS.find((item) => item.id === id);
+    if (weapon) return Phaser.Display.Color.HexStringToColor(weapon.color).color;
+
+    const crosshair = CROSSHAIRS.find((item) => item.id === id);
+    if (crosshair) return Phaser.Display.Color.HexStringToColor(crosshair.color).color;
+
+    return 0xffe56a;
+  }
+
   private spawnRaven(): void {
     const fromLeft = Math.random() > 0.5;
     const enemy = Math.random() > 0.82 ? ENEMIES.golden : Math.random() > 0.62 ? ENEMIES.fast : ENEMIES.normal;
@@ -302,5 +433,20 @@ export class AttractScene extends Phaser.Scene {
     } else {
       sprite.destroy();
     }
+  }
+}
+
+function upgradeFxColor(id: string): number {
+  switch (id) {
+    case 'steadyHands':
+      return 0x20f2ff;
+    case 'comboCore':
+      return 0xff3fb4;
+    case 'thickJacket':
+      return 0xff315a;
+    case 'bountyChip':
+      return 0xffd447;
+    default:
+      return 0xffe56a;
   }
 }

@@ -37,6 +37,7 @@ interface PowerupActor {
 const ENEMY_SPRITE_POOL_LIMIT = 32;
 const EXPLOSION_POOL_LIMIT = 18;
 const FEATHER_POOL_LIMIT = 96;
+const SPARK_POOL_LIMIT = 120;
 const TEXT_POOL_LIMIT = 32;
 const GRAPHICS_POOL_LIMIT = 24;
 const POWERUP_POOL_LIMIT = 12;
@@ -67,9 +68,11 @@ export class GameScene extends Phaser.Scene {
   private enemySpritePool: Phaser.GameObjects.Sprite[] = [];
   private explosionPool: Phaser.GameObjects.Sprite[] = [];
   private featherPool: Phaser.GameObjects.Rectangle[] = [];
+  private sparkPool: Phaser.GameObjects.Arc[] = [];
   private textPool: Phaser.GameObjects.Text[] = [];
   private graphicsPool: Phaser.GameObjects.Graphics[] = [];
   private powerupPool: PowerupActor[] = [];
+  private jackpotFx?: Phaser.GameObjects.Graphics;
 
   constructor() {
     super('GameScene');
@@ -95,12 +98,14 @@ export class GameScene extends Phaser.Scene {
     this.enemySpritePool = [];
     this.explosionPool = [];
     this.featherPool = [];
+    this.sparkPool = [];
     this.textPool = [];
     this.graphicsPool = [];
     this.powerupPool = [];
 
     this.cameras.main.setRoundPixels(false);
     this.createBackground();
+    this.jackpotFx = this.add.graphics().setDepth(-5);
     this.createCrosshair();
     this.bindCommands();
     this.registerInput();
@@ -120,6 +125,7 @@ export class GameScene extends Phaser.Scene {
 
     this.run.update(delta);
     this.updateBackground(delta);
+    this.updateJackpotAmbience(time);
     this.updateEnemies(time, delta);
     this.updatePowerups(time, delta);
     this.maybeSpawnEnemy(delta);
@@ -376,6 +382,26 @@ export class GameScene extends Phaser.Scene {
   private drawJackpotBackdrop(width: number, height: number): void {
     const horizon = height * 0.72;
 
+    this.background.fillStyle(0xffd447, 0.09);
+    for (let y = 48; y < horizon - 80; y += 72) {
+      this.background.fillRect(0, y, width, 9);
+    }
+
+    this.background.fillStyle(0x09040d, 0.64);
+    this.background.fillRoundedRect(width * 0.34, horizon - 244, width * 0.32, 82, 14);
+    this.background.lineStyle(4, 0xffd447, 0.58);
+    this.background.strokeRoundedRect(width * 0.34, horizon - 244, width * 0.32, 82, 14);
+    this.background.lineStyle(3, 0xff7a1f, 0.46);
+    this.background.strokeRoundedRect(width * 0.34 + 12, horizon - 232, width * 0.32 - 24, 58, 10);
+
+    for (let index = 0; index < 3; index++) {
+      const reelX = width * 0.4 + index * width * 0.1;
+      this.background.fillStyle(index === 1 ? 0xff7a1f : 0xffd447, 0.38);
+      this.background.fillRoundedRect(reelX, horizon - 219, 46, 34, 6);
+      this.background.lineStyle(2, 0xffffff, 0.38);
+      this.background.strokeCircle(reelX + 23, horizon - 202, 10);
+    }
+
     this.background.fillStyle(0xffd447, 0.22);
     for (let index = 0; index < 7; index++) {
       const x = width * 0.08 + index * width * 0.13;
@@ -390,6 +416,12 @@ export class GameScene extends Phaser.Scene {
     this.background.lineStyle(2, 0xffffff, 0.24);
     for (let x = 0; x < width; x += 84) {
       this.background.strokeCircle(x, horizon - 46, 12);
+    }
+
+    this.background.lineStyle(2, 0xff7a1f, 0.28);
+    for (let x = -40; x < width + 80; x += 118) {
+      this.background.lineBetween(x, horizon - 12, x + 64, height);
+      this.background.lineBetween(x + 64, horizon - 28, x + 24, height);
     }
   }
 
@@ -436,6 +468,34 @@ export class GameScene extends Phaser.Scene {
         star.x = this.scale.width + 8;
         star.y = Phaser.Math.Between(0, this.scale.height * 0.72);
       }
+    }
+  }
+
+  private updateJackpotAmbience(time: number): void {
+    if (!this.jackpotFx) return;
+
+    this.jackpotFx.clear();
+    if (!this.stage.bonus) return;
+
+    const width = this.scale.width;
+    const height = this.scale.height;
+    const horizon = height * 0.72;
+    const pulse = (Math.sin(time / 130) + 1) / 2;
+    const sweepX = ((time * 0.16) % (width + 220)) - 110;
+
+    this.jackpotFx.fillStyle(0xffd447, 0.08 + pulse * 0.06);
+    this.jackpotFx.fillRect(0, 0, width, height);
+    this.jackpotFx.lineStyle(3, 0xffd447, 0.2 + pulse * 0.36);
+    this.jackpotFx.lineBetween(sweepX - 70, 0, sweepX + 90, horizon);
+    this.jackpotFx.lineBetween(sweepX + 20, 0, sweepX + 180, horizon);
+
+    for (let x = 28; x < width; x += 74) {
+      const offset = (x / 74) % 2 === 0 ? 0 : Math.PI;
+      const alpha = 0.32 + ((Math.sin(time / 160 + offset) + 1) / 2) * 0.48;
+      this.jackpotFx.fillStyle(0xffffff, alpha);
+      this.jackpotFx.fillCircle(x, horizon - 46, 6);
+      this.jackpotFx.fillStyle(0xffd447, alpha * 0.65);
+      this.jackpotFx.fillCircle(x, horizon - 46, 12);
     }
   }
 
@@ -726,8 +786,15 @@ export class GameScene extends Phaser.Scene {
     const y = actor.sprite.y;
     const radius = actor.radius;
     const bossKilled = actor.boss;
+    const earnedCoins = actor.def.coinValue * (this.run.isPowerupActive('coinRush') ? 2 : 1);
 
     this.floatText(x, y - radius, `+${points}`, actor.def.tint ? `#${actor.def.tint.toString(16).padStart(6, '0')}` : '#ffe56a', 24 + Math.min(18, this.run.comboMultiplier * 2));
+    this.playScoreBurst(x, y, actor, points);
+    const isBonusStage = this.stage.bonus === true;
+    if (earnedCoins > 1 || isBonusStage) {
+      this.floatText(x + Math.min(72, radius), y + radius * 0.32, `+${earnedCoins} COIN`, '#ffd447', 19);
+      this.playCoinBurst(x, y, earnedCoins, isBonusStage);
+    }
     this.createExplosion(x, y, actor.def.scale);
     this.createFeathers(x, y, actor.def.tint ?? this.stage.palette.neon, actor.boss ? 44 : 18);
     this.shakeCamera(actor.boss ? 650 : 160, actor.boss ? 0.018 : 0.006);
@@ -871,6 +938,11 @@ export class GameScene extends Phaser.Scene {
     this.run.coinsEarned += this.stage.rewardCoins;
     arcadeAudio.playStageClear(this.run.stageIndex);
     this.floatText(this.scale.width / 2, this.scale.height * 0.38, `STAGE CLEAR +${this.stage.rewardCoins}`, '#ffe56a', 36);
+    if (this.stage.bonus) {
+      this.playJackpotStageClear();
+    } else {
+      this.playStageRewardBurst(this.scale.width / 2, this.scale.height * 0.42, this.stage.palette.neon);
+    }
     if (!this.save.settings.reducedMotion) this.cameras.main.flash(220, 255, 225, 106, false);
 
     this.completedStageSummary = {
@@ -907,6 +979,7 @@ export class GameScene extends Phaser.Scene {
     arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
     this.renderHud();
     this.showStageBanner(this.stage.bonus ? 'Bonus Stage' : this.stage.title, this.stage.subtitle);
+    if (this.stage.bonus) this.playJackpotIntro();
   }
 
   private clearActorsForStageAdvance(): void {
@@ -1080,6 +1153,211 @@ export class GameScene extends Phaser.Scene {
       this.explosionPool.push(explosion);
     } else {
       explosion.destroy();
+    }
+  }
+
+  private playScoreBurst(x: number, y: number, actor: EnemyActor, points: number): void {
+    const color = actor.def.tint ?? this.stage.palette.neon;
+    const combo = this.run.comboMultiplier;
+    const radius = Math.max(28, actor.radius * (actor.boss ? 0.86 : 0.64));
+    const ring = this.acquireTransientGraphics(76);
+    const spokes = actor.boss ? 18 : Math.min(14, 6 + combo);
+
+    ring.setPosition(x, y);
+    ring.lineStyle(actor.boss ? 5 : 3, color, 0.88);
+    ring.strokeCircle(0, 0, radius);
+    ring.lineStyle(1, 0xffffff, 0.58);
+    ring.strokeCircle(0, 0, radius * 0.58);
+
+    for (let index = 0; index < spokes; index++) {
+      const angle = (Math.PI * 2 * index) / spokes;
+      const inner = radius * 0.72;
+      const outer = radius * 1.22;
+      ring.lineBetween(Math.cos(angle) * inner, Math.sin(angle) * inner, Math.cos(angle) * outer, Math.sin(angle) * outer);
+    }
+
+    if (this.stage.bonus) {
+      ring.lineStyle(2, 0xffd447, 0.72);
+      ring.strokeRoundedRect(-radius * 1.04, -radius * 0.52, radius * 2.08, radius * 1.04, 8);
+    }
+
+    this.tweens.add({
+      targets: ring,
+      alpha: 0,
+      scale: actor.boss ? 1.65 : 1.35,
+      duration: this.save.settings.reducedMotion ? 140 : 320,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(ring),
+    });
+
+    const sparkCount = actor.boss ? 36 : Math.min(22, 8 + combo + Math.floor(points / 90));
+    this.emitSparkBurst(x, y, color, sparkCount, 78, actor.boss ? 180 : 118);
+
+    if (combo >= 3) {
+      this.floatText(x, y + radius * 0.55, `x${combo} CHAIN`, '#20f2ff', 18 + Math.min(combo, 10));
+    }
+  }
+
+  private playCoinBurst(x: number, y: number, coins: number, jackpot: boolean): void {
+    const burstCount = Math.min(jackpot ? 34 : 18, 6 + coins * 3);
+    const ring = this.acquireTransientGraphics(77);
+
+    ring.setPosition(x, y);
+    ring.lineStyle(jackpot ? 4 : 2, 0xffd447, 0.86);
+    ring.strokeCircle(0, 0, jackpot ? 54 : 34);
+    ring.lineStyle(1, 0xffffff, 0.45);
+    for (let index = 0; index < 8; index++) {
+      const angle = (Math.PI * 2 * index) / 8;
+      ring.strokeCircle(Math.cos(angle) * 31, Math.sin(angle) * 31, 7);
+    }
+
+    this.tweens.add({
+      targets: ring,
+      alpha: 0,
+      scale: jackpot ? 1.9 : 1.45,
+      duration: this.save.settings.reducedMotion ? 160 : 360,
+      ease: 'Cubic.easeOut',
+      onComplete: () => this.releaseTransientGraphics(ring),
+    });
+
+    this.emitSparkBurst(x, y, 0xffd447, burstCount, 79, jackpot ? 168 : 100, true);
+  }
+
+  private playStageRewardBurst(x: number, y: number, color: number): void {
+    const burst = this.acquireTransientGraphics(82);
+    burst.setPosition(x, y);
+    burst.lineStyle(4, color, 0.72);
+    burst.strokeCircle(0, 0, 84);
+    burst.lineStyle(2, 0xffe56a, 0.65);
+    burst.strokeCircle(0, 0, 118);
+    this.tweens.add({
+      targets: burst,
+      alpha: 0,
+      scale: 1.35,
+      duration: this.save.settings.reducedMotion ? 180 : 420,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(burst),
+    });
+    this.emitSparkBurst(x, y, color, 28, 83, 180);
+  }
+
+  private playJackpotIntro(): void {
+    const x = this.scale.width / 2;
+    const y = this.scale.height * 0.46;
+    const marquee = this.acquireTransientGraphics(84);
+
+    marquee.setPosition(x, y);
+    marquee.fillStyle(0xffd447, 0.12);
+    marquee.fillRoundedRect(-180, -54, 360, 108, 16);
+    marquee.lineStyle(4, 0xffd447, 0.82);
+    marquee.strokeRoundedRect(-180, -54, 360, 108, 16);
+    marquee.lineStyle(2, 0xffffff, 0.58);
+    for (let index = 0; index < 10; index++) {
+      marquee.strokeCircle(-150 + index * 33, -36, 6);
+      marquee.strokeCircle(-150 + index * 33, 36, 6);
+    }
+
+    this.floatText(x, y - 8, 'JACKPOT READY', '#ffd447', 36);
+    this.emitSparkBurst(x, y, 0xffd447, 32, 85, 220, true);
+    this.tweens.add({
+      targets: marquee,
+      alpha: 0,
+      scale: 1.12,
+      duration: this.save.settings.reducedMotion ? 220 : 620,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(marquee),
+    });
+  }
+
+  private playJackpotStageClear(): void {
+    const x = this.scale.width / 2;
+    const y = this.scale.height * 0.4;
+    const width = this.scale.width;
+    const jackpot = this.acquireTransientGraphics(86);
+
+    jackpot.setPosition(0, 0);
+    jackpot.fillStyle(0xffd447, 0.12);
+    jackpot.fillRect(0, 0, width, this.scale.height);
+    jackpot.lineStyle(5, 0xffd447, 0.72);
+    jackpot.lineBetween(0, y - 82, width, y - 122);
+    jackpot.lineBetween(0, y + 82, width, y + 122);
+    jackpot.lineStyle(2, 0xffffff, 0.5);
+    for (let index = 0; index < 16; index++) {
+      const coinX = (width * index) / 15;
+      jackpot.strokeCircle(coinX, y - 102 + (index % 2) * 28, 10);
+      jackpot.strokeCircle(coinX, y + 102 - (index % 2) * 28, 10);
+    }
+
+    this.floatText(x, y - 10, 'JACKPOT BANKED', '#ffd447', 40);
+    this.emitSparkBurst(x, y, 0xffd447, 44, 87, 260, true);
+    this.emitSparkBurst(width * 0.18, y + 42, 0xff7a1f, 22, 87, 180, true);
+    this.emitSparkBurst(width * 0.82, y - 42, 0xff7a1f, 22, 87, 180, true);
+    this.tweens.add({
+      targets: jackpot,
+      alpha: 0,
+      duration: this.save.settings.reducedMotion ? 220 : 680,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(jackpot),
+    });
+  }
+
+  private emitSparkBurst(
+    x: number,
+    y: number,
+    color: number,
+    count: number,
+    depth: number,
+    spread: number,
+    coinLike = false,
+  ): void {
+    const capped = this.save.settings.reducedMotion
+      ? Math.min(count, 7)
+      : this.isCompactPlayfield()
+        ? Math.ceil(count * 0.58)
+        : count;
+
+    for (let index = 0; index < capped; index++) {
+      const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+      const distance = Phaser.Math.FloatBetween(spread * 0.24, spread);
+      const radius = coinLike ? Phaser.Math.FloatBetween(3.4, 6.2) : Phaser.Math.FloatBetween(2.2, 4.8);
+      const spark = this.acquireSpark(x, y, radius, color, coinLike ? 0.95 : 0.84);
+      spark.setDepth(depth);
+      spark.setBlendMode(Phaser.BlendModes.ADD);
+
+      this.tweens.add({
+        targets: spark,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance * 0.72,
+        alpha: 0,
+        scale: coinLike ? 0.22 : 0.08,
+        duration: this.save.settings.reducedMotion ? 180 : Phaser.Math.Between(340, 680),
+        ease: 'Cubic.easeOut',
+        onComplete: () => this.releaseSpark(spark),
+      });
+    }
+  }
+
+  private acquireSpark(x: number, y: number, radius: number, color: number, alpha: number): Phaser.GameObjects.Arc {
+    const spark = this.sparkPool.pop() ?? this.add.circle(0, 0, radius, color, alpha);
+    spark.setPosition(x, y);
+    spark.setRadius(radius);
+    spark.setFillStyle(color, alpha);
+    spark.setActive(true);
+    spark.setVisible(true);
+    spark.setAlpha(1);
+    spark.setScale(1);
+    return spark;
+  }
+
+  private releaseSpark(spark: Phaser.GameObjects.Arc): void {
+    this.tweens.killTweensOf(spark);
+    spark.setActive(false);
+    spark.setVisible(false);
+    spark.setBlendMode(Phaser.BlendModes.NORMAL);
+    if (this.sparkPool.length < SPARK_POOL_LIMIT) {
+      this.sparkPool.push(spark);
+    } else {
+      spark.destroy();
     }
   }
 

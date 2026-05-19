@@ -6,6 +6,11 @@
     <meta name="theme-color" content="#181923" />
     <meta name="color-scheme" content="dark" />
     <meta name="application-name" content="Knotz Raven Mayhem" />
+    <meta name="author" content="KnotEnvy" />
+    <meta name="publisher" content="KnotEnvy" />
+    <meta name="keywords" content="Knotz Raven Mayhem, arcade shooter, raven game, browser game, Phaser arcade game" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="format-detection" content="telephone=no" />
     <meta name="apple-mobile-web-app-title" content="Raven Mayhem" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -22,6 +27,7 @@
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" sizes="180x180" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Knotz Raven Mayhem" />
     <meta property="og:url" content="https://knotenvy.github.io/Knotz-Raven-Mayhem/" />
     <meta property="og:title" content="Knotz Raven Mayhem | Arcade Raven Shooter" />
@@ -34,6 +40,7 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Knotz Raven Mayhem neon arcade raven shooter preview." />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://knotenvy.github.io/Knotz-Raven-Mayhem/" />
     <meta name="twitter:title" content="Knotz Raven Mayhem | Arcade Raven Shooter" />
     <meta
       name="twitter:description"
@@ -41,11 +48,76 @@
     />
     <meta name="twitter:image" content="https://knotenvy.github.io/Knotz-Raven-Mayhem/social-preview.png" />
     <meta name="twitter:image:alt" content="Knotz Raven Mayhem neon arcade raven shooter preview." />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Knotz Raven Mayhem",
+        "url": "https://knotenvy.github.io/Knotz-Raven-Mayhem/",
+        "image": "https://knotenvy.github.io/Knotz-Raven-Mayhem/social-preview.png",
+        "description": "A 1990s-inspired browser arcade raven shooter with staged runs, boss fights, local records, and armory upgrades.",
+        "applicationCategory": "Game",
+        "gamePlatform": "Web browser",
+        "operatingSystem": "Any modern browser",
+        "genre": ["Arcade", "Shooter"],
+        "playMode": "SinglePlayer",
+        "inLanguage": "en-US",
+        "publisher": {
+          "@type": "Organization",
+          "name": "KnotEnvy",
+          "url": "https://knotenvy.github.io/"
+        },
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "KnotEnvy Arcade",
+          "url": "https://knotenvy.github.io/"
+        }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "KnotEnvy Arcade",
+            "item": "https://knotenvy.github.io/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Knotz Raven Mayhem",
+            "item": "https://knotenvy.github.io/Knotz-Raven-Mayhem/"
+          }
+        ]
+      }
+    </script>
     <title>Knotz Raven Mayhem | Arcade Raven Shooter</title>
   </head>
   <body>
     <div id="game-root" aria-label="Knotz Raven Mayhem game canvas"></div>
     <div id="ui-root" aria-live="polite"></div>
+    <section id="seo-landing" class="seo-landing" aria-labelledby="seo-title">
+      <p>KnotEnvy Arcade</p>
+      <h1 id="seo-title">Knotz Raven Mayhem</h1>
+      <p>
+        Play a 1990s-inspired browser arcade shooter with staged raven runs, boss fights, Jackpot Alley,
+        local records, and persistent armory upgrades.
+      </p>
+      <nav aria-label="Knotz Raven Mayhem release links">
+        <a href="https://knotenvy.github.io/">Arcade Home</a>
+        <a href="https://knotenvy.github.io/Knotz-Raven-Mayhem/" aria-current="page">Play Raven Mayhem</a>
+      </nav>
+    </section>
+    <noscript>
+      <section class="noscript-card">
+        <h2>JavaScript Required</h2>
+        <p>Knotz Raven Mayhem runs in a browser canvas and requires JavaScript to play.</p>
+        <a href="https://knotenvy.github.io/">Return to KnotEnvy Arcade</a>
+      </section>
+    </noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

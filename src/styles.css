@@ -34,6 +34,10 @@ body {
     radial-gradient(circle at 22% 74%, rgba(32, 242, 255, 0.18), transparent 30%), var(--bg);
 }
 
+body.game-shell-ready .seo-landing {
+  display: none;
+}
+
 button {
   min-height: 42px;
   border: 2px solid var(--line);
@@ -65,9 +69,84 @@ button:disabled {
   opacity: 0.72;
 }
 
+a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--gold);
+}
+
 #game-root canvas {
   display: block;
   touch-action: none;
+}
+
+.seo-landing,
+.noscript-card {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  gap: 14px;
+  padding: clamp(24px, 6vw, 72px);
+  text-align: center;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.13) 50%),
+    radial-gradient(circle at 50% 20%, rgba(255, 63, 180, 0.24), transparent 34%),
+    var(--bg);
+  background-size: 100% 4px, 100% 100%, 100% 100%;
+}
+
+.seo-landing p,
+.noscript-card p {
+  max-width: 740px;
+  margin: 0 auto;
+  color: var(--text);
+  font-size: clamp(16px, 2vw, 22px);
+  line-height: 1.45;
+}
+
+.seo-landing > p:first-child {
+  color: var(--gold);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  text-transform: uppercase;
+}
+
+.seo-landing h1,
+.noscript-card h2 {
+  margin: 0;
+  color: var(--gold);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: clamp(54px, 10vw, 132px);
+  line-height: 0.9;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 14px rgba(255, 63, 180, 0.72),
+    0 0 28px rgba(32, 242, 255, 0.42),
+    6px 8px 0 rgba(0, 0, 0, 0.72);
+}
+
+.seo-landing nav,
+.noscript-card a {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.seo-landing a,
+.noscript-card a,
+.platform-route-row a {
+  border: 1px solid rgba(255, 229, 106, 0.34);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--gold);
+  background: rgba(255, 229, 106, 0.08);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  text-transform: uppercase;
 }
 
 .ui-root {
@@ -200,12 +279,21 @@ button:disabled {
 }
 
 .arcade-menu,
-.modal-actions {
+.modal-actions,
+.platform-route-row {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
   pointer-events: auto;
+}
+
+.platform-route-row {
+  margin-top: -8px;
+}
+
+.platform-route-row a {
+  font-size: 14px;
 }
 
 .primary-command {
@@ -388,6 +476,12 @@ button:disabled {
 
 .credits-copy strong {
   color: var(--gold);
+}
+
+.platform-copy a {
+  color: var(--gold);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  text-transform: uppercase;
 }
 
 .attract-demo-panel {
