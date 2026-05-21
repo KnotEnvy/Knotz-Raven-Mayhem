@@ -105,6 +105,7 @@ export class GameScene extends Phaser.Scene {
 
     this.cameras.main.setRoundPixels(false);
     this.createBackground();
+    this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.jackpotFx = this.add.graphics().setDepth(-5);
     this.createCrosshair();
     this.bindCommands();
@@ -114,6 +115,7 @@ export class GameScene extends Phaser.Scene {
     arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
       this.unsubscribers.forEach((unsubscribe) => unsubscribe());
       this.unsubscribers = [];
     });
@@ -218,6 +220,15 @@ export class GameScene extends Phaser.Scene {
 
     for (let y = height * 0.74; y < height; y += 36) {
       this.background.lineBetween(0, y, width, y);
+    }
+  }
+
+  private handleResize(): void {
+    this.drawBackground();
+
+    for (const star of this.starfield) {
+      star.x = Phaser.Math.Clamp(star.x, 0, this.scale.width);
+      star.y = Phaser.Math.Clamp(star.y, 0, this.scale.height);
     }
   }
 

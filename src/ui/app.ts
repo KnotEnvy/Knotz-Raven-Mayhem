@@ -17,6 +17,7 @@ const root = () => document.getElementById('ui-root');
 
 export function initializeUi(): void {
   document.body.classList.add('game-shell-ready');
+  ensureOrientationGate();
   onUiState(render);
 
   document.addEventListener('click', (event) => {
@@ -28,8 +29,41 @@ export function initializeUi(): void {
     const id = actionEl.dataset.id;
     if (!action) return;
 
+    if (action === 'start-run') {
+      requestLandscapeOrientation();
+    }
+
     dispatchCommand(action as Parameters<typeof dispatchCommand>[0], { id });
   });
+}
+
+function ensureOrientationGate(): void {
+  if (document.getElementById('orientation-gate')) return;
+
+  const gate = document.createElement('aside');
+  gate.id = 'orientation-gate';
+  gate.className = 'orientation-gate';
+  gate.setAttribute('role', 'status');
+  gate.setAttribute('aria-live', 'polite');
+  gate.innerHTML = `
+    <div>
+      <span class="orientation-icon" aria-hidden="true"></span>
+      <p class="eyebrow">Landscape Cabinet Required</p>
+      <strong>Rotate Your Phone</strong>
+      <small>Knotz Raven Mayhem is tuned for wide-screen shooting.</small>
+    </div>
+  `;
+  document.body.appendChild(gate);
+}
+
+function requestLandscapeOrientation(): void {
+  const orientation = screen.orientation as ScreenOrientation & {
+    lock?: (orientation: 'landscape') => Promise<void>;
+  };
+
+  if (!orientation.lock) return;
+
+  void orientation.lock('landscape').catch(() => undefined);
 }
 
 function render(state: UiState): void {

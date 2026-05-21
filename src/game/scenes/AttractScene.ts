@@ -44,6 +44,7 @@ export class AttractScene extends Phaser.Scene {
   private demoTimer = 0;
   private demoSlideIndex = 0;
   private armorySparkPool: Phaser.GameObjects.Arc[] = [];
+  private backdropLayer?: Phaser.GameObjects.Container;
 
   constructor() {
     super('AttractScene');
@@ -57,14 +58,18 @@ export class AttractScene extends Phaser.Scene {
     this.armorySparkPool = [];
     this.cameras.main.setBackgroundColor(0x070510);
     this.createBackdrop();
+    this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.bindCommands();
     this.bindIdleInput();
     this.renderUi();
     arcadeAudio.startMusic('menu', this.save.settings, 'menu');
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
       this.unsubscribers.forEach((unsubscribe) => unsubscribe());
       this.unsubscribers = [];
+      this.backdropLayer?.destroy(true);
+      this.backdropLayer = undefined;
     });
   }
 
@@ -93,12 +98,16 @@ export class AttractScene extends Phaser.Scene {
   }
 
   private createBackdrop(): void {
+    this.backdropLayer?.destroy(true);
+
     const width = this.scale.width;
     const height = this.scale.height;
+    this.backdropLayer = this.add.container(0, 0).setDepth(-10);
 
     const bg = this.add.graphics();
     bg.fillGradientStyle(0x070510, 0x130a2c, 0x241455, 0x071d35, 1);
     bg.fillRect(0, 0, width, height);
+    this.backdropLayer.add(bg);
 
     const grid = this.add.graphics();
     grid.lineStyle(1, 0x24e6ff, 0.16);
@@ -108,12 +117,18 @@ export class AttractScene extends Phaser.Scene {
     for (let y = height * 0.6; y < height; y += 34) {
       grid.lineBetween(0, y, width, y);
     }
+    this.backdropLayer.add(grid);
 
     const neon = this.add.graphics();
     neon.lineStyle(6, 0xff3fb4, 0.4);
     neon.strokeCircle(width * 0.75, height * 0.25, Math.min(width, height) * 0.22);
     neon.lineStyle(3, 0xffd84d, 0.38);
     neon.strokeCircle(width * 0.75, height * 0.25, Math.min(width, height) * 0.28);
+    this.backdropLayer.add(neon);
+  }
+
+  private handleResize(): void {
+    this.createBackdrop();
   }
 
   private bindCommands(): void {
