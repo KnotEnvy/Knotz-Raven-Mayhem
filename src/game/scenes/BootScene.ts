@@ -28,7 +28,7 @@ export class BootScene extends Phaser.Scene {
 
     this.anims.create({
       key: 'boom-pop',
-      frames: this.anims.generateFrameNumbers(SPRITE_KEYS.explosion, { start: 0, end: 5 }),
+      frames: this.anims.generateFrameNumbers(SPRITE_KEYS.explosion, { start: 0, end: 4 }),
       frameRate: 22,
       repeat: 0,
       hideOnComplete: true,

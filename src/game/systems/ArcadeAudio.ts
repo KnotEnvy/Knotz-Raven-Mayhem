@@ -32,6 +32,8 @@ class ArcadeAudio {
   private musicStep = 0;
   private mode: MusicMode = 'menu';
   private stageId = 'menu';
+  private unlocked = false;
+  private unlockListenersBound = false;
   private settings: GameSettings = {
     musicVolume: 0.65,
     sfxVolume: 0.75,
@@ -48,10 +50,13 @@ class ArcadeAudio {
     this.mode = mode;
     this.stageId = stageId;
     this.musicStep = 0;
-    this.ensureContext();
     this.stopMusic();
 
     if (this.settings.musicVolume <= 0 || this.settings.reducedMotion) return;
+    if (!this.unlocked) {
+      this.bindUnlockListeners();
+      return;
+    }
 
     const profile = this.stageProfile;
     const interval = mode === 'boss' ? 150 : mode === 'run' ? 185 - Math.min(18, Math.max(0, profile.transpose)) : 240;
@@ -222,6 +227,10 @@ class ArcadeAudio {
 
   private ensureContext(): AudioContext | undefined {
     if (typeof window === 'undefined') return undefined;
+    if (!this.unlocked) {
+      this.bindUnlockListeners();
+      return undefined;
+    }
     if (!this.context) {
       const AudioCtor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtor) return undefined;
@@ -231,6 +240,23 @@ class ArcadeAudio {
       void this.context.resume();
     }
     return this.context;
+  }
+
+  private bindUnlockListeners(): void {
+    if (this.unlockListenersBound || typeof window === 'undefined') return;
+    this.unlockListenersBound = true;
+
+    const unlock = () => {
+      if (this.unlocked) return;
+      this.unlocked = true;
+      this.unlockListenersBound = false;
+      this.ensureContext();
+      this.startMusic(this.mode, this.settings, this.stageId);
+    };
+
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
+    window.addEventListener('touchstart', unlock, { once: true, passive: true });
   }
 
   private get stageProfile(): StageAudioProfile {

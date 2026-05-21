@@ -102,12 +102,13 @@ function render(state: UiState): void {
 
 function renderAttract(state: Extract<UiState, { screen: 'attract' }>): string {
   const isDemoMode = isAttractDemoMode(state.mode);
+  const isUtilityMode = isUtilityAttractMode(state.mode);
 
   return `
     <div class="crt-overlay" aria-hidden="true"></div>
-    <main class="attract-shell ${isDemoMode ? 'demo-shell' : ''}">
-      ${renderCabinetTitle(isDemoMode)}
-      ${isDemoMode ? '' : renderMainMenu()}
+    <main class="attract-shell ${isDemoMode ? 'demo-shell' : ''} ${isUtilityMode ? 'utility-shell' : ''}">
+      ${isUtilityMode ? renderUtilityRail(state.mode) : renderCabinetTitle(isDemoMode)}
+      ${isDemoMode || isUtilityMode ? '' : renderMainMenu()}
       ${state.mode === 'armory' ? renderArmory(state.save, state.weapons, state.crosshairs, state.upgrades) : ''}
       ${state.mode === 'records' ? renderRecords(state.save) : ''}
       ${state.mode === 'options' ? renderOptions(state.save.settings) : ''}
@@ -118,13 +119,17 @@ function renderAttract(state: Extract<UiState, { screen: 'attract' }>): string {
       ${state.mode === 'armory-guide' ? renderArmoryGuide(state.weapons, state.crosshairs) : ''}
       ${state.mode === 'home' ? renderHomeStats(state.save) : ''}
       ${state.mode === 'home' ? renderPlatformRoutes() : ''}
-      <footer class="coin-line">${state.mode === 'home' ? 'Idle cabinet demo starts after 15 seconds.' : 'Press Start or click Start Run. Space pauses during play.'}</footer>
+      ${isUtilityMode ? '' : `<footer class="coin-line">${state.mode === 'home' ? 'Idle cabinet demo starts after 15 seconds.' : 'Press Start or click Start Run. Space pauses during play.'}</footer>`}
     </main>
   `;
 }
 
 function isAttractDemoMode(mode: Extract<UiState, { screen: 'attract' }>['mode']): boolean {
   return mode === 'raven-guide' || mode === 'field-guide' || mode === 'upgrade-guide' || mode === 'armory-guide';
+}
+
+function isUtilityAttractMode(mode: Extract<UiState, { screen: 'attract' }>['mode']): boolean {
+  return mode === 'armory' || mode === 'records' || mode === 'options' || mode === 'credits';
 }
 
 function renderCabinetTitle(compact = false): string {
@@ -134,6 +139,28 @@ function renderCabinetTitle(compact = false): string {
       <h1><span>Knotz</span><span>Raven</span><span>Mayhem</span></h1>
       <p class="tagline">Aim sharp. Chain combos. Upgrade the shooter. Outlast the flock.</p>
     </section>
+  `;
+}
+
+function renderUtilityRail(mode: Extract<UiState, { screen: 'attract' }>['mode']): string {
+  const tabs = [
+    ['open-armory', 'Armory', mode === 'armory'],
+    ['open-records', 'Records', mode === 'records'],
+    ['open-options', 'Options', mode === 'options'],
+    ['open-credits', 'Credits', mode === 'credits'],
+  ] as const;
+
+  return `
+    <header class="utility-rail">
+      <button data-action="show-home">Home</button>
+      <strong>Knotz Raven Mayhem</strong>
+      <nav aria-label="Cabinet utility menu">
+        <button class="primary-command" data-action="start-run">Start Run</button>
+        ${tabs
+          .map(([action, label, active]) => `<button data-action="${action}" ${active ? 'disabled aria-current="page"' : ''}>${label}</button>`)
+          .join('')}
+      </nav>
+    </header>
   `;
 }
 

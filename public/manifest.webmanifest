@@ -2,7 +2,7 @@
   "name": "Knotz Raven Mayhem",
   "short_name": "Raven Mayhem",
   "description": "A 1990s-inspired arcade raven shooter with staged runs, boss fights, local records, and armory upgrades.",
-  "id": "https://knotenvy.github.io/Knotz-Raven-Mayhem/",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

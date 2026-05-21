@@ -21,6 +21,8 @@ interface EnemyActor {
   velocityY: number;
   bornMs: number;
   radius: number;
+  visualRadius: number;
+  visualScale: number;
   boss: boolean;
   splitDepth: number;
 }
@@ -576,8 +578,10 @@ export class GameScene extends Phaser.Scene {
     const def = ENEMIES[enemyId];
     const spawnY = y ?? Phaser.Math.Between(80, this.scale.height - 90);
     const sprite = this.acquireEnemySprite(x, spawnY);
+    const visualScaleMultiplier = this.enemyVisualScaleMultiplier;
+    const visualScale = def.scale * visualScaleMultiplier;
     sprite.play('raven-flap');
-    sprite.setScale(def.scale);
+    sprite.setScale(visualScale);
     sprite.setDepth(def.behavior === 'boss' ? 22 : 10);
     sprite.setFlipX(false);
     if (def.tint) sprite.setTint(def.tint);
@@ -594,6 +598,8 @@ export class GameScene extends Phaser.Scene {
       velocityY: Phaser.Math.FloatBetween(-0.11, 0.11) * def.speed,
       bornMs: this.time.now,
       radius: def.radius,
+      visualRadius: def.radius * visualScaleMultiplier,
+      visualScale,
       boss: def.behavior === 'boss',
       splitDepth,
     };
@@ -635,7 +641,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (actor.def.behavior === 'brute') {
-        actor.sprite.scale = actor.def.scale + Math.sin(t * 4) * 0.035;
+        actor.sprite.scale = actor.visualScale + Math.sin(t * 4) * 0.035 * this.enemyVisualScaleMultiplier;
       }
 
       if (actor.boss) {
@@ -1090,9 +1096,9 @@ export class GameScene extends Phaser.Scene {
       actor.healthBar = this.add.graphics().setDepth(actor.boss ? 80 : 40);
     }
 
-    const width = actor.boss ? 220 : actor.radius * 1.7;
+    const width = actor.boss ? 220 * this.enemyVisualScaleMultiplier : actor.visualRadius * 1.7;
     const x = actor.sprite.x - width / 2;
-    const y = actor.sprite.y - actor.radius - 18;
+    const y = actor.sprite.y - actor.visualRadius - 16;
     const progress = Phaser.Math.Clamp(actor.hp / actor.def.health, 0, 1);
 
     actor.healthBar.clear();
@@ -1633,6 +1639,12 @@ export class GameScene extends Phaser.Scene {
     return this.isCompactPlayfield() || this.isCoarsePointer() ? 1 : 0;
   }
 
+  private get enemyVisualScaleMultiplier(): number {
+    if (this.isPhoneLandscapePlayfield()) return 0.76;
+    if (this.isCompactPlayfield()) return 0.86;
+    return 1;
+  }
+
   private get weaponCrosshairRadius(): number {
     if (this.weapon.id === 'scattergun') return 28 + this.weapon.spread * 0.08;
     if (this.weapon.id === 'burstRifle') return 24;
@@ -1642,6 +1654,10 @@ export class GameScene extends Phaser.Scene {
 
   private isCompactPlayfield(): boolean {
     return this.scale.width <= INPUT_TUNING.compactViewportWidth || this.scale.height <= INPUT_TUNING.compactViewportHeight;
+  }
+
+  private isPhoneLandscapePlayfield(): boolean {
+    return this.scale.width > this.scale.height && this.scale.height <= INPUT_TUNING.compactViewportHeight && (this.isCoarsePointer() || this.scale.width <= 940);
   }
 
   private isCoarsePointer(): boolean {
