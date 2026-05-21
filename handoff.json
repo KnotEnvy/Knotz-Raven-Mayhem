@@ -2,19 +2,20 @@
   "project": {
     "name": "Knotz Raven Mayhem",
     "repo": "KnotEnvy/Knotz-Raven-Mayhem",
-    "handoffDate": "2026-05-20",
+    "handoffDate": "2026-05-21",
     "currentBranch": "master",
-    "productGoal": "Prepare Knotz Raven Mayhem for a strong phone-first v1 release. The desktop arcade game, progression loop, local saves, procedural visual polish, SEO/release shell, release scripts, and GitHub Pages deployment path are in place. The next team should focus on making the game responsive, touch-friendly, installable as a PWA, and comfortable to play on real phones.",
+    "productGoal": "Move Knotz Raven Mayhem from a playable beta candidate into an official version 1 release by raising the visual, effects, shader, GFX, and presentation quality while preserving the now-working desktop and landscape-mobile gameplay baseline.",
     "v1ScopeDecision": "Local records and local progression only. Online leaderboards, databases, backend accounts, and cloud saves remain deferred beyond v1."
   },
   "handoffSummary": {
-    "nextTeamMission": "Build out the mobile version of the game so players can reliably play on phones from the GitHub Pages URL and, ideally, install it as a PWA.",
-    "whyThisMatters": "The biggest current complaint is that the game does not yet have a responsive phone experience or a PWA flow that works well. Desktop release quality is close; mobile usability is now the main product gap.",
-    "workingBaseline": "Treat the current desktop gameplay loop, stage progression, armory-forward game-over flow, between-stage screens, Jackpot Alley bonus round, local save behavior, procedural effects, and GitHub Pages Actions deployment path as accepted baseline behavior unless new bugs appear.",
-    "latestKnownGate": "The most recent local v1 polish pass completed with npm.cmd run typecheck, npm.cmd run balance:report, npm.cmd run build, npm.cmd run release:check, npm.cmd run release:verify, and npm.cmd run release:smoke passing."
+    "nextTeamMission": "Own the v1 presentation pass: special effects, GFX, shader-style treatments, stronger stage identity, hit/weapon feedback, boss spectacle, and release-grade visual polish.",
+    "whyThisMatters": "The game loop, armory progression, desktop layout, landscape-mobile flow, local saves, release shell, and deployment path are in good shape. The biggest remaining difference between beta and official v1 is production feel: the game needs more visual punch, clearer feedback, and more memorable stage/boss presentation.",
+    "workingBaseline": "Treat the current desktop and landscape-mobile experience as accepted baseline behavior unless new bugs appear. Do not restart the mobile workstream; protect it while improving effects and presentation.",
+    "latestKnownGate": "Recent local checks passed individually: npm.cmd run typecheck, npm.cmd run build, npm.cmd run release:check, and npm.cmd run release:smoke. The release check signal was Release check passed: linkedAssets=3 seedAssets=4 releaseShellAssets=10. The served dist smoke signal was Dist smoke passed: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10.",
+    "handoffWarning": "CI verification does not publish the live game. The GitHub Pages site updates only after the Deploy GitHub Pages workflow is manually run with workflow_dispatch on master."
   },
   "currentState": {
-    "summary": "The original raven click-target prototype has been rebuilt into a Phaser 3 + TypeScript + Vite arcade shooter with staged runs, bosses, Jackpot Alley bonus pacing, between-stage interstitials, armory-forward game over, armory progression, persistent local saves, DOM overlays, idle cabinet demo/tutorial screens, procedural stage art, stage-aware procedural audio, pooled transient effects, procedural scoring/armory/bonus-round FX, SEO/web kit release assets, release verification scripts, and GitHub Actions workflow scaffolding.",
+    "summary": "The original raven click-target prototype has been rebuilt into a Phaser 3 + TypeScript + Vite arcade shooter with staged runs, bosses, Jackpot Alley bonus pacing, between-stage interstitials, armory-forward game over, persistent local saves, DOM overlays, idle cabinet demo/tutorial screens, procedural stage art, stage-aware procedural audio, pooled transient effects, procedural scoring/armory/bonus-round FX, SEO/web kit release assets, release verification scripts, GitHub Actions workflow scaffolding, and a landscape-first mobile layout.",
     "implementedContent": {
       "stages": "9 named stages with different spawn pools, palettes, speed multipliers, rewards, procedural set dressing, a Jackpot Alley bonus round, overflow scaling after the final named stage, and field-drain stage transitions that wait for active ravens and powerups before showing stage clear.",
       "enemies": "11 enemy definitions: normal, fast, golden, armored, mini, shield, splitter, dive, wraith, brute, and boss. Stage pools reveal enemy types gradually across the full 9-stage arc.",
@@ -22,150 +23,183 @@
       "assistChips": "4 Assist Chip unlocks: Stock Cabinet, Turbo Capacitor, Threat Scanner, Chaos Net. These tune recharge feel and target forgiveness while the live reticle identity follows the equipped gun.",
       "upgrades": "4 permanent upgrade tracks: cooldown, combo window, starting lives, payout scaling.",
       "powerups": "6 powerups: slow-mo, multi-shot, score boost, extra life, overdrive, coin rush.",
-      "audio": "Procedural WebAudio with menu/run/boss modes, stage-aware motifs, weapon-specific shots, enemy-specific hit cues, powerup cues, boss warning/defeat stings, stage clear, miss, and game over.",
+      "audio": "Procedural WebAudio with menu/run/boss modes, stage-aware motifs, weapon-specific shots, enemy-specific hit cues, powerup cues, boss warning/defeat stings, stage clear, miss, and game over. AudioContext creation is gated until a real user gesture.",
       "visuals": "Seed raven/explosion assets plus procedural stage set dressing, cabinet-style HUD framing, weapon-driven reticles, Assist Chip effect labels, cooldown feedback, projectile traces, multishot chain traces, shotgun spread visualization, laser lane feedback, scoring bursts, coin showers, Jackpot Alley ambient FX, and pooled transient effects for long-session performance.",
-      "releaseOps": "Release verification scripts, balance report, SEO/release-shell asset checks, served dist smoke for /Knotz-Raven-Mayhem/, GitHub Actions CI, and manual GitHub Pages workflow are in place.",
-      "pwaShell": "index.html and public/ already include mobile web app tags, icons, manifest.webmanifest, robots.txt, sitemap.xml, social-preview.png, and canonical metadata. The manifest uses start_url './', scope './', display 'standalone', orientation 'any', and app icons under public/icons/."
+      "mobile": "Landscape-first mobile is now the accepted mobile direction. Portrait phones show a rotate gate, the manifest requests landscape, HUD density and enemy visual scale were reduced for phone landscape, and Armory uses a phone-landscape page scroll model instead of nested card scrolling.",
+      "releaseOps": "Release verification scripts, balance report, SEO/release-shell asset checks, served dist smoke for /Knotz-Raven-Mayhem/, GitHub Actions CI, and manual GitHub Pages deployment workflow are in place.",
+      "pwaShell": "index.html and public/ include mobile web app tags, icons, manifest.webmanifest, robots.txt, sitemap.xml, social-preview.png, and canonical metadata. The manifest uses start_url './', scope './', display 'standalone', orientation 'landscape', and same-origin id './'."
     },
     "latestPlaytestUpdate": {
-      "date": "2026-05-20",
-      "summary": "Desktop gameplay and release gates are in good shape. The next team's focus is not broad feature invention; it is mobile responsiveness, touch feel, PWA installability, and real-device validation.",
+      "date": "2026-05-21",
+      "summary": "Mobile is now working well enough to hand off. iPad and laptop layouts are good. Phone landscape supports menu/options/play, and Armory has been reworked as a whole-page mobile scroll surface. Remaining work should focus on v1 effects, GFX, shader-style presentation, and final release polish.",
       "acceptedSignals": [
-        "Between-stage interstitials work well and should be preserved.",
-        "Game-over-to-armory flow makes sense to players and supports progression.",
-        "Idle cabinet demo screens explain ravens, field basics, upgrades, and armory/loadout concepts.",
-        "Stage flow waits for active ravens and field powerups to clear before showing stage-clear.",
-        "Pooled transient effects and latest procedural FX are part of the current release candidate."
+        "Landscape-first mobile direction is accepted.",
+        "Desktop and iPad gameplay remain strong.",
+        "Options, core menu navigation, and gameplay work in landscape mobile testing.",
+        "Game-over-to-armory flow makes sense and should remain a progression anchor.",
+        "Between-stage interstitials and stage drain behavior should be preserved.",
+        "Recent console issues were addressed: manifest id is same-origin, AudioContext is user-gesture gated, and the explosion animation uses valid frames 0-4."
       ],
       "remainingValidation": [
-        "Real phone validation remains the highest-priority gap.",
-        "The full mobile responsive layout needs a pass across common iPhone and Android viewport sizes.",
-        "PWA install/open behavior needs to be verified on real iOS Safari and Android Chrome.",
-        "Published-build fresh-save and returning-save checks still need to be repeated after deployment."
+        "Re-test Armory page scrolling on the user's target phones after the latest page-scroll change.",
+        "Run final real-device checks after major effects/shader work because visual load can affect phone performance.",
+        "Repeat published-build fresh-save and returning-save checks after deployment.",
+        "Run DOCS/RELEASE-QA-CHECKLIST.md end to end before calling v1 final."
       ]
     },
     "knownUnfinishedAreas": [
-      "Phone layout is not yet considered production-ready; users report the screen is not responsive enough.",
-      "PWA installability and standalone launch behavior are not yet validated end to end.",
-      "HUD density, armory scrolling, modal sizing, and touch target sizing need a dedicated mobile pass.",
-      "Touch aiming, hit radius feel, cooldown feedback, pause controls, and game-over/armory routing need real-device tuning.",
-      "Safe-area behavior for notches, browser bars, and home indicators needs explicit CSS and runtime validation.",
-      "Final production visuals remain optional release polish, but do not block the mobile/PWA sprint unless they affect usability."
+      "The game needs a full v1 GFX and special-effects pass to feel release-grade rather than beta-simple.",
+      "Stage identities need more memorable foreground/background effects, transitions, and danger/readability cues.",
+      "Weapon impacts, combo moments, powerups, boss warnings, boss damage, and boss defeats need stronger payoff.",
+      "Shader-style treatments are currently minimal. Any shader/WebGL work should be performance-conscious and degrade cleanly on mobile.",
+      "Current seed raven and explosion assets are functional but not final production art.",
+      "Armory is planned to grow after beta; its mobile scroll model should be preserved and retested as content expands.",
+      "Final mobile performance validation remains necessary after the effects pass."
     ]
   },
   "nextTeamPrimaryFocus": {
-    "theme": "Mobile-first and PWA release readiness.",
+    "theme": "Version 1 effects, GFX, shader-style polish, and release-grade presentation.",
     "priorityOrder": [
       {
         "priority": 1,
-        "title": "Make the game responsive on phones",
+        "title": "Create a v1 visual effects language",
         "details": [
-          "Audit the full app at common phone sizes such as 390x844, 393x873, 412x915, 360x800, and landscape phone sizes.",
-          "Make the DOM overlay layouts in src/ui/app.ts and src/styles.css fit without overlapping controls, clipped buttons, unreadable text, or scroll traps.",
-          "Keep the playfield protected: HUD should be readable but must not cover the center or lower-middle target area during normal play.",
-          "Pay special attention to attract/home, armory, records, options, credits, pause, stage-clear, game-over, HUD, powerup rack, and recommendation panels.",
-          "Use CSS safe-area env() padding where needed for iOS notches and bottom home indicators."
+          "Define a consistent arcade-neon effects style for hits, misses, coins, combo chains, powerups, stage clears, boss warnings, and game over.",
+          "Keep effects readable over the moving playfield; spectacle should not hide ravens, powerups, the reticle, or important HUD information.",
+          "Reuse Phaser Graphics, pooled transient objects, existing sprite assets, and lightweight procedural effects before adding heavy assets.",
+          "Respect reduced-motion settings and screen-shake settings.",
+          "Keep effects data-driven or centralized enough that future content can reuse them instead of duplicating one-off scene code."
         ]
       },
       {
         "priority": 2,
-        "title": "Tune touch gameplay feel",
+        "title": "Upgrade weapon and enemy feedback",
         "details": [
-          "Verify tap-to-shoot works reliably on real phones, not just desktop emulation.",
-          "Evaluate touch hit radius, visual reticle size, cooldown readability, pause access, and target readability while the screen is under finger input.",
-          "Do not change core economy, stage balance, or spawn tuning unless mobile playtesting proves a specific gameplay blocker.",
-          "Keep mobile-specific tuning localized to presentation/input surfaces where possible, such as src/game/scenes/GameScene.ts and existing tuning constants only when justified.",
-          "Preserve reduced-motion and screen-shake settings while making mobile feedback readable without excessive flashing."
+          "Make each weapon feel visually distinct: pistol precision, burst cadence, shotgun spread, and arc laser lane identity should read instantly.",
+          "Strengthen enemy hit and destruction feedback by archetype: armor, shield, splitter, wraith, brute, golden, and boss should not all feel like the same hit effect.",
+          "Improve combo escalation feedback without cluttering the center or lower-middle playfield.",
+          "Use pooled effects and caps; do not create unbounded particles or long-lived graphics objects during late-stage runs.",
+          "Do not change weapon economy, upgrade costs, or stage balance unless an effect pass exposes a concrete gameplay readability blocker."
         ]
       },
       {
         "priority": 3,
-        "title": "Harden the PWA experience",
+        "title": "Make stages and bosses feel like v1 set pieces",
         "details": [
-          "Review index.html and public/manifest.webmanifest for installability, standalone display, icon coverage, theme/background colors, start_url, scope, orientation, and mobile/iOS app tags.",
-          "Add a service worker only if the team is ready to own cache invalidation for GitHub Pages releases. If added, make sure new deployments do not trap players on stale assets.",
-          "Validate Add to Home Screen on iOS Safari and install/open behavior on Android Chrome.",
-          "Confirm localStorage saves survive standalone PWA launch and browser launch separately where platform behavior differs.",
-          "Keep static URLs project-path-safe for https://knotenvy.github.io/Knotz-Raven-Mayhem/."
+          "Give each major stage a stronger mood through layered background animation, haze, lighting pulses, foreground silhouettes, warning flashes, or shader-style overlays.",
+          "Make Jackpot Alley feel like a special bonus moment with distinct visual rhythm and reward feedback.",
+          "Make boss entries, damage states, and defeats feel larger and more intentional.",
+          "Keep stage effects behind gameplay readability. The player must still read raven silhouettes and tap targets on phones.",
+          "Document any new stage-effect architecture so later stages can be authored without guessing."
         ]
       },
       {
         "priority": 4,
-        "title": "Protect release and deployment confidence",
+        "title": "Evaluate shader and post-processing options safely",
         "details": [
-          "Run npm run release:verify before every handoff.",
-          "Run npm run release:smoke after any release-shell, manifest, service worker, asset path, or Vite config change.",
-          "Confirm GitHub Pages Source remains GitHub Actions.",
-          "Remember that CI verification does not publish the game. The live site updates only when the Deploy GitHub Pages workflow is run manually with workflow_dispatch on master.",
-          "After deploy, hard refresh or use a private window when checking whether the latest build is live."
+          "Explore Phaser pipeline/shader-style effects only where they materially improve the game: CRT treatment, heat shimmer, lightning, boss aura, laser bloom, or stage haze.",
+          "Prefer opt-in, scoped shader effects over global post-processing that risks mobile performance or browser compatibility.",
+          "Provide a fallback path for mobile, reduced-motion, or weaker GPUs.",
+          "Test shader changes on desktop and phone landscape before merging.",
+          "Avoid service-worker/offline scope unless explicitly approved; v1 should not risk stale cached JS chunks."
+        ]
+      },
+      {
+        "priority": 5,
+        "title": "Protect release confidence",
+        "details": [
+          "Run npm run typecheck and npm run build after code changes.",
+          "Run npm run balance:report if gameplay timing, rewards, enemy behavior, or economy changes.",
+          "Run npm run release:check and npm run release:smoke after release-shell, asset, Vite, public, manifest, or dist path changes.",
+          "Run npm run release:verify before handoff or release candidate tagging.",
+          "After deploy, validate the live GitHub Pages URL in a fresh browser profile or private window."
         ]
       }
     ]
   },
   "currentBacklogFromDocs": [
-    "Make the first viewport usable on phones without overlapping HUD, controls, modal content, or playfield targets.",
-    "Complete real-device mobile/touch validation on iOS Safari and Android Chrome.",
-    "Verify PWA installability, standalone launch, icons, theme color, orientation, and save persistence.",
-    "Run DOCS/RELEASE-QA-CHECKLIST.md end to end after the mobile/PWA pass.",
-    "Complete published-build fresh-save and returning-save checks after deployment.",
-    "Optional: continue final production art/audio polish only after mobile playability is no longer the main blocker."
+    "Re-test Armory scrolling on real target phones after the latest mobile page-scroll change.",
+    "Create a v1 visual-effects pass for weapon shots, impacts, kills, combos, powerups, boss warnings, boss defeats, stage clears, and game over.",
+    "Add stronger stage-specific GFX and shader-style atmosphere while preserving raven/reticle readability.",
+    "Improve boss spectacle and Jackpot Alley reward presentation.",
+    "Profile long-session phone performance after effects work; watch particle counts, pooled graphics reuse, CPU/GPU pressure, and late-stage readability.",
+    "Run DOCS/RELEASE-QA-CHECKLIST.md end to end before final v1 release.",
+    "Complete published-build fresh-save and returning-save checks after deployment."
   ],
   "recommendedFirstSprint": [
     {
-      "slice": "Phone layout audit and responsive overlay rebuild",
-      "reason": "The user-facing complaint is that the game does not have a responsive phone screen. This should be fixed before PWA polish, because an installable app still fails if the HUD, armory, and modal screens do not fit.",
+      "slice": "V1 effects architecture and weapon-impact pass",
+      "reason": "The next biggest v1 gap is feel and presentation. Weapon and impact feedback are high-frequency moments that will make the whole game feel more official quickly.",
       "likelyFiles": [
-        "src/styles.css",
-        "src/ui/app.ts",
-        "src/ui/events.ts",
-        "src/main.ts",
-        "src/game/scenes/GameScene.ts"
+        "src/game/scenes/GameScene.ts",
+        "src/game/data/weapons.ts",
+        "src/game/data/enemies.ts",
+        "src/game/data/tuning.ts",
+        "src/styles.css"
       ],
       "acceptance": [
-        "Attract, armory, records, options, credits, pause, HUD, stage-clear, game-over, and recommendation surfaces fit at 390x844 with no clipped essential controls.",
-        "HUD remains readable while leaving the playfield center and lower-middle target area usable.",
-        "Armory columns collapse into a comfortable phone layout with usable scroll and touch targets.",
-        "Stage-clear and game-over modals are usable on phone portrait and do not require awkward hidden scrolling for primary actions.",
-        "npm run typecheck and npm run release:verify pass."
+        "Each weapon has visibly distinct shot and impact feedback.",
+        "Enemy archetypes have readable hit/destroy cues without obscuring targets.",
+        "Effects are pooled or capped and do not accumulate during long sessions.",
+        "Reduced-motion settings reduce non-essential motion and flashes.",
+        "npm run typecheck and npm run build pass."
       ]
     },
     {
-      "slice": "PWA installability and phone launch pass",
-      "reason": "The release shell already has a manifest and mobile web app tags, but the PWA behavior has not been validated on real phones.",
+      "slice": "Stage and boss spectacle pass",
+      "reason": "The game already has nine stages and recurring boss fights; v1 needs those moments to feel authored and memorable instead of simple palette swaps.",
       "likelyFiles": [
-        "index.html",
-        "public/manifest.webmanifest",
-        "public/icons/icon-192.png",
-        "public/icons/icon-512.png",
-        "vite.config.ts",
-        "scripts/check-release.mjs",
-        "scripts/smoke-dist.mjs"
+        "src/game/scenes/GameScene.ts",
+        "src/game/data/stages.ts",
+        "src/game/data/enemies.ts",
+        "src/game/systems/WaveDirector.ts",
+        "src/game/systems/ArcadeAudio.ts"
       ],
       "acceptance": [
-        "Android Chrome offers install or Add to Home Screen and opens with the expected icon/name.",
-        "iOS Safari Add to Home Screen opens a usable standalone experience.",
-        "Manifest, icons, theme color, start_url, and scope remain valid from the /Knotz-Raven-Mayhem/ project path.",
-        "Fresh-save and returning-save flows work from the installed/standalone app.",
-        "npm run release:check and npm run release:smoke pass."
+        "At least three early-to-mid stages have stronger distinctive visual identity.",
+        "Boss warning, boss active state, boss damage, and boss defeat each have upgraded presentation.",
+        "Jackpot Alley has clearer bonus-round visual treatment.",
+        "Phone landscape remains readable and playable.",
+        "npm run release:smoke passes after asset/runtime changes."
+      ]
+    },
+    {
+      "slice": "Shader-style polish exploration",
+      "reason": "Shader and post-processing effects can raise the official v1 feel, but they must be scoped and validated carefully for mobile.",
+      "likelyFiles": [
+        "src/game/scenes/GameScene.ts",
+        "src/main.ts",
+        "src/game/data/tuning.ts",
+        "src/game/systems"
+      ],
+      "acceptance": [
+        "One or two scoped shader-style effects are prototyped behind clear runtime conditions.",
+        "Effects have a fallback or can be disabled without breaking gameplay.",
+        "No global shader effect makes phone gameplay harder to read.",
+        "Reduced-motion and mobile performance are explicitly considered.",
+        "npm run typecheck and npm run build pass."
       ]
     }
   ],
   "architecturePointers": {
     "runtime": "src/main.ts creates the Phaser game with BootScene, AttractScene, and GameScene and imports src/styles.css.",
-    "gameplayScene": "src/game/scenes/GameScene.ts owns active run spawning, input, hit resolution, touch/crosshair behavior, stage flow, boss flow, background set dressing, procedural effects, and HUD dispatch.",
+    "boot": "src/game/scenes/BootScene.ts loads seed sprites/audio and creates raven-flap plus boom-pop animations. boom.png currently has five frames, indexed 0-4.",
+    "gameplayScene": "src/game/scenes/GameScene.ts owns active run spawning, input, hit resolution, touch/crosshair behavior, stage flow, boss flow, background set dressing, procedural effects, pooled transient effects, and HUD dispatch. This is the primary v1 effects/GFX work file.",
     "menuScene": "src/game/scenes/AttractScene.ts owns attract screen state, idle cabinet demo rotation, armory/records/options/credits commands, save mutations, menu music, pooled title-screen ravens, and armory transaction FX.",
     "uiLayer": "src/ui/app.ts renders DOM overlays for attract, armory, records, options, HUD, stage clear, pause, and game over. src/ui/events.ts is the scene/UI command bridge.",
-    "styles": "src/styles.css controls the responsive DOM overlay, HUD placement, modal sizing, phone breakpoints, reduced-motion CSS, and static SEO fallback styling.",
+    "styles": "src/styles.css controls the responsive DOM overlay, HUD placement, modal sizing, phone landscape layout, Armory scroll model, reduced-motion CSS, safe-area padding, and static SEO fallback styling.",
     "releaseShell": "index.html and public/ are the primary places for SEO, Open Graph/Twitter metadata, favicon/app icons, web manifest, social preview images, mobile web app tags, robots, and sitemap.",
-    "pwaManifest": "public/manifest.webmanifest currently sets start_url './', scope './', display 'standalone', orientation 'any', and icon paths under public/icons/.",
-    "data": "src/game/data/stages.ts, enemies.ts, weapons.ts, upgrades.ts, and tuning.ts are the main data/tuning entry points. Avoid changing tuning.ts for layout-only mobile work.",
-    "save": "src/game/save.ts normalizes localStorage save data and applies purchases/rewards. Any PWA storage behavior should preserve returning saves.",
+    "pwaManifest": "public/manifest.webmanifest currently sets id './', start_url './', scope './', display 'standalone', orientation 'landscape', and icon paths under public/icons/.",
+    "data": "src/game/data/stages.ts, enemies.ts, weapons.ts, upgrades.ts, and tuning.ts are the main data/tuning entry points. Avoid changing balance constants for visual-only work.",
+    "audio": "src/game/systems/ArcadeAudio.ts owns procedural WebAudio and now waits for a user gesture before creating/resuming AudioContext.",
+    "save": "src/game/save.ts normalizes localStorage save data and applies purchases/rewards. Preserve returning saves unless v1 explicitly changes save shape.",
     "balance": "scripts/report-balance.mjs reads live TypeScript data and estimates stage pacing, rewards, and economy costs.",
     "releaseChecks": "scripts/check-release.mjs validates dist files, release-shell metadata, and public web kit assets. scripts/smoke-dist.mjs serves dist from /Knotz-Raven-Mayhem/ and fetches linked assets, seed assets, and release-shell assets."
   },
   "importantCommands": {
     "install": "npm install",
-    "dev": "npm run dev",
+    "devLocalhost": "npm run dev",
+    "devLanForPhoneTesting": "npm.cmd run dev -- --host 0.0.0.0 --port 5173",
     "balanceReport": "npm run balance:report",
     "typecheck": "npm run typecheck",
     "build": "npm run build",
@@ -174,14 +208,16 @@
     "fullReleaseGate": "npm run release:verify"
   },
   "verificationStatusAtHandoff": {
-    "lastKnownPassingGate": "npm.cmd run release:verify",
+    "lastKnownPassingTypecheck": "npm.cmd run typecheck",
+    "lastKnownPassingBuild": "npm.cmd run build",
+    "lastKnownPassingReleaseCheck": "npm.cmd run release:check printed Release check passed: linkedAssets=3 seedAssets=4 releaseShellAssets=10. In one run, the shell wrapper timed out after the passing output; rerun if a clean process exit is required.",
     "lastKnownPassingSmoke": "npm.cmd run release:smoke",
     "lastKnownReleaseSmokeSignal": "Dist smoke passed: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10",
     "recentManualPlaytestSignals": [
-      "General desktop playtests have been working well.",
-      "Between-stage screens work well.",
-      "The game-over push to Armory makes sense.",
-      "The latest user-reported gap is mobile responsiveness and PWA quality."
+      "Laptop and iPad layouts work well.",
+      "Landscape mobile can change options and play the game.",
+      "Armory is a major progression surface and must remain usable as more content is added.",
+      "User wants the next phase to focus on special effects, GFX, shader effects, and official v1 release presentation."
     ],
     "releaseVerifyCoverage": [
       "balance report",
@@ -192,12 +228,12 @@
       "served dist smoke from /Knotz-Raven-Mayhem/"
     ],
     "manualValidationStillRequired": [
-      "Real iPhone portrait and landscape validation",
-      "Real Android portrait and landscape validation",
-      "PWA install and standalone launch on iOS Safari",
-      "PWA install and standalone launch on Android Chrome",
-      "Fresh-save and returning-save checks from browser and installed app",
-      "Final full release QA checklist after mobile work"
+      "Re-test latest Armory scroll behavior on real target phones.",
+      "Real iPhone landscape validation after the effects pass.",
+      "Real Android landscape validation after the effects pass.",
+      "PWA install and standalone launch checks on iOS Safari and Android Chrome if v1 will promote installability.",
+      "Fresh-save and returning-save checks from browser and installed app.",
+      "Final full release QA checklist after v1 effects work."
     ]
   },
   "releaseFilesAndDocs": {
@@ -210,7 +246,9 @@
     "stylesheet": "src/styles.css",
     "uiOverlay": "src/ui/app.ts",
     "gameplayScene": "src/game/scenes/GameScene.ts",
+    "bootScene": "src/game/scenes/BootScene.ts",
     "attractScene": "src/game/scenes/AttractScene.ts",
+    "audioSystem": "src/game/systems/ArcadeAudio.ts",
     "manifest": "public/manifest.webmanifest",
     "publicAssets": "public/",
     "ciWorkflow": ".github/workflows/ci.yml",
@@ -218,24 +256,24 @@
   },
   "recommendedSubagents": [
     {
-      "name": "Mobile Layout Agent",
-      "focus": "Own responsive DOM overlay work in src/ui/app.ts and src/styles.css, including HUD density, armory collapse, modal sizing, safe-area padding, and phone viewport QA."
+      "name": "VFX Systems Agent",
+      "focus": "Own reusable hit, kill, combo, coin, powerup, stage-clear, and game-over effect systems in GameScene.ts. Keep effects pooled, capped, reduced-motion aware, and reusable for future content."
     },
     {
-      "name": "Touch Gameplay Agent",
-      "focus": "Own phone touch feel in src/game/scenes/GameScene.ts: tap-to-shoot reliability, reticle readability, cooldown feedback, pause access, target readability, and reduced-motion compatibility."
+      "name": "Weapon And Enemy Feel Agent",
+      "focus": "Own distinct visual feedback for weapons and enemy archetypes, including projectile traces, impact bursts, armor/shield/wraith/splitter treatments, and boss damage readability."
     },
     {
-      "name": "PWA Release Shell Agent",
-      "focus": "Own index.html, public/manifest.webmanifest, icons, mobile/iOS app tags, installability, standalone launch behavior, and GitHub Pages project-path safety."
+      "name": "Stage And Boss GFX Agent",
+      "focus": "Own stage atmosphere, background/foreground motion, boss warning/entry/defeat spectacle, Jackpot Alley presentation, and stage-specific visual identity."
     },
     {
-      "name": "Mobile Performance Agent",
-      "focus": "Own long-session phone performance, particle caps, pooled effects, CPU/GPU pressure, attract-mode accumulation, and late-stage playfield readability."
+      "name": "Shader And Performance Agent",
+      "focus": "Evaluate Phaser shader/pipeline or shader-style effects, add fallbacks, profile phone landscape performance, and prevent visual polish from damaging readability or frame rate."
     },
     {
       "name": "Release QA And Deployment Agent",
-      "focus": "Own npm run release:verify, npm run release:smoke, published-build validation, fresh-save/returning-save checks, GitHub Pages Actions deployment, and final mobile QA evidence."
+      "focus": "Own npm run release:verify, release:smoke, published-build validation, fresh-save/returning-save checks, GitHub Pages Actions deployment, and final v1 QA evidence."
     }
   ],
   "githubPagesDeploymentNote": {
@@ -243,29 +281,30 @@
     "manualWorkflow": "Deploy GitHub Pages",
     "requiredEvent": "workflow_dispatch",
     "liveUrl": "https://knotenvy.github.io/Knotz-Raven-Mayhem/",
-    "currentStatus": "User reported recent commits had not gone live because the deploy workflow had not been run; CI verification alone does not publish. The correct path is still manual Deploy GitHub Pages on master after Release Verification is green.",
+    "currentStatus": "The correct publish path remains manual Deploy GitHub Pages on master after release verification is green. CI verification alone does not publish.",
     "why": "The classic Pages branch/folder source can show a blank white screen after the Vite migration because it may serve stale or mismatched static output. The Actions deployment uploads the freshly built dist artifact."
   },
   "implementationGuidance": [
-    "Mobile/PWA work is the next team's main mission. Do not drift into online leaderboards, accounts, databases, or cloud systems for v1.",
-    "Preserve the current desktop gameplay loop unless a mobile blocker requires a targeted fix.",
-    "Keep gameplay rules and tunables in data/system modules where possible instead of burying values in scene code.",
-    "For layout-only work, prefer src/styles.css and src/ui/app.ts over changing game data or economy constants.",
+    "The next team's main mission is v1 visual polish: special effects, GFX, shader-style treatments, stage identity, boss spectacle, and release presentation.",
+    "Do not restart mobile/PWA as the main workstream. Preserve the accepted landscape-mobile baseline and re-test it after effects changes.",
+    "Do not drift into online leaderboards, accounts, databases, or cloud systems for v1.",
+    "Preserve the current gameplay loop, armory economy, stage pacing, and local save behavior unless the user explicitly approves tuning changes.",
     "Use DOM overlays for text-heavy UI such as armory, records, options, stage-clear summaries, upgrade recommendations, and game-over prompts.",
-    "Use Phaser graphics/sprites for playfield effects, touch/crosshair feedback, projectile traces, impact bursts, and stage/boss presentation.",
+    "Use Phaser graphics/sprites/pipelines for playfield effects, shader-style treatments, touch/crosshair feedback, projectile traces, impact bursts, stage/boss presentation, and reward moments.",
     "Use only existing assets under public/assets/ or procedural Phaser/CSS work unless the user explicitly approves new asset production.",
-    "If a service worker is added for PWA/offline behavior, design cache versioning and update behavior carefully so GitHub Pages deploys do not strand players on stale JavaScript chunks.",
+    "If adding real shader/pipeline effects, keep them scoped, test on phone landscape, and provide fallback behavior.",
+    "If adding new assets, keep paths compatible with the /Knotz-Raven-Mayhem/ base path and rerun release:check plus release:smoke.",
     "When save shape changes, update normalization in src/game/save.ts and test returning-save behavior manually.",
     "After content or tuning changes, rerun npm run balance:report and update DOCS/BALANCE-NOTES.md if the baseline changes materially.",
     "After runtime, asset, manifest, release-shell, Vite config, or deploy-script changes, run npm run release:verify before handoff.",
     "After deployment, validate the live GitHub Pages URL in a fresh browser profile or private window."
   ],
   "openDesignQuestions": [
-    "Should the phone game be portrait-first, landscape-first, or support both equally for v1?",
-    "Should the HUD become a compact edge-only phone HUD, or should some run stats move behind pause/details on mobile?",
-    "Should the PWA support offline play for v1, or should v1 focus on installable online launch first to avoid service-worker cache risk?",
-    "Should touch input remain tap-to-shoot everywhere, or should mobile add a dedicated fire/aim mode if playtests show finger occlusion is a problem?",
-    "Should Assist Chips stay one-installed-at-a-time cabinet hardware for v1, or should later releases add multiple chip slots?",
-    "What is the desired full-armory completion time for an average mobile player?"
+    "Which three stage identities should receive the first v1 GFX pass?",
+    "Should shader-style effects be global atmosphere, weapon-specific, boss-specific, or stage-specific?",
+    "How intense should screen shake, bloom-like glow, and flash feedback be on phones versus desktop?",
+    "Should future Armory expansion add more weapons/chips before v1, or should v1 polish the existing loadout set first?",
+    "Should v1 include new production art assets, or stay procedural/seed-asset based until after launch?",
+    "What is the desired final benchmark for phone performance during late-stage runs with effects enabled?"
   ]
 }
