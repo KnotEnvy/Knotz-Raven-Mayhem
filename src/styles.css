@@ -1591,6 +1591,22 @@ a:hover {
     overflow: hidden;
   }
 
+  .mode-armory.utility-shell {
+    grid-template-rows: auto auto;
+    align-content: start;
+    align-items: start;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: calc(var(--safe-bottom) + 18px);
+    pointer-events: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .utility-rail {
     grid-template-columns: auto minmax(0, 1fr);
     width: 100%;
@@ -1613,6 +1629,12 @@ a:hover {
     min-height: 34px;
     padding: 5px 7px;
     font-size: 12px;
+  }
+
+  .mode-armory .utility-rail {
+    position: sticky;
+    top: calc(var(--safe-top) + 0px);
+    z-index: 5;
   }
 
   .cabinet-title {
@@ -1714,6 +1736,12 @@ a:hover {
     padding: 10px;
   }
 
+  .mode-armory.utility-shell .arcade-panel {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
   .attract-demo-panel {
     min-height: 0;
   }
@@ -1748,6 +1776,11 @@ a:hover {
     -webkit-overflow-scrolling: touch;
   }
 
+  .mode-armory .armory-panel {
+    overflow: visible;
+    scroll-padding-bottom: 0;
+  }
+
   .armory-panel .panel-header {
     position: sticky;
     top: -10px;
@@ -1758,10 +1791,18 @@ a:hover {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.28);
   }
 
+  .mode-armory .armory-panel .panel-header {
+    position: static;
+    margin: 0 0 8px;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
   .armory-columns {
     overflow: visible;
     padding-right: 4px;
-    padding-bottom: 34px;
+    padding-bottom: calc(var(--safe-bottom) + 48px);
   }
 
   .armory-panel h3,

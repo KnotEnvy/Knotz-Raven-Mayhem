@@ -106,7 +106,7 @@ function renderAttract(state: Extract<UiState, { screen: 'attract' }>): string {
 
   return `
     <div class="crt-overlay" aria-hidden="true"></div>
-    <main class="attract-shell ${isDemoMode ? 'demo-shell' : ''} ${isUtilityMode ? 'utility-shell' : ''}">
+    <main class="attract-shell mode-${state.mode} ${isDemoMode ? 'demo-shell' : ''} ${isUtilityMode ? 'utility-shell' : ''}">
       ${isUtilityMode ? renderUtilityRail(state.mode) : renderCabinetTitle(isDemoMode)}
       ${isDemoMode || isUtilityMode ? '' : renderMainMenu()}
       ${state.mode === 'armory' ? renderArmory(state.save, state.weapons, state.crosshairs, state.upgrades) : ''}
