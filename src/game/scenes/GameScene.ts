@@ -39,9 +39,9 @@ interface PowerupActor {
 const ENEMY_SPRITE_POOL_LIMIT = 32;
 const EXPLOSION_POOL_LIMIT = 18;
 const FEATHER_POOL_LIMIT = 96;
-const SPARK_POOL_LIMIT = 120;
+const SPARK_POOL_LIMIT = 160;
 const TEXT_POOL_LIMIT = 32;
-const GRAPHICS_POOL_LIMIT = 24;
+const GRAPHICS_POOL_LIMIT = 40;
 const POWERUP_POOL_LIMIT = 12;
 
 export class GameScene extends Phaser.Scene {
@@ -75,6 +75,7 @@ export class GameScene extends Phaser.Scene {
   private graphicsPool: Phaser.GameObjects.Graphics[] = [];
   private powerupPool: PowerupActor[] = [];
   private jackpotFx?: Phaser.GameObjects.Graphics;
+  private stageAtmosphereFx?: Phaser.GameObjects.Graphics;
 
   constructor() {
     super('GameScene');
@@ -109,11 +110,13 @@ export class GameScene extends Phaser.Scene {
     this.createBackground();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.jackpotFx = this.add.graphics().setDepth(-5);
+    this.stageAtmosphereFx = this.add.graphics().setDepth(-4);
     this.createCrosshair();
     this.bindCommands();
     this.registerInput();
     this.renderHud();
     this.showStageBanner(this.stage.title, this.stage.subtitle);
+    this.playStageIntroFx(this.stage);
     arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -129,6 +132,7 @@ export class GameScene extends Phaser.Scene {
 
     this.run.update(delta);
     this.updateBackground(delta);
+    this.updateStageAtmosphere(time);
     this.updateJackpotAmbience(time);
     this.updateEnemies(time, delta);
     this.updatePowerups(time, delta);
@@ -235,7 +239,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawStageSetDressing(width: number, height: number): void {
-    const baseId = this.stage.id.replace(/-\d+$/, '');
+    const baseId = this.stageBaseId;
 
     switch (baseId) {
       case 'graveyard-dusk':
@@ -484,6 +488,259 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private updateStageAtmosphere(time: number): void {
+    if (!this.stageAtmosphereFx) return;
+
+    const fx = this.stageAtmosphereFx;
+    const width = this.scale.width;
+    const height = this.scale.height;
+    const horizon = height * 0.72;
+    const pulse = (Math.sin(time / 420) + 1) / 2;
+    const compact = this.isCompactPlayfield();
+    const reducedMotion = this.save.settings.reducedMotion;
+    const sweep = reducedMotion ? width * 0.62 : ((time * 0.09) % (width + 260)) - 130;
+    const { neon, haze } = this.stage.palette;
+
+    fx.clear();
+    fx.setBlendMode(Phaser.BlendModes.ADD);
+    fx.fillStyle(neon, compact ? 0.035 : 0.052);
+    fx.fillRect(0, 0, width, height);
+    fx.lineStyle(2, neon, 0.08 + pulse * 0.12);
+    fx.lineBetween(0, horizon - 22, width, horizon - 62);
+    fx.lineStyle(1, 0xffffff, 0.08);
+    for (let y = horizon + 24; y < height; y += compact ? 58 : 42) {
+      fx.lineBetween(0, y, width, y - 10);
+    }
+
+    if (!reducedMotion) {
+      fx.fillStyle(0xffffff, 0.035);
+      fx.fillTriangle(sweep - 38, 0, sweep + 62, 0, sweep + 210, horizon);
+    }
+
+    switch (this.stageBaseId) {
+      case 'graveyard-dusk':
+        this.drawGraveyardAtmosphere(fx, width, height, horizon, time, compact, reducedMotion);
+        break;
+      case 'neon-boardwalk':
+        this.drawBoardwalkAtmosphere(fx, width, height, horizon, time, compact, reducedMotion);
+        break;
+      case 'storm-tower':
+        this.drawStormAtmosphere(fx, width, height, horizon, time, compact, reducedMotion);
+        break;
+      case 'junkyard-moon':
+        this.drawJunkyardAtmosphere(fx, width, height, horizon, time, compact, reducedMotion);
+        break;
+      case 'carnival-night':
+        this.drawCarnivalAtmosphere(fx, width, height, horizon, time, compact, reducedMotion);
+        break;
+      case 'raven-kings-nest':
+        this.drawRavenNestAtmosphere(fx, width, height, horizon, time, compact, reducedMotion);
+        break;
+      case 'jackpot-alley':
+        this.drawJackpotAtmosphere(fx, width, height, horizon, time, compact, reducedMotion);
+        break;
+      case 'cinder-viaduct':
+        this.drawCinderAtmosphere(fx, width, height, horizon, time, compact, reducedMotion);
+        break;
+      case 'clocktower-apex':
+        this.drawClocktowerAtmosphere(fx, width, height, horizon, time, compact, reducedMotion);
+        break;
+      default:
+        fx.lineStyle(2, haze, 0.12);
+        fx.strokeCircle(width * 0.76, height * 0.22, Math.min(width, height) * 0.18);
+    }
+  }
+
+  private drawGraveyardAtmosphere(
+    fx: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    horizon: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const bands = compact ? 3 : 5;
+    for (let index = 0; index < bands; index++) {
+      const offset = reducedMotion ? 0 : Math.sin(time / 900 + index) * 42;
+      const y = horizon - 154 + index * 38;
+      fx.fillStyle(index % 2 === 0 ? 0xff42f8 : 0x9c7cff, 0.055);
+      fx.fillRoundedRect(-80 + offset, y, width + 160, 15, 8);
+    }
+    fx.lineStyle(2, 0xfff0a6, 0.18);
+    fx.strokeCircle(width * 0.78, height * 0.18, Math.min(width, height) * (0.13 + Math.sin(time / 700) * 0.006));
+  }
+
+  private drawBoardwalkAtmosphere(
+    fx: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    horizon: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const signCount = compact ? 4 : 7;
+    for (let index = 0; index < signCount; index++) {
+      const x = width * 0.08 + index * width * 0.14;
+      const phase = reducedMotion ? 0.5 : (Math.sin(time / 180 + index * 0.9) + 1) / 2;
+      fx.fillStyle(index % 2 === 0 ? 0x20f2ff : 0xffb11f, 0.08 + phase * 0.12);
+      fx.fillRoundedRect(x, horizon - 138 - (index % 3) * 18, 56, 14, 5);
+      fx.lineStyle(2, 0xffffff, 0.08 + phase * 0.12);
+      fx.lineBetween(x + 8, horizon - 96, x + 46, height);
+    }
+  }
+
+  private drawStormAtmosphere(
+    fx: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    horizon: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const flash = reducedMotion ? 0 : Math.max(0, Math.sin(time / 310) - 0.82) * 3.8;
+    if (flash > 0) {
+      fx.fillStyle(0xd7f7ff, Math.min(0.14, flash * 0.12));
+      fx.fillRect(0, 0, width, horizon);
+      fx.lineStyle(compact ? 3 : 5, 0xd7f7ff, Math.min(0.58, flash));
+      fx.lineBetween(width * 0.2, 0, width * 0.34, height * 0.18);
+      fx.lineBetween(width * 0.34, height * 0.18, width * 0.28, height * 0.3);
+      fx.lineBetween(width * 0.28, height * 0.3, width * 0.42, height * 0.46);
+    }
+    fx.lineStyle(2, 0x93ff29, 0.12);
+    for (let y = height * 0.12; y < horizon; y += compact ? 86 : 64) {
+      const drift = reducedMotion ? 0 : Math.sin(time / 520 + y) * 26;
+      fx.lineBetween(0, y + drift, width, y + 18 + drift);
+    }
+  }
+
+  private drawJunkyardAtmosphere(
+    fx: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    horizon: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const emberCount = compact ? 10 : 18;
+    for (let index = 0; index < emberCount; index++) {
+      const x = (index * 97 + (reducedMotion ? 0 : time * 0.025)) % (width + 80) - 40;
+      const y = horizon - 18 - ((index * 43 + (reducedMotion ? 0 : time * 0.04)) % 190);
+      fx.fillStyle(index % 2 === 0 ? 0xffe14b : 0xff6d2d, 0.12);
+      fx.fillCircle(x, y, 2 + (index % 3));
+    }
+    fx.lineStyle(3, 0xff6d2d, 0.14);
+    fx.lineBetween(width * 0.12, horizon - 152, width * 0.46, horizon - 42);
+  }
+
+  private drawCarnivalAtmosphere(
+    fx: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    horizon: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const wheelX = width * 0.76;
+    const wheelY = horizon - 118;
+    const wheelRadius = Math.min(width, height) * 0.17;
+    const rotation = reducedMotion ? 0 : time / 900;
+    fx.lineStyle(2, 0xff2f7f, 0.2);
+    for (let index = 0; index < (compact ? 8 : 12); index++) {
+      const angle = rotation + (Math.PI * 2 * index) / 12;
+      fx.fillStyle(index % 2 === 0 ? 0xffdf4d : 0x2cffc8, 0.14);
+      fx.fillCircle(wheelX + Math.cos(angle) * wheelRadius, wheelY + Math.sin(angle) * wheelRadius, 7);
+    }
+    fx.lineStyle(2, 0x2cffc8, 0.1);
+    fx.strokeCircle(wheelX, wheelY, wheelRadius + 16);
+  }
+
+  private drawRavenNestAtmosphere(
+    fx: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    horizon: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const pulse = reducedMotion ? 0.5 : (Math.sin(time / 260) + 1) / 2;
+    fx.fillStyle(0xff1e3d, 0.06 + pulse * 0.08);
+    fx.fillCircle(width * 0.74, horizon - 148, compact ? 92 : 132);
+    fx.lineStyle(3, 0x9c2dff, 0.18 + pulse * 0.16);
+    fx.strokeCircle(width * 0.74, horizon - 148, compact ? 112 : 158);
+    for (let index = 0; index < 5; index++) {
+      const wing = reducedMotion ? 0 : Math.sin(time / 520 + index) * 12;
+      fx.lineBetween(width * 0.18 + index * width * 0.12, horizon - 78 + wing, width * 0.32 + index * width * 0.12, horizon - 136 - wing);
+    }
+  }
+
+  private drawJackpotAtmosphere(
+    fx: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    horizon: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const lightCount = compact ? 8 : 14;
+    for (let index = 0; index < lightCount; index++) {
+      const x = (width * index) / Math.max(1, lightCount - 1);
+      const phase = reducedMotion ? 0.5 : (Math.sin(time / 120 + index) + 1) / 2;
+      fx.fillStyle(0xffd447, 0.1 + phase * 0.16);
+      fx.fillCircle(x, horizon - 44, 10);
+      fx.fillStyle(0xffffff, 0.08 + phase * 0.14);
+      fx.fillCircle(x, horizon - 44, 4);
+    }
+  }
+
+  private drawCinderAtmosphere(
+    fx: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    horizon: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const railCount = compact ? 4 : 7;
+    for (let index = 0; index < railCount; index++) {
+      const y = horizon - 132 + index * 34;
+      const offset = reducedMotion ? 0 : Math.sin(time / 480 + index) * 22;
+      fx.lineStyle(3, index % 2 === 0 ? 0xff8738 : 0x49e7ff, 0.1);
+      fx.lineBetween(-40, y + offset, width + 40, y + 18 - offset);
+    }
+    fx.fillStyle(0xffb35c, 0.075);
+    fx.fillCircle(width * 0.18, height * 0.18, Math.min(width, height) * 0.16);
+  }
+
+  private drawClocktowerAtmosphere(
+    fx: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    horizon: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const x = width * 0.56 + 63;
+    const y = horizon - 238;
+    const radius = compact ? 56 : 74;
+    const hand = reducedMotion ? -Math.PI / 3 : time / 640;
+    fx.lineStyle(2, 0x5ee7ff, 0.2);
+    fx.strokeCircle(x, y, radius);
+    fx.strokeCircle(x, y, radius + 22);
+    fx.lineStyle(4, 0xff3fb4, 0.22);
+    fx.lineBetween(x, y, x + Math.cos(hand) * radius, y + Math.sin(hand) * radius);
+    fx.lineStyle(2, 0xffffff, 0.12);
+    fx.lineBetween(x, y, x + Math.cos(hand * 0.42) * (radius * 0.74), y + Math.sin(hand * 0.42) * (radius * 0.74));
+  }
+
   private updateJackpotAmbience(time: number): void {
     if (!this.jackpotFx) return;
 
@@ -613,6 +870,7 @@ export class GameScene extends Phaser.Scene {
       arcadeAudio.playBossWarning();
       arcadeAudio.startMusic('boss', this.save.settings, this.stage.id);
       this.shakeCamera(450, 0.008);
+      this.playBossEntryFx(actor);
     }
 
     this.enemies.push(actor);
@@ -720,6 +978,7 @@ export class GameScene extends Phaser.Scene {
       this.run.recordMiss();
       arcadeAudio.playMiss();
       this.floatText(x, y - 24, 'MISS', '#ff315a', 22);
+      this.playMissFeedback(x, y);
       this.shakeCamera(90, 0.003);
       return;
     }
@@ -781,6 +1040,7 @@ export class GameScene extends Phaser.Scene {
   private damageEnemy(actor: EnemyActor, damage: number): void {
     actor.hp -= damage;
     arcadeAudio.playHit(actor.def.id);
+    this.playWeaponImpact(actor);
     actor.sprite.setTintFill(0xffffff);
     this.time.delayedCall(70, () => {
       if (!actor.sprite.active) return;
@@ -790,6 +1050,7 @@ export class GameScene extends Phaser.Scene {
 
     if (actor.hp > 0) {
       this.floatText(actor.sprite.x, actor.sprite.y - actor.radius, 'HIT', '#ffe56a', 22);
+      this.playEnemyWoundedFeedback(actor);
       this.shakeCamera(80, 0.004);
       return;
     }
@@ -807,6 +1068,7 @@ export class GameScene extends Phaser.Scene {
 
     this.floatText(x, y - radius, `+${points}`, actor.def.tint ? `#${actor.def.tint.toString(16).padStart(6, '0')}` : '#ffe56a', 24 + Math.min(18, this.run.comboMultiplier * 2));
     this.playScoreBurst(x, y, actor, points);
+    this.playEnemyDefeatSignature(actor, x, y);
     const isBonusStage = this.stage.bonus === true;
     if (earnedCoins > 1 || isBonusStage) {
       this.floatText(x + Math.min(72, radius), y + radius * 0.32, `+${earnedCoins} COIN`, '#ffd447', 19);
@@ -840,6 +1102,7 @@ export class GameScene extends Phaser.Scene {
       this.bossKills++;
       this.bossDefeated = true;
       arcadeAudio.playBossDefeated();
+      this.playBossDefeatSetPiece(x, y);
     }
   }
 
@@ -855,6 +1118,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.floatText(powerup.container.x, powerup.container.y - 32, powerup.label, '#9dff57', 24);
+    this.playPowerupCollectEffect(powerup);
     this.createFeathers(powerup.container.x, powerup.container.y, 0x9dff57, 16);
     arcadeAudio.playPowerup(powerup.id);
     this.releasePowerup(powerup);
@@ -873,6 +1137,7 @@ export class GameScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
     });
+    this.playPowerupSpawnEffect(x, y, color);
 
     this.powerups.push(powerup);
   }
@@ -955,6 +1220,7 @@ export class GameScene extends Phaser.Scene {
     this.run.coinsEarned += this.stage.rewardCoins;
     arcadeAudio.playStageClear(this.run.stageIndex);
     this.floatText(this.scale.width / 2, this.scale.height * 0.38, `STAGE CLEAR +${this.stage.rewardCoins}`, '#ffe56a', 36);
+    this.playStageClearSweep(currentStage);
     if (this.stage.bonus) {
       this.playJackpotStageClear();
     } else {
@@ -996,6 +1262,7 @@ export class GameScene extends Phaser.Scene {
     arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
     this.renderHud();
     this.showStageBanner(this.stage.bonus ? 'Bonus Stage' : this.stage.title, this.stage.subtitle);
+    this.playStageIntroFx(this.stage);
     if (this.stage.bonus) this.playJackpotIntro();
   }
 
@@ -1212,7 +1479,37 @@ export class GameScene extends Phaser.Scene {
 
     if (combo >= 3) {
       this.floatText(x, y + radius * 0.55, `x${combo} CHAIN`, '#20f2ff', 18 + Math.min(combo, 10));
+      if (combo >= 4) this.playComboSurge(x, y, combo, color);
     }
+  }
+
+  private playComboSurge(x: number, y: number, combo: number, color: number): void {
+    const surge = this.acquireTransientGraphics(78);
+    const radius = 42 + Math.min(combo, 8) * 8;
+    surge.setPosition(x, y);
+    surge.setBlendMode(Phaser.BlendModes.ADD);
+    surge.lineStyle(3, 0x20f2ff, 0.72);
+    surge.strokeCircle(0, 0, radius);
+    surge.lineStyle(2, color, 0.48);
+    surge.strokeCircle(0, 0, radius * 0.62);
+    for (let index = 0; index < Math.min(16, combo * 2); index++) {
+      const angle = (Math.PI * 2 * index) / Math.min(16, combo * 2);
+      surge.lineBetween(
+        Math.cos(angle) * radius * 0.82,
+        Math.sin(angle) * radius * 0.82,
+        Math.cos(angle) * radius * 1.12,
+        Math.sin(angle) * radius * 1.12,
+      );
+    }
+
+    this.tweens.add({
+      targets: surge,
+      alpha: 0,
+      scale: this.save.settings.reducedMotion ? 1.05 : 1.35,
+      duration: this.save.settings.reducedMotion ? 120 : 280,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(surge),
+    });
   }
 
   private playCoinBurst(x: number, y: number, coins: number, jackpot: boolean): void {
@@ -1238,6 +1535,65 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.emitSparkBurst(x, y, 0xffd447, burstCount, 79, jackpot ? 168 : 100, true);
+  }
+
+  private playStageIntroFx(stage: StageDefinition): void {
+    const width = this.scale.width;
+    const height = this.scale.height;
+    const compact = this.isCompactPlayfield();
+    const reducedMotion = this.save.settings.reducedMotion;
+    const intro = this.acquireTransientGraphics(63);
+    const centerY = height * 0.42;
+
+    intro.setBlendMode(Phaser.BlendModes.ADD);
+    intro.fillStyle(stage.palette.neon, stage.bonus ? 0.12 : 0.07);
+    intro.fillRect(0, centerY - 54, width, 108);
+    intro.lineStyle(stage.bonus ? 5 : 3, stage.palette.neon, 0.58);
+    intro.lineBetween(0, centerY - 54, width, centerY - 88);
+    intro.lineBetween(0, centerY + 54, width, centerY + 88);
+    intro.lineStyle(1, 0xffffff, 0.22);
+    for (let index = 0; index < (compact ? 8 : 14); index++) {
+      const x = (width * index) / Math.max(1, (compact ? 7 : 13));
+      intro.strokeCircle(x, centerY + (index % 2 === 0 ? -62 : 62), stage.bonus ? 9 : 6);
+    }
+
+    if (!reducedMotion) {
+      this.emitSparkBurst(width * 0.5, centerY, stage.palette.neon, stage.bonus ? 26 : 16, 64, compact ? 110 : 180, stage.bonus);
+    }
+
+    this.tweens.add({
+      targets: intro,
+      alpha: 0,
+      scaleY: reducedMotion ? 1 : 1.22,
+      duration: reducedMotion ? 220 : 620,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(intro),
+    });
+  }
+
+  private playStageClearSweep(stage: StageDefinition): void {
+    const width = this.scale.width;
+    const height = this.scale.height;
+    const clear = this.acquireTransientGraphics(81);
+
+    clear.setBlendMode(Phaser.BlendModes.ADD);
+    clear.fillStyle(stage.palette.neon, stage.bonus ? 0.15 : 0.08);
+    clear.fillRect(0, 0, width, height);
+    clear.lineStyle(stage.bonus ? 6 : 4, stage.palette.neon, 0.62);
+    clear.lineBetween(-80, height * 0.35, width + 80, height * 0.19);
+    clear.lineBetween(-80, height * 0.62, width + 80, height * 0.78);
+    clear.lineStyle(2, 0xffffff, 0.38);
+    clear.strokeCircle(width * 0.5, height * 0.42, stage.bonus ? 128 : 92);
+    clear.strokeCircle(width * 0.5, height * 0.42, stage.bonus ? 168 : 126);
+
+    this.tweens.add({
+      targets: clear,
+      alpha: 0,
+      scale: this.save.settings.reducedMotion ? 1 : 1.08,
+      duration: this.save.settings.reducedMotion ? 220 : 560,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(clear),
+    });
   }
 
   private playStageRewardBurst(x: number, y: number, color: number): void {
@@ -1316,6 +1672,366 @@ export class GameScene extends Phaser.Scene {
       ease: 'Quad.easeOut',
       onComplete: () => this.releaseTransientGraphics(jackpot),
     });
+  }
+
+  private playMissFeedback(x: number, y: number): void {
+    const miss = this.acquireTransientGraphics(72);
+    miss.setPosition(x, y);
+    miss.lineStyle(3, 0xff315a, 0.66);
+    miss.strokeCircle(0, 0, this.weaponCrosshairRadius + 8);
+    miss.lineBetween(-14, -14, 14, 14);
+    miss.lineBetween(-14, 14, 14, -14);
+    this.tweens.add({
+      targets: miss,
+      alpha: 0,
+      scale: this.save.settings.reducedMotion ? 0.9 : 1.32,
+      duration: this.save.settings.reducedMotion ? 90 : 210,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(miss),
+    });
+  }
+
+  private playWeaponImpact(actor: EnemyActor): void {
+    const x = actor.sprite.x;
+    const y = actor.sprite.y;
+    const color = Phaser.Display.Color.HexStringToColor(this.weapon.color).color;
+    const enemyColor = actor.def.tint ?? this.stage.palette.neon;
+    const radius = Math.max(16, actor.visualRadius * 0.55);
+    const impact = this.acquireTransientGraphics(actor.boss ? 89 : 74);
+
+    impact.setPosition(x, y);
+    impact.setBlendMode(Phaser.BlendModes.ADD);
+
+    if (this.weapon.id === 'arcLaser') {
+      impact.lineStyle(actor.boss ? 7 : 5, color, 0.76);
+      impact.lineBetween(-radius * 1.4, 0, radius * 1.4, 0);
+      impact.lineStyle(2, 0xffffff, 0.62);
+      impact.lineBetween(-radius * 1.2, -8, radius * 1.2, -8);
+      impact.lineBetween(-radius * 1.2, 8, radius * 1.2, 8);
+      impact.strokeRect(-radius * 0.78, -radius * 0.22, radius * 1.56, radius * 0.44);
+    } else if (this.weapon.id === 'scattergun') {
+      impact.lineStyle(2, color, 0.68);
+      for (let index = 0; index < 7; index++) {
+        const angle = -0.9 + index * 0.3;
+        impact.lineBetween(0, 0, Math.cos(angle) * radius * 1.15, Math.sin(angle) * radius * 1.15);
+        impact.strokeCircle(Math.cos(angle) * radius * 0.66, Math.sin(angle) * radius * 0.66, 4);
+      }
+      impact.lineStyle(2, 0xffffff, 0.42);
+      impact.strokeCircle(0, 0, radius * 0.62);
+    } else if (this.weapon.id === 'burstRifle') {
+      impact.lineStyle(2, color, 0.72);
+      for (let index = -1; index <= 1; index++) {
+        impact.strokeCircle(index * radius * 0.34, index * 4, radius * 0.3);
+        impact.lineBetween(index * radius * 0.2, -radius * 0.44, index * radius * 0.44, radius * 0.44);
+      }
+    } else {
+      impact.lineStyle(3, color, 0.76);
+      impact.strokeCircle(0, 0, radius * 0.7);
+      impact.lineBetween(-radius, 0, radius, 0);
+      impact.lineBetween(0, -radius, 0, radius);
+    }
+
+    if (actor.def.behavior === 'shield') {
+      impact.lineStyle(3, 0x58ff9c, 0.72);
+      this.drawHexRing(impact, radius * 1.05);
+    } else if (actor.def.behavior === 'armored' || actor.def.behavior === 'brute') {
+      impact.lineStyle(actor.def.behavior === 'brute' ? 4 : 3, 0xd8e2ef, 0.72);
+      impact.strokeRoundedRect(-radius * 0.72, -radius * 0.38, radius * 1.44, radius * 0.76, 6);
+      impact.lineBetween(-radius * 0.4, -radius * 0.38, radius * 0.18, radius * 0.38);
+      impact.lineBetween(radius * 0.12, -radius * 0.38, radius * 0.46, radius * 0.28);
+    } else if (actor.def.behavior === 'wraith') {
+      impact.lineStyle(2, 0xb58cff, 0.58);
+      impact.strokeCircle(-radius * 0.28, -radius * 0.18, radius * 0.72);
+      impact.strokeCircle(radius * 0.24, radius * 0.16, radius * 0.92);
+    } else if (actor.boss) {
+      impact.lineStyle(4, 0xff214f, 0.72);
+      impact.strokeCircle(0, 0, radius * 1.18);
+      impact.strokeCircle(0, 0, radius * 0.78);
+      impact.lineStyle(2, 0xffffff, 0.42);
+      impact.lineBetween(-radius * 0.42, -radius * 1.02, 0, -radius * 1.32);
+      impact.lineBetween(0, -radius * 1.32, radius * 0.42, -radius * 1.02);
+    }
+
+    this.emitSparkBurst(x, y, enemyColor, actor.boss ? 18 : 7, actor.boss ? 90 : 75, actor.boss ? 108 : 52);
+    this.tweens.add({
+      targets: impact,
+      alpha: 0,
+      scale: actor.boss ? 1.16 : 1.28,
+      duration: this.save.settings.reducedMotion ? 110 : 250,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(impact),
+    });
+  }
+
+  private playEnemyWoundedFeedback(actor: EnemyActor): void {
+    const x = actor.sprite.x;
+    const y = actor.sprite.y;
+    const radius = Math.max(18, actor.visualRadius * 0.7);
+    const wounded = this.acquireTransientGraphics(actor.boss ? 88 : 73);
+    const color = actor.def.tint ?? this.stage.palette.neon;
+
+    wounded.setPosition(x, y);
+    wounded.setBlendMode(Phaser.BlendModes.ADD);
+    wounded.lineStyle(actor.boss ? 4 : 3, color, 0.56);
+
+    switch (actor.def.behavior) {
+      case 'shield':
+        this.drawHexRing(wounded, radius);
+        wounded.lineStyle(2, 0xffffff, 0.36);
+        this.drawHexRing(wounded, radius * 0.72);
+        break;
+      case 'armored':
+      case 'brute':
+        wounded.strokeRoundedRect(-radius * 0.8, -radius * 0.45, radius * 1.6, radius * 0.9, 8);
+        wounded.lineBetween(-radius * 0.46, -radius * 0.45, radius * 0.18, radius * 0.42);
+        wounded.lineBetween(radius * 0.1, -radius * 0.44, radius * 0.62, radius * 0.32);
+        break;
+      case 'wraith':
+        wounded.strokeCircle(-radius * 0.32, -radius * 0.18, radius * 0.86);
+        wounded.strokeCircle(radius * 0.32, radius * 0.18, radius * 1.08);
+        break;
+      case 'boss':
+        wounded.strokeCircle(0, 0, radius * 1.05);
+        wounded.lineStyle(2, 0xffffff, 0.32);
+        for (let index = 0; index < 10; index++) {
+          const angle = (Math.PI * 2 * index) / 10;
+          wounded.lineBetween(Math.cos(angle) * radius * 0.72, Math.sin(angle) * radius * 0.72, Math.cos(angle) * radius * 1.18, Math.sin(angle) * radius * 1.18);
+        }
+        break;
+      default:
+        wounded.strokeCircle(0, 0, radius);
+    }
+
+    this.tweens.add({
+      targets: wounded,
+      alpha: 0,
+      scale: this.save.settings.reducedMotion ? 1 : 1.24,
+      duration: this.save.settings.reducedMotion ? 100 : 240,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(wounded),
+    });
+  }
+
+  private playEnemyDefeatSignature(actor: EnemyActor, x: number, y: number): void {
+    const color = actor.def.tint ?? this.stage.palette.neon;
+    const radius = Math.max(24, actor.visualRadius * 0.82);
+    const defeat = this.acquireTransientGraphics(actor.boss ? 91 : 76);
+
+    defeat.setPosition(x, y);
+    defeat.setBlendMode(Phaser.BlendModes.ADD);
+    defeat.lineStyle(actor.boss ? 5 : 3, color, 0.72);
+
+    if (actor.def.id === 'golden') {
+      defeat.lineStyle(4, 0xffd447, 0.78);
+      defeat.strokeCircle(0, 0, radius);
+      defeat.strokeRoundedRect(-radius, -radius * 0.52, radius * 2, radius * 1.04, 10);
+      this.emitSparkBurst(x, y, 0xffd447, 18, 80, 122, true);
+    } else {
+      switch (actor.def.behavior) {
+        case 'shield':
+          this.drawHexRing(defeat, radius * 1.08);
+          defeat.lineStyle(2, 0xffffff, 0.44);
+          for (let index = 0; index < 6; index++) {
+            const angle = (Math.PI * 2 * index) / 6;
+            defeat.lineBetween(0, 0, Math.cos(angle) * radius * 1.28, Math.sin(angle) * radius * 1.28);
+          }
+          break;
+        case 'splitter':
+          defeat.lineStyle(4, 0xff6a3d, 0.78);
+          defeat.lineBetween(-radius, -radius * 0.52, radius, radius * 0.52);
+          defeat.lineBetween(-radius, radius * 0.52, radius, -radius * 0.52);
+          defeat.strokeCircle(0, 0, radius * 0.84);
+          break;
+        case 'wraith':
+          defeat.lineStyle(3, 0xb58cff, 0.62);
+          defeat.strokeCircle(0, 0, radius * 1.22);
+          defeat.strokeCircle(-radius * 0.3, 0, radius * 0.82);
+          defeat.strokeCircle(radius * 0.3, 0, radius * 0.82);
+          break;
+        case 'brute':
+        case 'armored':
+          defeat.lineStyle(4, actor.def.behavior === 'brute' ? 0xffb35c : 0xd8e2ef, 0.74);
+          for (let index = 0; index < 10; index++) {
+            const angle = (Math.PI * 2 * index) / 10;
+            defeat.lineBetween(Math.cos(angle) * radius * 0.45, Math.sin(angle) * radius * 0.45, Math.cos(angle) * radius * 1.34, Math.sin(angle) * radius * 1.34);
+          }
+          break;
+        case 'boss':
+          defeat.lineStyle(6, 0xff214f, 0.78);
+          defeat.strokeCircle(0, 0, radius * 1.28);
+          defeat.lineStyle(3, 0xffffff, 0.46);
+          this.drawCrownBurst(defeat, radius);
+          break;
+        default:
+          defeat.strokeCircle(0, 0, radius);
+          defeat.lineStyle(2, 0xffffff, 0.4);
+          defeat.strokeCircle(0, 0, radius * 0.56);
+      }
+    }
+
+    this.tweens.add({
+      targets: defeat,
+      alpha: 0,
+      scale: actor.boss ? 1.36 : 1.42,
+      duration: this.save.settings.reducedMotion ? 140 : 340,
+      ease: 'Cubic.easeOut',
+      onComplete: () => this.releaseTransientGraphics(defeat),
+    });
+  }
+
+  private playBossEntryFx(actor: EnemyActor): void {
+    const width = this.scale.width;
+    const height = this.scale.height;
+    const warning = this.acquireTransientGraphics(92);
+    const y = actor.sprite.y;
+
+    warning.setBlendMode(Phaser.BlendModes.ADD);
+    warning.fillStyle(0xff214f, 0.12);
+    warning.fillRect(0, 0, width, height);
+    warning.lineStyle(6, 0xff214f, 0.78);
+    warning.lineBetween(0, y - actor.visualRadius * 1.1, width, y - actor.visualRadius * 1.1);
+    warning.lineBetween(0, y + actor.visualRadius * 1.1, width, y + actor.visualRadius * 1.1);
+    warning.lineStyle(3, 0xffffff, 0.48);
+    warning.strokeCircle(actor.sprite.x, y, actor.visualRadius * 1.28);
+    this.drawCrownBurst(warning, actor.visualRadius, actor.sprite.x, y - actor.visualRadius * 0.15);
+    this.emitSparkBurst(width * 0.5, y, 0xff214f, 28, 93, width * 0.26);
+
+    this.tweens.add({
+      targets: warning,
+      alpha: 0,
+      scaleY: this.save.settings.reducedMotion ? 1 : 1.16,
+      duration: this.save.settings.reducedMotion ? 260 : 820,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(warning),
+    });
+  }
+
+  private playBossDefeatSetPiece(x: number, y: number): void {
+    const width = this.scale.width;
+    const height = this.scale.height;
+    const defeat = this.acquireTransientGraphics(95);
+
+    defeat.setBlendMode(Phaser.BlendModes.ADD);
+    defeat.fillStyle(0xff214f, 0.18);
+    defeat.fillRect(0, 0, width, height);
+    defeat.lineStyle(7, 0xff214f, 0.78);
+    defeat.strokeCircle(x, y, 120);
+    defeat.strokeCircle(x, y, 174);
+    defeat.lineStyle(3, 0xffffff, 0.5);
+    this.drawCrownBurst(defeat, 104, x, y - 16);
+    defeat.lineStyle(3, this.stage.palette.neon, 0.44);
+    defeat.lineBetween(0, y - 132, width, y - 184);
+    defeat.lineBetween(0, y + 132, width, y + 184);
+
+    if (!this.save.settings.reducedMotion) {
+      this.cameras.main.flash(360, 255, 33, 79, false);
+      this.shakeCamera(760, 0.02);
+    }
+    this.emitSparkBurst(x, y, 0xff214f, 48, 96, 280);
+    this.emitSparkBurst(x, y, this.stage.palette.neon, 30, 96, 220);
+    this.floatText(x, y - 134, 'RAVEN KING DOWN', '#ff315a', 34);
+
+    this.tweens.add({
+      targets: defeat,
+      alpha: 0,
+      scale: this.save.settings.reducedMotion ? 1 : 1.08,
+      duration: this.save.settings.reducedMotion ? 280 : 860,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(defeat),
+    });
+  }
+
+  private playPowerupSpawnEffect(x: number, y: number, color: number): void {
+    const spawn = this.acquireTransientGraphics(69);
+    spawn.setPosition(x, y);
+    spawn.setBlendMode(Phaser.BlendModes.ADD);
+    spawn.lineStyle(3, color, 0.64);
+    spawn.strokeCircle(0, 0, 34);
+    spawn.lineStyle(1, 0xffffff, 0.42);
+    spawn.strokeCircle(0, 0, 48);
+    this.tweens.add({
+      targets: spawn,
+      alpha: 0,
+      scale: this.save.settings.reducedMotion ? 1 : 1.36,
+      duration: this.save.settings.reducedMotion ? 120 : 300,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(spawn),
+    });
+  }
+
+  private playPowerupCollectEffect(powerup: PowerupActor): void {
+    const x = powerup.container.x;
+    const y = powerup.container.y;
+    const color = powerupColor(powerup.id);
+    const collect = this.acquireTransientGraphics(79);
+
+    collect.setPosition(x, y);
+    collect.setBlendMode(Phaser.BlendModes.ADD);
+    collect.lineStyle(4, color, 0.72);
+    collect.strokeCircle(0, 0, 38);
+
+    switch (powerup.id) {
+      case 'slowmo':
+        collect.lineStyle(2, 0x31f4ff, 0.68);
+        collect.strokeCircle(0, 0, 58);
+        collect.lineBetween(0, 0, 0, -44);
+        collect.lineBetween(0, 0, 28, 20);
+        break;
+      case 'multishot':
+        collect.lineStyle(3, 0xff8a32, 0.72);
+        for (let index = 0; index < 8; index++) {
+          const angle = (Math.PI * 2 * index) / 8;
+          collect.lineBetween(Math.cos(angle) * 20, Math.sin(angle) * 20, Math.cos(angle) * 66, Math.sin(angle) * 66);
+        }
+        break;
+      case 'scoreBoost':
+      case 'coinRush':
+        collect.lineStyle(3, 0xffd447, 0.78);
+        collect.strokeRoundedRect(-42, -25, 84, 50, 10);
+        collect.strokeCircle(-18, 0, 8);
+        collect.strokeCircle(18, 0, 8);
+        this.emitSparkBurst(x, y, 0xffd447, 20, 80, 118, true);
+        break;
+      case 'extraLife':
+        collect.lineStyle(5, 0x9dff57, 0.78);
+        collect.lineBetween(-34, 0, 34, 0);
+        collect.lineBetween(0, -34, 0, 34);
+        break;
+      case 'overdrive':
+        collect.lineStyle(3, 0xff5fbb, 0.78);
+        collect.lineBetween(-46, -26, -8, -6);
+        collect.lineBetween(-8, -6, -30, 12);
+        collect.lineBetween(-30, 12, 44, 30);
+        collect.lineBetween(6, -34, 24, -6);
+        collect.lineBetween(24, -6, 2, 10);
+        break;
+    }
+
+    this.emitSparkBurst(x, y, color, 14, 80, 92, powerup.id === 'coinRush' || powerup.id === 'scoreBoost');
+    this.tweens.add({
+      targets: collect,
+      alpha: 0,
+      scale: this.save.settings.reducedMotion ? 1.05 : 1.48,
+      duration: this.save.settings.reducedMotion ? 130 : 320,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(collect),
+    });
+  }
+
+  private drawHexRing(graphics: Phaser.GameObjects.Graphics, radius: number, x = 0, y = 0): void {
+    for (let index = 0; index < 6; index++) {
+      const start = (Math.PI * 2 * index) / 6 - Math.PI / 6;
+      const end = (Math.PI * 2 * (index + 1)) / 6 - Math.PI / 6;
+      graphics.lineBetween(x + Math.cos(start) * radius, y + Math.sin(start) * radius, x + Math.cos(end) * radius, y + Math.sin(end) * radius);
+    }
+  }
+
+  private drawCrownBurst(graphics: Phaser.GameObjects.Graphics, radius: number, x = 0, y = 0): void {
+    graphics.lineBetween(x - radius * 0.78, y - radius * 0.28, x - radius * 0.42, y - radius * 0.84);
+    graphics.lineBetween(x - radius * 0.42, y - radius * 0.84, x, y - radius * 0.42);
+    graphics.lineBetween(x, y - radius * 0.42, x + radius * 0.42, y - radius * 0.84);
+    graphics.lineBetween(x + radius * 0.42, y - radius * 0.84, x + radius * 0.78, y - radius * 0.28);
+    graphics.lineBetween(x - radius * 0.78, y - radius * 0.28, x + radius * 0.78, y - radius * 0.28);
   }
 
   private emitSparkBurst(
@@ -1430,15 +2146,44 @@ export class GameScene extends Phaser.Scene {
     const color = Phaser.Display.Color.HexStringToColor(this.weapon.color).color;
     const flash = this.acquireTransientGraphics(70);
     flash.setPosition(x, y);
-    flash.fillStyle(color, 0.8);
-    flash.fillCircle(0, 0, 10);
-    flash.fillStyle(color, 0.55);
-    flash.fillRect(-57, -1.5, 54, 3);
+    flash.setBlendMode(Phaser.BlendModes.ADD);
+    flash.fillStyle(color, 0.82);
+    flash.fillCircle(0, 0, this.weapon.id === 'scattergun' ? 14 : 10);
+    flash.lineStyle(2, 0xffffff, 0.44);
+    flash.strokeCircle(0, 0, this.weaponCrosshairRadius * 0.82);
+
+    if (this.weapon.id === 'arcLaser') {
+      flash.fillStyle(color, 0.5);
+      flash.fillRect(-74, -5, 148, 10);
+      flash.lineStyle(2, 0xffffff, 0.46);
+      flash.lineBetween(-88, 0, 88, 0);
+    } else if (this.weapon.id === 'scattergun') {
+      flash.lineStyle(3, color, 0.62);
+      for (let index = 0; index < 7; index++) {
+        const angle = -0.9 + index * 0.3;
+        flash.lineBetween(0, 0, Math.cos(angle) * 72, Math.sin(angle) * 72);
+      }
+    } else if (this.weapon.id === 'burstRifle') {
+      flash.lineStyle(3, color, 0.64);
+      flash.strokeCircle(-18, -4, 7);
+      flash.strokeCircle(0, 0, 9);
+      flash.strokeCircle(18, 4, 7);
+      flash.lineBetween(-58, -8, -18, -4);
+      flash.lineBetween(-54, 0, 0, 0);
+      flash.lineBetween(-50, 8, 18, 4);
+    } else {
+      flash.fillStyle(color, 0.55);
+      flash.fillRect(-57, -1.5, 54, 3);
+      flash.lineStyle(3, color, 0.58);
+      flash.lineBetween(-30, -18, 30, 18);
+      flash.lineBetween(-30, 18, 30, -18);
+    }
+
     this.tweens.add({
       targets: flash,
       alpha: 0,
       scale: 2.1,
-      duration: 120,
+      duration: this.save.settings.reducedMotion ? 70 : 130,
       onComplete: () => this.releaseTransientGraphics(flash),
     });
   }
@@ -1446,18 +2191,43 @@ export class GameScene extends Phaser.Scene {
   private drawWeaponTraces(x: number, y: number, probes: Array<{ x: number; y: number }>): void {
     const color = Phaser.Display.Color.HexStringToColor(this.weapon.color).color;
     const graphics = this.acquireTransientGraphics(68);
+    graphics.setBlendMode(Phaser.BlendModes.ADD);
     graphics.lineStyle(this.weapon.id === 'scattergun' ? 3 : 2, color, this.weapon.id === 'arcLaser' ? 0.82 : 0.62);
 
     if (this.weapon.id === 'arcLaser') {
+      graphics.fillStyle(color, 0.12);
+      graphics.fillRect(x - 80, y - 12, this.scale.width - x + 160, 24);
       graphics.lineStyle(5, color, 0.78);
       graphics.lineBetween(x - 80, y, this.scale.width + 80, y);
       graphics.lineStyle(1, 0xffffff, 0.7);
       graphics.lineBetween(x - 42, y - 6, this.scale.width + 40, y - 6);
       graphics.lineBetween(x - 42, y + 6, this.scale.width + 40, y + 6);
+      for (let lane = 0; lane < 4; lane++) {
+        const laneY = y - 18 + lane * 12;
+        graphics.lineStyle(1, color, 0.18);
+        graphics.lineBetween(x - 68, laneY, this.scale.width + 30, laneY);
+      }
+    } else if (this.weapon.id === 'burstRifle') {
+      graphics.lineStyle(2, color, 0.7);
+      probes.forEach((probe, index) => {
+        const stagger = index - 1;
+        graphics.lineBetween(x - 24, y + stagger * 7, probe.x, probe.y);
+        graphics.strokeCircle(probe.x, probe.y, 7 + index);
+      });
+      graphics.lineStyle(1, 0xffffff, 0.42);
+      graphics.strokeCircle(x, y, 20);
+    } else if (this.weapon.id === 'scattergun') {
+      graphics.lineStyle(2, color, 0.48);
+      probes.forEach((probe, index) => {
+        graphics.lineBetween(x, y, probe.x, probe.y);
+        graphics.strokeCircle(probe.x, probe.y, index % 2 === 0 ? 10 : 6);
+      });
+      graphics.lineStyle(2, 0xffffff, 0.22);
+      graphics.strokeCircle(x, y, this.weapon.spread * 0.42);
     } else {
       for (const probe of probes) {
         graphics.lineBetween(x, y, probe.x, probe.y);
-        graphics.strokeCircle(probe.x, probe.y, this.weapon.id === 'scattergun' ? 10 : 6);
+        graphics.strokeCircle(probe.x, probe.y, 6);
       }
     }
 
@@ -1511,6 +2281,8 @@ export class GameScene extends Phaser.Scene {
     graphics.setVisible(true);
     graphics.setAlpha(1);
     graphics.setScale(1);
+    graphics.setRotation(0);
+    graphics.setBlendMode(Phaser.BlendModes.NORMAL);
     graphics.setPosition(0, 0);
     return graphics;
   }
@@ -1520,6 +2292,7 @@ export class GameScene extends Phaser.Scene {
     graphics.clear();
     graphics.setActive(false);
     graphics.setVisible(false);
+    graphics.setBlendMode(Phaser.BlendModes.NORMAL);
     if (this.graphicsPool.length < GRAPHICS_POOL_LIMIT) {
       this.graphicsPool.push(graphics);
     } else {
@@ -1650,6 +2423,10 @@ export class GameScene extends Phaser.Scene {
     if (this.weapon.id === 'burstRifle') return 24;
     if (this.weapon.id === 'arcLaser') return 21;
     return 18;
+  }
+
+  private get stageBaseId(): string {
+    return this.stage.id.replace(/-\d+$/, '');
   }
 
   private isCompactPlayfield(): boolean {
