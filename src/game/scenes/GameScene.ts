@@ -76,6 +76,8 @@ export class GameScene extends Phaser.Scene {
   private powerupPool: PowerupActor[] = [];
   private jackpotFx?: Phaser.GameObjects.Graphics;
   private stageAtmosphereFx?: Phaser.GameObjects.Graphics;
+  private screenPolishFx?: Phaser.GameObjects.Graphics;
+  private powerupFieldFx?: Phaser.GameObjects.Graphics;
 
   constructor() {
     super('GameScene');
@@ -111,6 +113,8 @@ export class GameScene extends Phaser.Scene {
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.jackpotFx = this.add.graphics().setDepth(-5);
     this.stageAtmosphereFx = this.add.graphics().setDepth(-4);
+    this.screenPolishFx = this.add.graphics().setDepth(96);
+    this.powerupFieldFx = this.add.graphics().setDepth(97);
     this.createCrosshair();
     this.bindCommands();
     this.registerInput();
@@ -136,6 +140,7 @@ export class GameScene extends Phaser.Scene {
     this.updateJackpotAmbience(time);
     this.updateEnemies(time, delta);
     this.updatePowerups(time, delta);
+    this.updateScreenPolish(time);
     this.maybeSpawnEnemy(delta);
     this.checkStageFlow();
     this.renderHud();
@@ -769,6 +774,169 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private updateScreenPolish(time: number): void {
+    if (!this.screenPolishFx || !this.powerupFieldFx) return;
+
+    const width = this.scale.width;
+    const height = this.scale.height;
+    const compact = this.isCompactPlayfield();
+    const reducedMotion = this.save.settings.reducedMotion;
+    const boss = this.enemies.find((enemy) => enemy.boss && enemy.sprite.active);
+
+    this.screenPolishFx.clear();
+    this.screenPolishFx.setBlendMode(Phaser.BlendModes.NORMAL);
+    this.drawV1Vignette(this.screenPolishFx, width, height, compact);
+    this.drawArcadeScanlines(this.screenPolishFx, width, height, time, compact, reducedMotion);
+    if (boss) this.drawBossPressureOverlay(this.screenPolishFx, width, height, boss, time, compact, reducedMotion);
+    if (this.run.lives <= 1 && !this.stage.bonus) this.drawLowLifeOverlay(this.screenPolishFx, width, height, time, reducedMotion);
+
+    this.powerupFieldFx.clear();
+    this.powerupFieldFx.setBlendMode(Phaser.BlendModes.ADD);
+    this.drawActivePowerupField(this.powerupFieldFx, width, height, time, compact, reducedMotion);
+  }
+
+  private drawV1Vignette(graphics: Phaser.GameObjects.Graphics, width: number, height: number, compact: boolean): void {
+    const layers = compact ? 4 : 6;
+    for (let index = 0; index < layers; index++) {
+      const inset = index * (compact ? 10 : 14);
+      const alpha = 0.018 + index * (compact ? 0.014 : 0.016);
+      graphics.fillStyle(0x02030a, alpha);
+      graphics.fillRect(0, inset, width, compact ? 9 : 12);
+      graphics.fillRect(0, height - inset - (compact ? 9 : 12), width, compact ? 9 : 12);
+      graphics.fillRect(inset, 0, compact ? 9 : 12, height);
+      graphics.fillRect(width - inset - (compact ? 9 : 12), 0, compact ? 9 : 12, height);
+    }
+  }
+
+  private drawArcadeScanlines(
+    graphics: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const spacing = compact ? 24 : 18;
+    const drift = reducedMotion ? 0 : Math.floor((time * 0.018) % spacing);
+    graphics.lineStyle(1, 0xffffff, compact ? 0.025 : 0.035);
+    for (let y = drift; y < height; y += spacing) {
+      graphics.lineBetween(0, y, width, y);
+    }
+
+    graphics.lineStyle(1, this.stage.palette.neon, compact ? 0.028 : 0.045);
+    const sweepY = reducedMotion ? height * 0.42 : (time * 0.04) % (height + 80) - 40;
+    graphics.lineBetween(0, sweepY, width, sweepY + 14);
+  }
+
+  private drawBossPressureOverlay(
+    graphics: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    boss: EnemyActor,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const pulse = reducedMotion ? 0.65 : (Math.sin(time / 130) + 1) / 2;
+    const border = compact ? 9 : 14;
+
+    graphics.fillStyle(0xff214f, 0.035 + pulse * 0.035);
+    graphics.fillRect(0, 0, width, border);
+    graphics.fillRect(0, height - border, width, border);
+    graphics.fillRect(0, 0, border, height);
+    graphics.fillRect(width - border, 0, border, height);
+    graphics.lineStyle(compact ? 2 : 3, 0xff214f, 0.22 + pulse * 0.24);
+    graphics.strokeCircle(boss.sprite.x, boss.sprite.y, boss.visualRadius * (1.24 + pulse * 0.12));
+    graphics.lineStyle(1, 0xffffff, 0.16);
+    graphics.lineBetween(width, boss.sprite.y - boss.visualRadius * 0.8, Math.max(width * 0.62, boss.sprite.x), boss.sprite.y);
+    graphics.lineBetween(width, boss.sprite.y + boss.visualRadius * 0.8, Math.max(width * 0.62, boss.sprite.x), boss.sprite.y);
+  }
+
+  private drawLowLifeOverlay(
+    graphics: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    time: number,
+    reducedMotion: boolean,
+  ): void {
+    const pulse = reducedMotion ? 0.45 : (Math.sin(time / 180) + 1) / 2;
+    graphics.fillStyle(0xff315a, 0.045 + pulse * 0.035);
+    graphics.fillRect(0, 0, width, 18);
+    graphics.fillRect(0, height - 18, width, 18);
+    graphics.lineStyle(2, 0xff315a, 0.18 + pulse * 0.24);
+    graphics.lineBetween(0, height * 0.18, width * 0.16, 0);
+    graphics.lineBetween(width, height * 0.82, width * 0.84, height);
+  }
+
+  private drawActivePowerupField(
+    graphics: Phaser.GameObjects.Graphics,
+    width: number,
+    height: number,
+    time: number,
+    compact: boolean,
+    reducedMotion: boolean,
+  ): void {
+    const centerX = width * 0.5;
+    const centerY = height * 0.45;
+    const pointer = this.input.activePointer;
+
+    if (this.run.isPowerupActive('slowmo')) {
+      const wave = reducedMotion ? 0 : Math.sin(time / 360) * 18;
+      graphics.lineStyle(2, 0x31f4ff, compact ? 0.18 : 0.24);
+      for (let index = 0; index < (compact ? 3 : 5); index++) {
+        graphics.strokeCircle(centerX, centerY, 88 + index * 48 + wave);
+      }
+      graphics.lineStyle(1, 0xffffff, 0.16);
+      for (let y = height * 0.18; y < height * 0.76; y += compact ? 68 : 48) {
+        const offset = reducedMotion ? 0 : Math.sin(time / 240 + y) * 24;
+        graphics.lineBetween(width * 0.1, y + offset, width * 0.9, y - offset);
+      }
+    }
+
+    if (this.run.isPowerupActive('multishot')) {
+      const orbit = reducedMotion ? 0 : time / 180;
+      graphics.lineStyle(2, 0xff8a32, 0.26);
+      for (let index = 0; index < 6; index++) {
+        const angle = orbit + (Math.PI * 2 * index) / 6;
+        const x = pointer.x + Math.cos(angle) * 42;
+        const y = pointer.y + Math.sin(angle) * 28;
+        graphics.strokeCircle(x, y, 6);
+        graphics.lineBetween(pointer.x, pointer.y, x, y);
+      }
+    }
+
+    if (this.run.isPowerupActive('scoreBoost')) {
+      graphics.lineStyle(2, 0xffdf4d, compact ? 0.14 : 0.2);
+      for (let index = 0; index < (compact ? 8 : 12); index++) {
+        const angle = (Math.PI * 2 * index) / (compact ? 8 : 12) + (reducedMotion ? 0 : time / 1200);
+        graphics.lineBetween(centerX + Math.cos(angle) * 72, centerY + Math.sin(angle) * 42, centerX + Math.cos(angle) * width * 0.45, centerY + Math.sin(angle) * height * 0.42);
+      }
+    }
+
+    if (this.run.isPowerupActive('overdrive')) {
+      const slide = reducedMotion ? 0 : (time * 0.16) % 92;
+      graphics.lineStyle(3, 0xff5fbb, compact ? 0.16 : 0.24);
+      for (let x = -120 + slide; x < width + 120; x += 92) {
+        graphics.lineBetween(x, height, x + width * 0.22, 0);
+      }
+      graphics.lineStyle(1, 0xffffff, 0.18);
+      graphics.strokeRect(pointer.x - 34, pointer.y - 18, 68, 36);
+    }
+
+    if (this.run.isPowerupActive('coinRush')) {
+      const coins = compact ? 9 : 15;
+      for (let index = 0; index < coins; index++) {
+        const drift = reducedMotion ? index * 37 : time * 0.05 + index * 37;
+        const x = (index * 71 + drift) % (width + 80) - 40;
+        const y = height * 0.18 + ((index * 41 + drift * 0.7) % (height * 0.58));
+        graphics.lineStyle(2, 0xffd447, 0.28);
+        graphics.strokeCircle(x, y, 8 + (index % 3));
+        graphics.lineStyle(1, 0xffffff, 0.16);
+        graphics.lineBetween(x - 4, y, x + 4, y);
+      }
+    }
+  }
+
   private createCrosshair(): void {
     this.crosshair = this.add.graphics();
     this.crosshair.setDepth(1000);
@@ -871,6 +1039,8 @@ export class GameScene extends Phaser.Scene {
       arcadeAudio.startMusic('boss', this.save.settings, this.stage.id);
       this.shakeCamera(450, 0.008);
       this.playBossEntryFx(actor);
+    } else {
+      this.playEnemySpawnTelegraph(actor);
     }
 
     this.enemies.push(actor);
@@ -1691,6 +1861,74 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private playEnemySpawnTelegraph(actor: EnemyActor): void {
+    const width = this.scale.width;
+    const y = actor.sprite.y;
+    const color = actor.def.tint ?? this.stage.palette.neon;
+    const compact = this.isCompactPlayfield();
+    const reducedMotion = this.save.settings.reducedMotion;
+    const telegraph = this.acquireTransientGraphics(66);
+    const strength = actor.def.id === 'normal' ? 0.34 : 0.58;
+    const laneLength = compact ? 86 : 132;
+
+    telegraph.setBlendMode(Phaser.BlendModes.ADD);
+    telegraph.lineStyle(actor.def.id === 'normal' ? 2 : 3, color, strength);
+    telegraph.lineBetween(width - 4, y, width - laneLength, y);
+    telegraph.lineStyle(1, 0xffffff, strength * 0.52);
+    telegraph.lineBetween(width - 18, y - 12, width - laneLength * 0.56, y - 12);
+    telegraph.lineBetween(width - 18, y + 12, width - laneLength * 0.56, y + 12);
+
+    switch (actor.def.behavior) {
+      case 'zigzag':
+        for (let index = 0; index < 3; index++) {
+          const x = width - laneLength + index * 34;
+          telegraph.lineBetween(x, y - 18, x + 18, y + 18);
+          telegraph.lineBetween(x + 18, y + 18, x + 36, y - 18);
+        }
+        break;
+      case 'shield':
+        this.drawHexRing(telegraph, compact ? 18 : 24, width - laneLength * 0.38, y);
+        break;
+      case 'armored':
+      case 'brute':
+        telegraph.strokeRoundedRect(width - laneLength * 0.62, y - 20, compact ? 38 : 52, 40, 8);
+        telegraph.lineBetween(width - laneLength * 0.58, y - 20, width - laneLength * 0.42, y + 20);
+        break;
+      case 'splitter':
+        telegraph.lineBetween(width - laneLength * 0.58, y - 24, width - laneLength * 0.28, y + 24);
+        telegraph.lineBetween(width - laneLength * 0.58, y + 24, width - laneLength * 0.28, y - 24);
+        break;
+      case 'dive':
+        telegraph.lineBetween(width - laneLength * 0.68, y - 30, width - laneLength * 0.36, y);
+        telegraph.lineBetween(width - laneLength * 0.36, y, width - laneLength * 0.68, y + 30);
+        break;
+      case 'wraith':
+        telegraph.strokeCircle(width - laneLength * 0.42, y - 8, compact ? 18 : 24);
+        telegraph.strokeCircle(width - laneLength * 0.54, y + 10, compact ? 13 : 18);
+        break;
+      case 'mini':
+        telegraph.strokeCircle(width - laneLength * 0.42, y, compact ? 10 : 14);
+        telegraph.strokeCircle(width - laneLength * 0.32, y - 8, compact ? 8 : 11);
+        break;
+      default:
+        if (actor.def.id === 'golden') {
+          telegraph.strokeRoundedRect(width - laneLength * 0.64, y - 20, compact ? 52 : 68, 40, 8);
+          telegraph.strokeCircle(width - laneLength * 0.42, y, compact ? 12 : 16);
+        } else {
+          telegraph.strokeCircle(width - laneLength * 0.36, y, compact ? 13 : 18);
+        }
+    }
+
+    this.tweens.add({
+      targets: telegraph,
+      alpha: 0,
+      scaleX: reducedMotion ? 1 : 0.72,
+      duration: reducedMotion ? 140 : 320,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(telegraph),
+    });
+  }
+
   private playWeaponImpact(actor: EnemyActor): void {
     const x = actor.sprite.x;
     const y = actor.sprite.y;
@@ -2242,6 +2480,7 @@ export class GameScene extends Phaser.Scene {
   private drawChainTraces(x: number, y: number, actors: EnemyActor[]): void {
     if (actors.length === 0) return;
     const graphics = this.acquireTransientGraphics(67);
+    graphics.setBlendMode(Phaser.BlendModes.ADD);
     graphics.lineStyle(2, 0xff8a32, 0.74);
     for (const actor of actors) {
       graphics.lineBetween(x, y, actor.sprite.x, actor.sprite.y);
