@@ -20,6 +20,7 @@ interface EnemyActor {
   velocityX: number;
   velocityY: number;
   bornMs: number;
+  nextSpitAtMs?: number;
   radius: number;
   visualRadius: number;
   visualScale: number;
@@ -43,6 +44,12 @@ const SPARK_POOL_LIMIT = 160;
 const TEXT_POOL_LIMIT = 32;
 const GRAPHICS_POOL_LIMIT = 40;
 const POWERUP_POOL_LIMIT = 12;
+const BOSS_SPIT_FIRST_DELAY_MS = 1350;
+const BOSS_SPIT_INTERVAL_MS = 2350;
+const BOSS_SPIT_INTERVAL_VARIANCE_MS = 620;
+const BOSS_SPIT_MINION_LIMIT = 4;
+const BOSS_VERTICAL_SAFE_PADDING = 34;
+const BOSS_MOUTH_SAFE_PADDING = 44;
 
 export class GameScene extends Phaser.Scene {
   private save!: SaveData;
@@ -999,7 +1006,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private spawnEnemy(enemyId: EnemyId, x = this.scale.width + 120, y?: number, splitDepth = 0): void {
+  private spawnEnemy(enemyId: EnemyId, x = this.scale.width + 120, y?: number, splitDepth = 0, telegraph = true): void {
     const def = ENEMIES[enemyId];
     const spawnY = y ?? Phaser.Math.Between(80, this.scale.height - 90);
     const sprite = this.acquireEnemySprite(x, spawnY);
@@ -1022,6 +1029,7 @@ export class GameScene extends Phaser.Scene {
       velocityX: (0.14 + Math.random() * 0.08) * def.speed * this.stage.speedMultiplier,
       velocityY: Phaser.Math.FloatBetween(-0.11, 0.11) * def.speed,
       bornMs: this.time.now,
+      nextSpitAtMs: undefined,
       radius: def.radius,
       visualRadius: def.radius * visualScaleMultiplier,
       visualScale,
@@ -1033,13 +1041,14 @@ export class GameScene extends Phaser.Scene {
       actor.velocityX = 0.04;
       actor.velocityY = 0.08;
       actor.sprite.x = this.scale.width + 180;
-      actor.sprite.y = this.scale.height * 0.35;
+      actor.sprite.y = this.clampBossY(this.scale.height * 0.35, actor);
+      actor.nextSpitAtMs = this.time.now + BOSS_SPIT_FIRST_DELAY_MS;
       this.showStageBanner('Boss Warning', def.label);
       arcadeAudio.playBossWarning();
       arcadeAudio.startMusic('boss', this.save.settings, this.stage.id);
       this.shakeCamera(450, 0.008);
       this.playBossEntryFx(actor);
-    } else {
+    } else if (telegraph) {
       this.playEnemySpawnTelegraph(actor);
     }
 
@@ -1075,9 +1084,11 @@ export class GameScene extends Phaser.Scene {
       if (actor.boss) {
         actor.sprite.x = Math.max(this.scale.width - 260, actor.sprite.x);
         actor.sprite.y += Math.sin(t * 2) * 0.5 * delta;
+        this.constrainBossToArena(actor);
+        this.updateBossSpit(actor, time);
       }
 
-      if (actor.sprite.y < 50 || actor.sprite.y > this.scale.height - 50) {
+      if (!actor.boss && (actor.sprite.y < 50 || actor.sprite.y > this.scale.height - 50)) {
         actor.velocityY *= -1;
       }
 
@@ -1099,6 +1110,73 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.enemies = this.enemies.filter((actor) => actor.sprite.active);
+  }
+
+  private constrainBossToArena(actor: EnemyActor): void {
+    const minY = this.bossMinY(actor);
+    const maxY = this.bossMaxY(actor);
+    const clampedY = Phaser.Math.Clamp(actor.sprite.y, minY, maxY);
+
+    if (clampedY !== actor.sprite.y) {
+      actor.sprite.y = clampedY;
+      actor.velocityY = Math.abs(actor.velocityY) * (clampedY === minY ? 1 : -1);
+    }
+  }
+
+  private updateBossSpit(actor: EnemyActor, time: number): void {
+    if (this.stageTransition || this.gameEnded || !actor.sprite.active) return;
+    if (time < (actor.nextSpitAtMs ?? 0)) return;
+
+    actor.nextSpitAtMs = time + this.nextBossSpitDelay();
+
+    const activeBossMinions = this.enemies.filter((enemy) => enemy.def.id === 'mini' && enemy.splitDepth >= 2 && enemy.sprite.active).length;
+    if (activeBossMinions >= this.bossSpitMinionLimit) return;
+
+    this.spitMiniRaven(actor, activeBossMinions);
+  }
+
+  private spitMiniRaven(actor: EnemyActor, activeBossMinions: number): void {
+    const mouth = this.bossMouthPosition(actor);
+    const count = activeBossMinions <= 1 && actor.hp <= actor.def.health * 0.42 && !this.isCompactPlayfield() ? 2 : 1;
+
+    this.playBossSpitWarning(actor, mouth.x, mouth.y);
+
+    for (let index = 0; index < count; index++) {
+      const minionY = Phaser.Math.Clamp(
+        mouth.y + (count === 1 ? 0 : index === 0 ? -26 : 26),
+        BOSS_MOUTH_SAFE_PADDING,
+        this.scale.height - BOSS_MOUTH_SAFE_PADDING,
+      );
+      const minionX = Phaser.Math.Clamp(mouth.x - index * 14, 116, this.scale.width - 108);
+      this.spawnEnemy('mini', minionX, minionY, 2, false);
+      const minion = this.enemies[this.enemies.length - 1];
+      if (minion?.def.id === 'mini') {
+        minion.velocityX = (0.19 + index * 0.025) * minion.def.speed * this.stage.speedMultiplier;
+        minion.velocityY = Phaser.Math.FloatBetween(-0.045, 0.045) * minion.def.speed;
+        minion.sprite.setDepth(24);
+        minion.sprite.setAlpha(0.96);
+      }
+    }
+  }
+
+  private bossMouthPosition(actor: EnemyActor): { x: number; y: number } {
+    const x = Phaser.Math.Clamp(actor.sprite.x - actor.visualRadius * 0.72, 116, this.scale.width - 108);
+    const y = Phaser.Math.Clamp(actor.sprite.y + actor.visualRadius * 0.08, BOSS_MOUTH_SAFE_PADDING, this.scale.height - BOSS_MOUTH_SAFE_PADDING);
+    return { x, y };
+  }
+
+  private nextBossSpitDelay(): number {
+    const compactMultiplier = this.isCompactPlayfield() ? 1.18 : 1;
+    const lowHealthMultiplier = this.enemies.some((enemy) => enemy.boss && enemy.hp <= enemy.def.health * 0.42) ? 0.78 : 1;
+    return (
+      (BOSS_SPIT_INTERVAL_MS + Phaser.Math.Between(-BOSS_SPIT_INTERVAL_VARIANCE_MS, BOSS_SPIT_INTERVAL_VARIANCE_MS)) *
+      compactMultiplier *
+      lowHealthMultiplier
+    );
+  }
+
+  private get bossSpitMinionLimit(): number {
+    return this.isCompactPlayfield() ? Math.max(2, BOSS_SPIT_MINION_LIMIT - 1) : BOSS_SPIT_MINION_LIMIT;
   }
 
   private updatePowerups(time: number, delta: number): void {
@@ -1256,8 +1334,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (actor.def.behavior === 'splitter' && actor.splitDepth < 1) {
-      this.spawnEnemy('mini', x + 34, y - 36, actor.splitDepth + 1);
-      this.spawnEnemy('mini', x + 34, y + 36, actor.splitDepth + 1);
+      this.spawnEnemy('mini', x + 34, y - 36, actor.splitDepth + 1, false);
+      this.spawnEnemy('mini', x + 34, y + 36, actor.splitDepth + 1, false);
     }
 
     arcadeAudio.playEnemyDestroyed(actor.def.id, this.run.comboMultiplier);
@@ -2144,6 +2222,35 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private playBossSpitWarning(actor: EnemyActor, x: number, y: number): void {
+    const warning = this.acquireTransientGraphics(94);
+    const compact = this.isCompactPlayfield();
+    const radius = Math.max(22, actor.visualRadius * (compact ? 0.22 : 0.28));
+
+    warning.setPosition(x, y);
+    warning.setBlendMode(Phaser.BlendModes.ADD);
+    warning.fillStyle(0xff214f, 0.18);
+    warning.fillCircle(0, 0, radius * 0.72);
+    warning.lineStyle(4, 0xff214f, 0.78);
+    warning.strokeCircle(0, 0, radius);
+    warning.lineStyle(2, 0xffffff, 0.48);
+    warning.lineBetween(-radius * 0.9, -radius * 0.32, radius * 1.1, 0);
+    warning.lineBetween(-radius * 0.9, radius * 0.32, radius * 1.1, 0);
+    warning.lineStyle(2, 0xffd447, 0.44);
+    warning.lineBetween(0, 0, -radius * 1.7, -radius * 0.56);
+    warning.lineBetween(0, 0, -radius * 1.7, radius * 0.56);
+    this.emitSparkBurst(x, y, 0xff214f, compact ? 6 : 10, 94, compact ? 44 : 68);
+
+    this.tweens.add({
+      targets: warning,
+      alpha: 0,
+      scale: this.save.settings.reducedMotion ? 1 : 1.38,
+      duration: this.save.settings.reducedMotion ? 120 : 260,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.releaseTransientGraphics(warning),
+    });
+  }
+
   private playBossDefeatSetPiece(x: number, y: number): void {
     const width = this.scale.width;
     const height = this.scale.height;
@@ -2662,6 +2769,18 @@ export class GameScene extends Phaser.Scene {
     if (this.weapon.id === 'burstRifle') return 24;
     if (this.weapon.id === 'arcLaser') return 21;
     return 18;
+  }
+
+  private bossMinY(actor: EnemyActor): number {
+    return Math.max(84, actor.visualRadius + BOSS_VERTICAL_SAFE_PADDING);
+  }
+
+  private bossMaxY(actor: EnemyActor): number {
+    return Math.max(this.bossMinY(actor) + 32, this.scale.height - actor.visualRadius - BOSS_VERTICAL_SAFE_PADDING);
+  }
+
+  private clampBossY(y: number, actor: EnemyActor): number {
+    return Phaser.Math.Clamp(y, this.bossMinY(actor), this.bossMaxY(actor));
   }
 
   private get stageBaseId(): string {
