@@ -373,6 +373,15 @@ a:hover {
   pointer-events: auto;
 }
 
+.modal-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin: 14px -4px -4px;
+  padding: 8px 4px 4px;
+  background: linear-gradient(180deg, transparent, rgba(12, 7, 26, 0.96) 36%);
+}
+
 .utility-rail {
   display: grid;
   grid-template-columns: auto minmax(150px, 1fr) minmax(320px, 2fr);
@@ -1168,6 +1177,10 @@ a:hover {
   border-color: rgba(32, 242, 255, 0.32);
 }
 
+.stage-cluster strong {
+  overflow-wrap: anywhere;
+}
+
 .grade-cluster {
   top: 14px;
   right: 14px;
@@ -1302,6 +1315,8 @@ a:hover {
 }
 
 .modal-card {
+  position: relative;
+  z-index: 2;
   width: min(680px, calc(100vw - 28px));
   border: 2px solid var(--line);
   border-radius: 8px;
@@ -1405,6 +1420,79 @@ a:hover {
 
 .bonus-grade {
   border-color: rgba(255, 212, 71, 0.36);
+}
+
+.grade-celebration {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.grade-celebration strong {
+  position: absolute;
+  top: clamp(24px, 9vh, 82px);
+  left: 50%;
+  color: var(--gold);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: clamp(44px, 10vw, 104px);
+  line-height: 1;
+  text-shadow:
+    0 0 18px rgba(255, 229, 106, 0.86),
+    0 0 40px rgba(157, 255, 87, 0.42),
+    4px 5px 0 rgba(0, 0, 0, 0.68);
+  transform: translateX(-50%);
+  animation: s-rank-pop 1.05s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.grade-celebration i {
+  position: absolute;
+  top: -18px;
+  left: calc(var(--x) * 1%);
+  width: 10px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--confetti-color);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--confetti-color) 72%, transparent);
+  transform: translateX(var(--dx)) rotate(0deg);
+  animation: grade-confetti-fall 1.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--delay);
+}
+
+@keyframes s-rank-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.56) rotate(-5deg);
+    filter: blur(10px);
+  }
+
+  54% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.12) rotate(1deg);
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-24px) scale(1);
+  }
+}
+
+@keyframes grade-confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translateX(var(--dx)) translateY(0) rotate(0deg);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(calc(var(--dx) + var(--drift))) translateY(76vh) rotate(var(--spin));
+  }
 }
 
 @keyframes grade-unveil {
@@ -1816,6 +1904,10 @@ a:hover {
     gap: 8px;
   }
 
+  .arcade-menu button {
+    min-height: 44px;
+  }
+
   .arcade-menu .primary-command {
     grid-column: 1 / -1;
   }
@@ -2041,7 +2133,7 @@ a:hover {
   }
 
   .grade-cluster button {
-    min-height: 32px;
+    min-height: 42px;
     margin-top: 5px;
     font-size: 12px;
   }
@@ -2106,17 +2198,89 @@ a:hover {
     padding: 14px;
   }
 
+  .stage-clear-card {
+    display: grid;
+    grid-template-columns: minmax(178px, 0.72fr) minmax(0, 1fr);
+    grid-template-areas:
+      "eyebrow reward"
+      "title stats"
+      "grade stats"
+      "next next"
+      "actions actions";
+    align-items: start;
+    gap: 7px 10px;
+    text-align: left;
+  }
+
+  .stage-clear-card .eyebrow {
+    grid-area: eyebrow;
+  }
+
+  .stage-clear-card h2 {
+    grid-area: title;
+  }
+
+  .stage-clear-card .grade-report {
+    grid-area: grade;
+  }
+
+  .stage-clear-card .reward-line {
+    grid-area: reward;
+    align-self: stretch;
+    margin: 0;
+  }
+
+  .stage-clear-card .record-grid {
+    grid-area: stats;
+    align-self: stretch;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0;
+  }
+
+  .stage-clear-card .next-stage-card {
+    grid-area: next;
+    margin: 0;
+  }
+
+  .stage-clear-card .modal-actions {
+    grid-area: actions;
+    display: grid;
+    grid-template-columns: 1.15fr repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .gameover-card .record-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin: 6px 0;
+  }
+
+  .gameover-card .modal-actions {
+    display: grid;
+    grid-template-columns: 1.15fr repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .modal-actions button,
+  .stage-clear-card .modal-actions button,
+  .gameover-card .modal-actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+
   .modal-card h2 {
-    font-size: clamp(34px, 14vh, 62px);
+    font-size: clamp(30px, 12vh, 54px);
+    line-height: 0.9;
   }
 
   .grade-report {
     margin: 8px 0;
-    padding: 10px;
+    padding: 9px;
   }
 
   .grade-emblem {
-    font-size: clamp(62px, 26vh, 112px);
+    font-size: clamp(50px, 23vh, 96px);
   }
 
   .grade-detail {
@@ -2135,8 +2299,60 @@ a:hover {
     padding: 10px;
   }
 
+  .reward-line {
+    align-items: center;
+    gap: 10px;
+  }
+
+  .reward-line strong {
+    font-size: 22px;
+    white-space: nowrap;
+  }
+
+  .next-stage-card strong {
+    font-size: clamp(24px, 8vh, 36px);
+  }
+
+  .next-stage-card p,
+  .threat-chips {
+    display: none;
+  }
+
+  .grade-celebration strong {
+    top: calc(var(--safe-top) + 8px);
+    font-size: clamp(34px, 13vh, 58px);
+  }
+
   .recommendation-panel div div {
     grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 740px) {
+  .armory-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stage-clear-card {
+    grid-template-columns: minmax(154px, 0.65fr) minmax(0, 1fr);
+    gap: 6px 8px;
+  }
+
+  .stage-clear-card .record-grid,
+  .gameover-card .record-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .record-grid div {
+    padding: 6px;
+  }
+
+  .record-grid span {
+    font-size: 10px;
+  }
+
+  .record-grid strong {
+    font-size: clamp(18px, 7vh, 24px);
   }
 }
 

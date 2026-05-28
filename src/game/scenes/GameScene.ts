@@ -1470,7 +1470,6 @@ export class GameScene extends Phaser.Scene {
     arcadeAudio.playStageClear(this.run.stageIndex);
     this.floatText(this.scale.width / 2, this.scale.height * 0.38, `STAGE CLEAR +${rewardCoins}`, '#ffe56a', 36);
     this.playStageClearSweep(currentStage);
-    if (stageGrade.gradeLabel === 'S') this.playSGradeConfetti(currentStage);
     if (this.stage.bonus) {
       this.playJackpotStageClear();
     } else {
@@ -1888,47 +1887,6 @@ export class GameScene extends Phaser.Scene {
       onComplete: () => this.releaseTransientGraphics(burst),
     });
     this.emitSparkBurst(x, y, color, 28, 83, 180);
-  }
-
-  private playSGradeConfetti(stage: StageDefinition): void {
-    const x = this.scale.width / 2;
-    const y = this.scale.height * 0.34;
-    const reducedMotion = this.save.settings.reducedMotion;
-    const colors = [stage.palette.neon, 0xffe56a, 0x9dff57, 0x20f2ff, 0xff3fb4, 0xffffff];
-    const count = reducedMotion ? 18 : 72;
-
-    this.floatText(x, y - 88, 'S RANK!', '#ffe56a', 54);
-    this.emitSparkBurst(x, y, 0xffe56a, reducedMotion ? 16 : 42, 91, 260, true);
-    this.emitSparkBurst(x, y, stage.palette.neon, reducedMotion ? 12 : 34, 91, 220, true);
-    if (!reducedMotion) this.cameras.main.flash(260, 255, 229, 106, false);
-    this.shakeCamera(360, 0.01);
-
-    for (let index = 0; index < count; index++) {
-      const angle = (Math.PI * 2 * index) / count + Phaser.Math.FloatBetween(-0.22, 0.22);
-      const distance = Phaser.Math.Between(120, reducedMotion ? 260 : 420);
-      const confetti = this.add.rectangle(
-        x,
-        y,
-        Phaser.Math.Between(5, 12),
-        Phaser.Math.Between(3, 9),
-        Phaser.Math.RND.pick(colors),
-        0.95,
-      );
-
-      confetti.setDepth(218);
-      confetti.setAngle(Phaser.Math.Between(0, 180));
-      this.tweens.add({
-        targets: confetti,
-        x: x + Math.cos(angle) * distance,
-        y: y + Math.sin(angle) * distance + Phaser.Math.Between(30, 120),
-        alpha: 0,
-        angle: confetti.angle + Phaser.Math.Between(180, 720),
-        scaleX: Phaser.Math.FloatBetween(0.45, 1.4),
-        duration: reducedMotion ? 460 : Phaser.Math.Between(760, 1180),
-        ease: 'Quad.easeOut',
-        onComplete: () => confetti.destroy(),
-      });
-    }
   }
 
   private playJackpotIntro(): void {

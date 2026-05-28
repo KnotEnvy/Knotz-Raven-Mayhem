@@ -4,110 +4,110 @@
     "repo": "KnotEnvy/Knotz-Raven-Mayhem",
     "handoffDate": "2026-05-28",
     "currentBranch": "master",
-    "productGoal": "Knotz Raven Mayhem is now a stage-grading arcade campaign: players keep advancing through the stage arc while stars, grade percent, coins, records, and upgrades preserve mastery pressure.",
-    "v1ScopeDecision": "Local records and local progression only. Online leaderboards, databases, backend accounts, cloud saves, and service-worker/offline caching remain deferred beyond v1."
+    "productGoal": "Make Knotz Raven Mayhem feel better than expected for a free GitHub Pages arcade game, especially for players testing on phones and installed PWA-style launches.",
+    "v1ScopeDecision": "Local records and local progression only. Online leaderboards, databases, backend accounts, cloud saves, and service-worker/offline caching remain deferred beyond v1 unless explicitly approved."
   },
   "handoffSummary": {
-    "completedThisPass": "Converted the lives-gated progression model into explicit stage-grade accounting, 1-5 star ratings, grade-adjusted stage rewards, stage retry, dramatic grade reveals, S-rank confetti, run reports, grade records, a Recovery Matrix upgrade, and a Grade Shield powerup.",
-    "workingBaseline": "Preserve the current desktop, iPad, landscape-phone, VFX, boss, Jackpot Alley, armory, local save, release-shell, and GitHub Pages baseline. The main progression blocker from the prior handoff is now implemented locally.",
+    "completedBaseline": "The game is currently playable as a stage-grading arcade campaign with stage retry, dramatic grade reveals, S-rank confetti on the grading screen, run reports, armory upgrades, bosses, Jackpot Alley, local records, release shell assets, and GitHub Pages build support.",
+    "nextTeamMission": "Return to the mobile/PWA-first track. The next pass should make phone landscape, tablet, installed-app, and GitHub Pages testing feel deliberate, polished, responsive, and reliable rather than merely functional.",
+    "qualityBar": "A first-time tester opening the GitHub Pages link on a phone should understand orientation, start the game quickly, read the HUD, use touch controls comfortably, clear stages without layout overlap, and trust that the game is a real arcade build.",
     "latestKnownGate": "npm.cmd run release:verify passed on 2026-05-28. It ran balance:report, build, release:check, and release:smoke. Release check signal: linkedAssets=3 seedAssets=4 releaseShellAssets=10. Dist smoke signal: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10.",
-    "devServer": "A Vite dev server is already responding at http://127.0.0.1:5173/ for manual playtesting.",
+    "devServer": "A Vite dev server has been used at http://127.0.0.1:5173/ for manual playtesting. Use npm run dev for local desktop checks, or npm.cmd run dev -- --host 0.0.0.0 --port 5173 for same-network phone testing.",
     "handoffWarning": "CI verification does not publish the live game. The GitHub Pages site updates only after the Deploy GitHub Pages workflow is manually run with workflow_dispatch on master."
   },
-  "implementedGradeSystem": {
-    "stageProgression": "Missed non-bonus ravens now become escaped grade-eligible enemies instead of removing lives or ending the run. Stage flow still waits for the spawn quota plus field drain, and boss stages still require the Raven King to be defeated.",
-    "gradeMath": {
-      "gradeEligibleSpawned": "Incremented only for normal stage quota spawns.",
-      "gradeEligibleKilled": "Incremented only when a grade-eligible quota enemy is killed.",
-      "excludedFromGradeInflation": "Splitter children, boss-spit mini ravens, bosses, bonus-stage enemies, and future optional spawns do not inflate grade percentage.",
-      "thresholds": "5 stars at 90%+, 4 at 80-89%, 3 at 70-79%, 2 at 60-69%, 1 below 60%.",
-      "gradeBuffer": "Recovery Matrix keeps the internal thickJacket save id and adds a small grade buffer per rank without granting free perfect grades."
-    },
-    "rewards": {
-      "stageRewards": "Non-bonus stage rewards are adjusted by star count. Bonus rounds keep their flat payout.",
-      "runRewards": "Run payout now includes score coins, stage coins, accuracy bonus, star bonus, boss bonus, enemy/drop coins, and Bounty Chip multiplier.",
-      "balanceReport": "scripts/report-balance.mjs now models learning, solid, and hot runs by grade percent and stars per stage."
-    },
-    "records": {
-      "saveCompatibility": "Save version remains 1. Existing thickJacket ranks are preserved and now power Recovery Matrix.",
-      "newLocalRecords": "bestRunStars, bestRunGradePercent, perfectStages, and bestStageStars are normalized into existing local saves.",
-      "recordsUi": "Records now show best stars, best run grade, perfect stages, stage medals, and existing score/stage/combo/kills records."
-    },
-    "ui": {
-      "hud": "Life pips are replaced by a grade cluster showing grade percent/stars, escaped count, stage aim, shield charges, and coins.",
-      "stageClear": "Stage clear now shows a large dramatic grade label, supporting grade percent, stars, escaped count, grade kills, stage aim, grade-adjusted reward, total coins, run stars, next-stage preview, Continue, Retry Stage, and Quit Run.",
-      "stageRetry": "Retry Stage restores score, coins, stars, boss credit, grade records, kills, shots, powerups, and shield charges to the checkpoint captured at the start of the current stage before replaying that same stage.",
-      "sRankCelebration": "S-grade clears trigger a Phaser-side confetti pop, extra spark bursts, S RANK text, and a short flash/shake when motion settings allow it.",
-      "runReport": "The old game-over surface is now a Run Report. Quitting from pause or stage clear banks rewards and shows total stars, average grade, perfect stages, coins, and armory recommendations."
-    },
-    "powerups": {
-      "gradeShield": "The existing extraLife powerup id is now presented as Grade Shield. It stores up to three shield charges and forgives one escaped grade-eligible raven per charge.",
-      "otherPowerups": "Slow-Mo, Multi-Shot, Score Boost, Overdrive, and Coin Rush behavior remains intact."
-    }
+  "currentPlayableBaseline": {
+    "campaign": "Nine authored stages are in place, including boss stages and Jackpot Alley. The player advances through the arc using grade and star pressure instead of lives-based failure.",
+    "stageGrades": "Missed non-bonus ravens become escaped grade-eligible enemies. Stars are awarded from grade percent: 5 stars at 90%+, 4 at 80-89%, 3 at 70-79%, 2 at 60-69%, and 1 below 60%.",
+    "stageRetry": "Stage clear now includes Retry Stage so players can replay the current stage from its checkpoint and improve the score, coins, grade, and star outcome for that stage.",
+    "gradePresentation": "Stage transition presentation now emphasizes the grade more than the percent. S-grade clears trigger the DOM-overlay S RANK text and confetti on the grading screen itself.",
+    "runReport": "Quitting from pause or stage clear banks rewards and shows total stars, average grade, perfect stages, coins, and armory recommendations.",
+    "progression": "Recovery Matrix preserves the internal thickJacket save id and adds a small grade buffer per rank. Grade Shield preserves the extraLife powerup id but now forgives one grade-eligible escape per charge.",
+    "localPersistence": "Save version remains 1. Existing local saves should keep working, including prior thickJacket ranks."
   },
-  "subagentWorkIntegrated": [
+  "mobilePwaBaseline": {
+    "currentDirection": "Landscape-first mobile remains the accepted direction for v1. Portrait currently acts as an orientation gate rather than a full portrait gameplay layout.",
+    "manifest": {
+      "file": "public/manifest.webmanifest",
+      "display": "standalone",
+      "orientation": "landscape",
+      "id": "./",
+      "start_url": "./",
+      "scope": "./",
+      "icons": "192x192 and 512x512 maskable icons are present.",
+      "note": "Relative manifest paths are intentional for GitHub Pages base-path safety."
+    },
+    "htmlShell": "index.html includes viewport-fit=cover, theme color, manifest link, apple-mobile-web-app-capable, apple-mobile-web-app-title, apple status bar styling, and social preview metadata.",
+    "cssShell": "src/styles.css owns safe-area variables, touch-action controls, portrait orientation gate styles, and short landscape viewport rules.",
+    "releaseShell": "public/ owns icons and social preview assets. release:check currently expects releaseShellAssets=10.",
+    "offlineCaching": "No service worker or offline caching is currently approved for v1. Do not add caching semantics without an explicit product decision and a stale-asset invalidation plan."
+  },
+  "nextTeamPrimaryFocus": [
     {
-      "name": "Grade Systems Agent",
-      "result": "Confirmed lives loss was isolated to GameScene.updateEnemies() calling RunState.loseLife(), and flagged stageKills/stageTargetKills as unsafe for stars because splitter children, boss kills, and boss-spit minis inflate kills."
+      "priority": 1,
+      "name": "Real-device phone landscape fit and touch feel",
+      "goal": "Make the game feel intentionally designed on common iPhone and Android landscape sizes, not just shrunken desktop. Validate HUD density, stage-clear controls, run report, armory, pause/options, and touch target comfort."
     },
     {
-      "name": "Stage Transition UI Agent",
-      "result": "Mapped HUD life pips, stage-clear, game-over, records, upgrade labels, and responsive CSS areas. The implementation moved those surfaces to grade, stars, and run-report UI."
+      "priority": 2,
+      "name": "PWA installability and GitHub Pages path safety",
+      "goal": "Confirm installed launches, relative manifest paths, icons, splash/background colors, standalone display, and the /Knotz-Raven-Mayhem/ base path continue to work after every mobile change."
     },
     {
-      "name": "Upgrade And Economy Agent",
-      "result": "Mapped thickJacket, startingLives, extraLife, save compatibility, rewards, and balance-report hooks. The implementation kept the internal thickJacket id, rebranded it, replaced extra-life semantics, and updated balance modeling."
+      "priority": 3,
+      "name": "Grade and retry UI on mobile",
+      "goal": "The new grading screen is now a core feature. Ensure the dramatic grade reveal, Retry Stage, Continue, Quit Run, stars, reward math, and S-rank confetti remain readable and usable on phone landscape."
+    },
+    {
+      "priority": 4,
+      "name": "Mobile performance and effects budget",
+      "goal": "Protect framerate during boss stages, dense raven waves, screen shake, DOM confetti, S-rank celebrations, and mobile browser compositing. Add caps or reduced-effect behavior if real devices show jank."
+    },
+    {
+      "priority": 5,
+      "name": "Release QA and deployment confidence",
+      "goal": "Keep the local gates green, update the release checklist with concrete phone/PWA cases, and preserve the manual Deploy GitHub Pages workflow path."
     }
   ],
-  "importantFilesChanged": {
-    "gradeContract": [
-      "src/game/types.ts",
-      "src/game/systems/grades.ts",
-      "src/game/systems/RunState.ts"
+  "recommendedFirstSprint": {
+    "outcome": "Ship a mobile/PWA polish pass that can be tested from both the local LAN dev server and the public GitHub Pages URL.",
+    "steps": [
+      "Audit current phone landscape at 667x375, 740x360, 844x390, 852x393, 932x430, and at least one tablet landscape size.",
+      "Fix any overlap or cramped controls in HUD, stage clear, S-rank grading screen, run report, armory, pause/options, and portrait gate.",
+      "Tune touch affordances and hit targets so the game can be played without accidental taps or obscured action.",
+      "Validate installed PWA-style launch behavior on at least one iOS and one Android device where possible.",
+      "Confirm GitHub Pages build output still uses the correct base path and relative PWA shell paths.",
+      "Update DOCS/RELEASE-QA-CHECKLIST.md with the exact mobile/PWA cases that were actually run."
     ],
-    "gameplayFlow": [
+    "likelyFiles": [
+      "src/styles.css",
+      "src/ui/app.ts",
       "src/game/scenes/GameScene.ts",
       "src/game/data/tuning.ts",
-      "src/game/data/stages.ts"
-    ],
-    "progressionAndSave": [
-      "src/game/systems/progression.ts",
-      "src/game/data/upgrades.ts",
-      "src/game/save.ts"
-    ],
-    "uiAndCss": [
-      "src/ui/app.ts",
-      "src/styles.css",
-      "src/game/scenes/AttractScene.ts"
-    ],
-    "balanceAndDocs": [
-      "scripts/report-balance.mjs",
-      "DOCS/BALANCE-NOTES.md",
+      "index.html",
+      "public/manifest.webmanifest",
+      "scripts/check-release.mjs",
+      "scripts/smoke-dist.mjs",
       "DOCS/RELEASE-QA-CHECKLIST.md",
-      "DOCS/RELEASE-ROADMAP.md",
       "DOCS/DEPLOYMENT-RUNBOOK.md",
-      "DOCS/SUBAGENTS.md",
-      "README.md"
+      "DOCS/RELEASE-ROADMAP.md"
     ]
   },
-  "manualPlaytestNeededNow": [
-    "From http://127.0.0.1:5173/, start a fresh run and intentionally miss several Stage 1 ravens. Expected: no 0-lives failure, escaped count rises, grade percent/stars drop, and stage clear still appears after quota plus field drain.",
-    "Use Retry Stage from a stage-clear screen. Expected: the same stage restarts, the prior attempt does not double-count score/coins/stars, and a better replay can replace that stage result.",
-    "Clear a stage with S rank. Expected: the stage transition emphasizes the S grade first, percent reads as supporting detail, and a confetti pop celebration appears without hiding the controls.",
-    "Continue through Stage 2 and confirm stage-clear rewards explain grade-adjusted coins and the HUD still fits while grade, escapes, shields, stage aim, and coins update.",
-    "Collect a Grade Shield powerup if it drops. Expected: HUD shield count increases; the next grade-eligible escape shows GRADE SHIELD and does not increase escaped count.",
-    "Reach or simulate boss stages in normal play if possible: Stage 3, Stage 6, and Stage 9. Expected: boss defeat is still required; boss-spit minis add score/pressure without inflating grade percent.",
-    "Play Jackpot Alley. Expected: it behaves as a bonus payout round, missed enemies do not lower stage stars, and the stage clear report says Bonus Round.",
-    "From a stage-clear screen and from pause, choose Quit Run. Expected: rewards are banked, the Run Report appears, and Open Armory, Run It Back, and Menu route correctly.",
-    "Check Armory with a returning save that had thickJacket ranks. Expected: Recovery Matrix shows the preserved rank and no save reset occurs.",
-    "Check desktop, iPad, and phone landscape HUD/stage-clear/run-report layouts for overlap after the grade UI changes."
-  ],
-  "remainingProductWork": [
-    "Manual balance tuning after real play: decide whether 90/80/70/60 star thresholds and reward multipliers feel right.",
-    "Boss pressure tuning after lives removal, especially Raven King duration and boss-spit readability.",
-    "Real-device phone landscape validation after grade HUD and run-report changes.",
-    "Final production art/audio pass remains optional before public release, as documented in DOCS/RELEASE-ROADMAP.md.",
-    "Final release QA checklist still must be run end to end before sharing a new GitHub Pages build."
+  "mobileQaChecklistForNextTeam": [
+    "Open the local LAN dev server on a real phone in landscape. Expected: no browser chrome or safe-area overlap blocks HUD, controls, stage-clear buttons, or run-report actions.",
+    "Open the public GitHub Pages URL on a phone after deployment. Expected: assets load from /Knotz-Raven-Mayhem/, no blank screen, no missing icon/social/manifest assets.",
+    "Rotate to portrait during menu and gameplay. Expected: the orientation gate is clear, polished, and recoverable when returning to landscape.",
+    "Install or add to home screen on iOS and Android where available. Expected: standalone launch uses the correct title, icon, theme/background color, orientation, and start URL.",
+    "Start a fresh Stage 1 run with touch input only. Expected: movement, firing, pause, and menu actions feel reachable and do not fight page scroll or browser gestures.",
+    "Miss several Stage 1 ravens, then finish the stage. Expected: no lives failure, escaped count rises, grade percent/stars drop, and stage clear still fits on phone landscape.",
+    "Use Retry Stage from stage clear. Expected: the same stage restarts, previous attempt values do not double count, and the next clear can improve the stage result.",
+    "Clear a stage with S rank. Expected: grade reveal and confetti happen on the grading screen, do not hide primary actions, and do not tank framerate on a real phone.",
+    "Use Continue, Retry Stage, and Quit Run from the mobile stage-clear screen. Expected: all three actions are visible, tappable, and visually distinct.",
+    "Open the Run Report from Quit Run. Expected: totals, stars, average grade, perfect stages, coins, and action buttons fit without scrolling traps or overlap.",
+    "Open Armory on phone landscape. Expected: upgrade text, prices, purchase affordances, and preserved Recovery Matrix rank remain readable and usable.",
+    "Play or simulate boss stages 3, 6, and 9 on a phone. Expected: boss health/readability, projectile pressure, boss-spit minis, and grade HUD remain understandable.",
+    "Play Jackpot Alley. Expected: bonus-round labeling and payout fit on mobile, and missed bonus enemies do not lower stars.",
+    "Toggle reduced shake or other options where available. Expected: mobile users can reduce intense effects without breaking feedback.",
+    "Try a repeat visit after deployment. Expected: no stale asset or cached-manifest behavior creates a blank screen or old build confusion."
   ],
   "importantCommands": {
     "install": "npm install",
@@ -125,14 +125,21 @@
     "manualWorkflow": "Deploy GitHub Pages",
     "requiredEvent": "workflow_dispatch",
     "liveUrl": "https://knotenvy.github.io/Knotz-Raven-Mayhem/",
-    "currentStatus": "Local release verification is green after the grade conversion. The correct publish path remains manual Deploy GitHub Pages on master after manual QA is acceptable. CI verification alone does not publish.",
+    "currentStatus": "Local release verification was green after the grade conversion. The correct publish path remains manual Deploy GitHub Pages on master after mobile/PWA manual QA is acceptable.",
     "why": "The classic Pages branch/folder source can show a blank white screen after the Vite migration because it may serve stale or mismatched static output. The Actions deployment uploads the freshly built dist artifact."
   },
-  "openDesignQuestionsForPlaytest": [
-    "Do low-grade clears still feel exciting when the player advances instead of losing the run?",
-    "Are grade shields helpful without making 5-star clears feel automatic?",
-    "Should boss-spit mini ravens remain optional score/pressure only, or should they affect a separate boss-pressure bonus later?",
-    "Are star-adjusted stage rewards strong enough to motivate mastery without blocking progression?",
-    "Should a completed Stage 9 run show a special end-of-arc recap before overflow stages?"
+  "doNotChangeWithoutApproval": [
+    "Do not add online accounts, backend saves, databases, leaderboards, or analytics without approval.",
+    "Do not add a service worker or offline caching without an explicit cache invalidation and GitHub Pages stale-asset plan.",
+    "Do not replace the current grade/stars/stage-retry progression model while doing mobile polish.",
+    "Do not make portrait gameplay the main v1 mode unless the product direction changes.",
+    "Do not remove the relative manifest/start_url/scope behavior without proving GitHub Pages deployment still works."
+  ],
+  "openQuestionsForMobileTeam": [
+    "Should v1 remain landscape-only with a premium orientation gate, or should portrait menus become a later supported mode?",
+    "Should installed PWA launch hide any browser-only instructions or add a dedicated first-run touch calibration prompt?",
+    "Do the current touch controls need larger zones, configurable sensitivity, or a different phone layout?",
+    "Should S-rank confetti and heavy VFX automatically scale down on low-end phones?",
+    "Should the final Stage 9 clear receive a special end-of-arc recap before any future overflow or endless-stage work?"
   ]
 }

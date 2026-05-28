@@ -698,6 +698,7 @@ function renderStageClear(state: Extract<UiState, { screen: 'stage-clear' }>): s
   return `
     ${renderHud({ screen: 'hud', snapshot, stage: currentStage, weapon: { name: snapshot.weaponName } as WeaponDefinition, crosshair: { name: snapshot.crosshairName } as CrosshairDefinition })}
     <section class="modal-screen stage-clear-screen">
+      ${grade.gradeLabel === 'S' ? renderSGradeCelebration() : ''}
       <div class="modal-card stage-clear-card">
         <p class="eyebrow">${summary.nextStageIsBonus ? 'Bonus Round Incoming' : 'Stage Clear'}</p>
         <h2>${currentStage.title}</h2>
@@ -792,6 +793,30 @@ function renderGradeReport(grade: StageGrade): string {
 function renderStars(starCount: number): string {
   if (starCount <= 0) return '<span class="bonus-star">Bonus</span>';
   return Array.from({ length: 5 }, (_, index) => `<i class="${index < starCount ? 'filled' : ''}"></i>`).join('');
+}
+
+function renderSGradeCelebration(): string {
+  const colors = ['#ffe56a', '#9dff57', '#20f2ff', '#ff3fb4', '#ffffff', '#ffd447'];
+  const compactSurface = window.matchMedia('(orientation: landscape) and (max-height: 520px), (max-width: 860px)').matches;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pieceCount = reducedMotion ? 12 : compactSurface ? 28 : 56;
+  const pieces = Array.from({ length: pieceCount }, (_, index) => {
+    const x = 8 + ((index * 17) % 84);
+    const dx = ((index % 9) - 4) * 18;
+    const drift = ((index % 7) - 3) * 26;
+    const delay = (index % 10) * 28;
+    const spin = 180 + (index % 8) * 90;
+    const color = colors[index % colors.length];
+
+    return `<i style="--x:${x}; --dx:${dx}px; --drift:${drift}px; --delay:${delay}ms; --spin:${spin}deg; --confetti-color:${color};"></i>`;
+  }).join('');
+
+  return `
+    <div class="grade-celebration" aria-hidden="true">
+      <strong>S RANK</strong>
+      ${pieces}
+    </div>
+  `;
 }
 
 function renderArmoryRecommendations(save: SaveData): string {

@@ -67,8 +67,14 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 
 ## Mobile And Accessibility
 
-- [ ] Attract screen, armory, records, options, pause, HUD, stage clear, and run report fit at 390x844 without overlapping controls.
-- [ ] HUD remains readable at 390x844 while targets are still hittable.
+- [ ] Portrait phone view, such as 390x844, shows the landscape orientation gate clearly and returns cleanly to the game after rotating.
+- [ ] Phone landscape viewports, including 667x375, 740x360, 844x390, 852x393, and 932x430, keep the attract screen, armory, records, options, pause, HUD, stage clear, and run report free of overlapping controls.
+- [ ] Touch-only Stage 1 play works in phone landscape: firing, HUD Pause, Resume, Continue, Retry Stage, Quit Run, Run It Back, Open Armory, and Menu targets are reachable without browser scroll or gesture conflicts.
+- [ ] Stage-clear grade UI fits in phone landscape with the dramatic grade, stars, grade-adjusted reward, escaped count, Retry Stage, Continue, and Quit Run actions readable and tappable.
+- [ ] S-grade confetti in phone landscape does not cover the stage-clear actions and does not visibly tank framerate on a real device.
+- [ ] Run report fits in phone landscape with total stars, average grade, perfect stages, coins, armory recommendations, and all action buttons usable.
+- [ ] HUD remains readable in phone landscape while targets are still hittable and the lower-middle playfield is not blocked by persistent UI.
+- [ ] Installed or home-screen PWA-style launch uses the correct title, icon, theme/background color, orientation, and relative start URL on at least one iOS and one Android device when available.
 - [ ] Long-running attract mode and late-stage runs do not visibly slow down from accumulated ravens, powerups, traces, text, or particle effects.
 - [ ] Reduced Motion disables major flash/shake effects and procedural music.
 - [ ] Screen Shake off prevents camera shake while preserving core hit feedback.
