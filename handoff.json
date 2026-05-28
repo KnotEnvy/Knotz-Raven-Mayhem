@@ -2,198 +2,219 @@
   "project": {
     "name": "Knotz Raven Mayhem",
     "repo": "KnotEnvy/Knotz-Raven-Mayhem",
-    "handoffDate": "2026-05-21",
+    "handoffDate": "2026-05-28",
     "currentBranch": "master",
-    "productGoal": "Move Knotz Raven Mayhem from a playable beta candidate into an official version 1 release by raising the visual, effects, shader, GFX, and presentation quality while preserving the now-working desktop and landscape-mobile gameplay baseline.",
-    "v1ScopeDecision": "Local records and local progression only. Online leaderboards, databases, backend accounts, and cloud saves remain deferred beyond v1."
+    "productGoal": "Move Knotz Raven Mayhem from a lives-gated arcade run into a stage-grading arcade campaign where players can keep seeing later content while still being ranked on performance.",
+    "v1ScopeDecision": "Local records and local progression only. Online leaderboards, databases, backend accounts, cloud saves, and service-worker/offline caching remain deferred beyond v1."
   },
   "handoffSummary": {
-    "nextTeamMission": "Own the v1 presentation pass: special effects, GFX, shader-style treatments, stronger stage identity, hit/weapon feedback, boss spectacle, and release-grade visual polish.",
-    "whyThisMatters": "The game loop, armory progression, desktop layout, landscape-mobile flow, local saves, release shell, and deployment path are in good shape. The biggest remaining difference between beta and official v1 is production feel: the game needs more visual punch, clearer feedback, and more memorable stage/boss presentation.",
-    "workingBaseline": "Treat the current desktop and landscape-mobile experience as accepted baseline behavior unless new bugs appear. Do not restart the mobile workstream; protect it while improving effects and presentation.",
-    "latestKnownGate": "Recent local checks passed individually: npm.cmd run typecheck, npm.cmd run build, npm.cmd run release:check, and npm.cmd run release:smoke. The release check signal was Release check passed: linkedAssets=3 seedAssets=4 releaseShellAssets=10. The served dist smoke signal was Dist smoke passed: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10.",
+    "nextTeamMission": "Own the major progression conversion from lives-based failure to stage grades, star ratings, grade-aware rewards, and stage transitions that advance even after low-performance clears.",
+    "whyThisMatters": "The game has become visually strong and mechanically more demanding, especially with late-stage enemy pressure and boss fights. Players are not reliably reaching later stages under the current lives model. A grading system lets the full 9-stage arc be experienced while preserving mastery goals through stars, score, coins, records, and upgrade incentives.",
+    "workingBaseline": "Preserve the current desktop, iPad, landscape-phone, VFX, boss, Jackpot Alley, armory, local save, release-shell, and GitHub Pages baseline while changing progression rules. Do not restart mobile/PWA or visual-polish workstreams.",
+    "latestKnownGate": "Recent local code gates from the gameplay/presentation work passed individually: npm.cmd run typecheck, npm.cmd run balance:report, npm.cmd run build, npm.cmd run release:check, and npm.cmd run release:smoke. Release check signal: Release check passed: linkedAssets=3 seedAssets=4 releaseShellAssets=10. Dist smoke signal: Dist smoke passed: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10.",
     "handoffWarning": "CI verification does not publish the live game. The GitHub Pages site updates only after the Deploy GitHub Pages workflow is manually run with workflow_dispatch on master."
   },
   "currentState": {
-    "summary": "The original raven click-target prototype has been rebuilt into a Phaser 3 + TypeScript + Vite arcade shooter with staged runs, bosses, Jackpot Alley bonus pacing, between-stage interstitials, armory-forward game over, persistent local saves, DOM overlays, idle cabinet demo/tutorial screens, procedural stage art, stage-aware procedural audio, pooled transient effects, procedural scoring/armory/bonus-round FX, SEO/web kit release assets, release verification scripts, GitHub Actions workflow scaffolding, and a landscape-first mobile layout.",
+    "summary": "The original raven click-target prototype is now a Phaser 3 + TypeScript + Vite arcade shooter with 9 named stages, bosses, Jackpot Alley, armory progression, local saves, DOM overlays, landscape-first mobile layout, SEO/PWA shell, release verification scripts, procedural stage art/audio, pooled transient VFX, shader-style screen polish, weapon/enemy impact signatures, stage atmosphere, boss spectacle, and improved Raven King behavior.",
     "implementedContent": {
-      "stages": "9 named stages with different spawn pools, palettes, speed multipliers, rewards, procedural set dressing, a Jackpot Alley bonus round, overflow scaling after the final named stage, and field-drain stage transitions that wait for active ravens and powerups before showing stage clear.",
+      "stages": "9 named stages with different spawn pools, palettes, speed multipliers, rewards, procedural set dressing, Jackpot Alley bonus pacing, overflow scaling after the final named stage, and field-drain stage transitions that wait for active ravens and powerups before showing stage clear.",
       "enemies": "11 enemy definitions: normal, fast, golden, armored, mini, shield, splitter, dive, wraith, brute, and boss. Stage pools reveal enemy types gradually across the full 9-stage arc.",
-      "weapons": "4 guns: Quarter Pistol, Burst Rifle, Scattergun, Arc Laser.",
+      "bosses": "The Raven King appears on boss stages, is vertically clamped inside a fair arena lane, has boss warning/pressure/defeat presentation, and now spits mini ravens from a clamped mouth position with active boss-minion caps.",
+      "weapons": "4 guns: Quarter Pistol, Burst Rifle, Scattergun, Arc Laser. Weapon-specific muzzle, trace, impact, and reticle feedback are implemented.",
       "assistChips": "4 Assist Chip unlocks: Stock Cabinet, Turbo Capacitor, Threat Scanner, Chaos Net. These tune recharge feel and target forgiveness while the live reticle identity follows the equipped gun.",
-      "upgrades": "4 permanent upgrade tracks: cooldown, combo window, starting lives, payout scaling.",
-      "powerups": "6 powerups: slow-mo, multi-shot, score boost, extra life, overdrive, coin rush.",
+      "currentUpgrades": "4 permanent upgrade tracks currently exist: cooldown, combo window, starting lives, and payout scaling. The starting-lives upgrade is the main upgrade that must be redesigned for the grading-system conversion.",
+      "powerups": "6 powerups: slow-mo, multi-shot, score boost, extra life, overdrive, coin rush. Extra life is also affected by the grading-system conversion and should be redesigned or retired.",
       "audio": "Procedural WebAudio with menu/run/boss modes, stage-aware motifs, weapon-specific shots, enemy-specific hit cues, powerup cues, boss warning/defeat stings, stage clear, miss, and game over. AudioContext creation is gated until a real user gesture.",
-      "visuals": "Seed raven/explosion assets plus procedural stage set dressing, cabinet-style HUD framing, weapon-driven reticles, Assist Chip effect labels, cooldown feedback, projectile traces, multishot chain traces, shotgun spread visualization, laser lane feedback, scoring bursts, coin showers, Jackpot Alley ambient FX, and pooled transient effects for long-session performance.",
-      "mobile": "Landscape-first mobile is now the accepted mobile direction. Portrait phones show a rotate gate, the manifest requests landscape, HUD density and enemy visual scale were reduced for phone landscape, and Armory uses a phone-landscape page scroll model instead of nested card scrolling.",
+      "visuals": "Seed raven/explosion assets plus procedural stage set dressing, cabinet HUD, stage atmosphere overlays, screen polish, weapon-driven reticles, cooldown feedback, projectile traces, scoring bursts, coin showers, Jackpot Alley FX, boss FX, powerup field FX, and pooled transient graphics for long-session performance.",
+      "mobile": "Landscape-first mobile is the accepted mobile direction. Portrait phones show a rotate gate, the manifest requests landscape, HUD density and enemy visual scale are reduced for phone landscape, and Armory uses a phone-landscape page scroll model.",
       "releaseOps": "Release verification scripts, balance report, SEO/release-shell asset checks, served dist smoke for /Knotz-Raven-Mayhem/, GitHub Actions CI, and manual GitHub Pages deployment workflow are in place.",
-      "pwaShell": "index.html and public/ include mobile web app tags, icons, manifest.webmanifest, robots.txt, sitemap.xml, social-preview.png, and canonical metadata. The manifest uses start_url './', scope './', display 'standalone', orientation 'landscape', and same-origin id './'."
+      "pwaShell": "index.html and public/ include mobile web app tags, icons, manifest.webmanifest, robots.txt, sitemap.xml, social-preview.png, and canonical metadata. Manifest uses id './', start_url './', scope './', display 'standalone', and orientation 'landscape'."
+    },
+    "currentProgressionProblem": {
+      "problem": "The current run model is lives-gated. Missed non-bonus ravens call run.loseLife(), and 0 lives ends the run. Because the game is harder now, players can lose access to later stages instead of receiving a poor stage grade and continuing.",
+      "targetChange": "Stages should advance after the spawn quota and field drain complete, even when the player misses many ravens. Misses should lower grade, rewards, and records rather than hard-stopping the run.",
+      "recommendedGradeScale": [
+        "5 stars: 90% or higher grade-eligible kill percentage.",
+        "4 stars: 80% to 89%.",
+        "3 stars: 70% to 79%.",
+        "2 stars: 60% to 69%.",
+        "1 star: below 60%, still a stage pass unless the player quits or a new explicit failure rule is approved."
+      ],
+      "importantNuance": "Do not calculate stars by blindly using total stageKills divided by stageTargetKills. Splitter children, boss-spit mini ravens, and possibly future bonus spawns can inflate kills. Track grade-eligible spawned enemies and grade-eligible kills explicitly, then clamp percentages to 100%.",
+      "bossStages": "Boss stages should no longer be life-gated. The boss can remain a required objective, but missed ravens and boss-spit minions should hurt grade/rewards rather than causing game over. If boss duration becomes too long, tune boss health/spit cadence separately instead of reintroducing lives as the main progression gate."
     },
     "latestPlaytestUpdate": {
-      "date": "2026-05-21",
-      "summary": "Mobile is now working well enough to hand off. iPad and laptop layouts are good. Phone landscape supports menu/options/play, and Armory has been reworked as a whole-page mobile scroll surface. Remaining work should focus on v1 effects, GFX, shader-style presentation, and final release polish.",
+      "date": "2026-05-28",
+      "summary": "The game looks and feels substantially better after VFX, screen polish, boss spectacle, and boss-spit work. The next product-level issue is progression accessibility: the game is hard enough that the lives model blocks many players from seeing later levels.",
       "acceptedSignals": [
-        "Landscape-first mobile direction is accepted.",
-        "Desktop and iPad gameplay remain strong.",
-        "Options, core menu navigation, and gameplay work in landscape mobile testing.",
-        "Game-over-to-armory flow makes sense and should remain a progression anchor.",
-        "Between-stage interstitials and stage drain behavior should be preserved.",
-        "Recent console issues were addressed: manifest id is same-origin, AudioContext is user-gesture gated, and the explosion animation uses valid frames 0-4."
+        "Desktop and iPad gameplay are strong.",
+        "Landscape-phone direction remains accepted.",
+        "The VFX and shader-style presentation work should be preserved.",
+        "Raven King boss clamp and boss-spit behavior should be preserved unless playtesting shows difficulty spikes.",
+        "Armory and local progression remain important; the grading system should feed that loop rather than replacing it."
       ],
       "remainingValidation": [
-        "Re-test Armory page scrolling on the user's target phones after the latest page-scroll change.",
-        "Run final real-device checks after major effects/shader work because visual load can affect phone performance.",
-        "Repeat published-build fresh-save and returning-save checks after deployment.",
-        "Run DOCS/RELEASE-QA-CHECKLIST.md end to end before calling v1 final."
+        "Design and implement stage-grade data, UI, rewards, and records.",
+        "Playtest whether low-grade stage advancement keeps the game exciting without making mastery feel irrelevant.",
+        "Retest boss stages after lives are removed because boss-spit pressure will shift from survival pressure to grade pressure.",
+        "Retest phone landscape after changing HUD/stage-clear/game-over UI.",
+        "Run DOCS/RELEASE-QA-CHECKLIST.md end to end after the grading conversion."
       ]
     },
     "knownUnfinishedAreas": [
-      "The game needs a full v1 GFX and special-effects pass to feel release-grade rather than beta-simple.",
-      "Stage identities need more memorable foreground/background effects, transitions, and danger/readability cues.",
-      "Weapon impacts, combo moments, powerups, boss warnings, boss damage, and boss defeats need stronger payoff.",
-      "Shader-style treatments are currently minimal. Any shader/WebGL work should be performance-conscious and degrade cleanly on mobile.",
-      "Current seed raven and explosion assets are functional but not final production art.",
-      "Armory is planned to grow after beta; its mobile scroll model should be preserved and retested as content expands.",
-      "Final mobile performance validation remains necessary after the effects pass."
+      "Lives-based run failure must be converted into grade-based stage evaluation.",
+      "Stage-clear interstitials need star/grade presentation, grade-eligible kill percentage, missed/escaped count, and grade-based reward explanation.",
+      "HUD life pips should be removed or repurposed into grade/progress/pressure indicators.",
+      "Game over flow needs to be redefined. It may become end-of-arc summary, quit/abandon summary, or grade recap rather than 0-lives failure.",
+      "The Thick Jacket / starting-lives upgrade needs a new player-facing identity and mechanic.",
+      "The Extra Life powerup needs a replacement or new meaning because lives should no longer be the core resource.",
+      "Records and rewards should store/display best stage grades and possibly total stars.",
+      "Manual balance and real-device validation are required after the progression conversion."
     ]
   },
   "nextTeamPrimaryFocus": {
-    "theme": "Version 1 effects, GFX, shader-style polish, and release-grade presentation.",
+    "theme": "Stage grading, star ratings, reward conversion, and lives-system removal.",
     "priorityOrder": [
       {
         "priority": 1,
-        "title": "Create a v1 visual effects language",
+        "title": "Define the grade model and data contract",
         "details": [
-          "Define a consistent arcade-neon effects style for hits, misses, coins, combo chains, powerups, stage clears, boss warnings, and game over.",
-          "Keep effects readable over the moving playfield; spectacle should not hide ravens, powerups, the reticle, or important HUD information.",
-          "Reuse Phaser Graphics, pooled transient objects, existing sprite assets, and lightweight procedural effects before adding heavy assets.",
-          "Respect reduced-motion settings and screen-shake settings.",
-          "Keep effects data-driven or centralized enough that future content can reuse them instead of duplicating one-off scene code."
+          "Add an explicit stage-grade model instead of deriving grades from existing total kills.",
+          "Recommended fields: gradeEligibleSpawned, gradeEligibleKilled, escapedGradeEligible, optionalKills, stageAccuracy, starCount, gradeLabel, and gradePercent.",
+          "Use 5 stars for 90%+, 4 for 80%+, 3 for 70%+, 2 for 60%+, and 1 below 60%.",
+          "Decide whether boss death is a required objective. Recommended: boss must be defeated, but misses/minions only lower grade.",
+          "Document whether bonus-stage Jackpot Raven misses affect grade, coins only, or a separate bonus grade."
         ]
       },
       {
         "priority": 2,
-        "title": "Upgrade weapon and enemy feedback",
+        "title": "Replace lives as the progression gate",
         "details": [
-          "Make each weapon feel visually distinct: pistol precision, burst cadence, shotgun spread, and arc laser lane identity should read instantly.",
-          "Strengthen enemy hit and destruction feedback by archetype: armor, shield, splitter, wraith, brute, golden, and boss should not all feel like the same hit effect.",
-          "Improve combo escalation feedback without cluttering the center or lower-middle playfield.",
-          "Use pooled effects and caps; do not create unbounded particles or long-lived graphics objects during late-stage runs.",
-          "Do not change weapon economy, upgrade costs, or stage balance unless an effect pass exposes a concrete gameplay readability blocker."
+          "Change missed non-bonus ravens in GameScene.ts from loseLife/endRun into escaped/missed grade accounting.",
+          "Keep stage flow based on spawn quota plus field clear, then show stage clear with a grade rather than ending the run.",
+          "Remove or redesign low-life screen polish and HUD life pips.",
+          "Update RunState.ts so per-stage grade state resets on startStage() and snapshots expose grade fields.",
+          "Preserve combo reset and miss feedback on misses so skill still matters."
         ]
       },
       {
         "priority": 3,
-        "title": "Make stages and bosses feel like v1 set pieces",
+        "title": "Revamp stage-clear, game-over, and records UI",
         "details": [
-          "Give each major stage a stronger mood through layered background animation, haze, lighting pulses, foreground silhouettes, warning flashes, or shader-style overlays.",
-          "Make Jackpot Alley feel like a special bonus moment with distinct visual rhythm and reward feedback.",
-          "Make boss entries, damage states, and defeats feel larger and more intentional.",
-          "Keep stage effects behind gameplay readability. The player must still read raven silhouettes and tap targets on phones.",
-          "Document any new stage-effect architecture so later stages can be authored without guessing."
+          "Stage clear should show stars, grade percentage, killed/escaped grade-eligible enemies, accuracy, combo, reward coins, and next-stage preview.",
+          "Game over should become a run summary, quit summary, or end-of-arc recap rather than a lives failure screen.",
+          "Records should track best grade per stage, total stars, best full-run grade, and possibly perfect-stage count.",
+          "HUD should show current stage grade trend or kill percentage instead of life pips.",
+          "Keep DOM overlays for text-heavy summaries; do not move this UI into Phaser canvas."
         ]
       },
       {
         "priority": 4,
-        "title": "Evaluate shader and post-processing options safely",
+        "title": "Redesign lives-related progression",
         "details": [
-          "Explore Phaser pipeline/shader-style effects only where they materially improve the game: CRT treatment, heat shimmer, lightning, boss aura, laser bloom, or stage haze.",
-          "Prefer opt-in, scoped shader effects over global post-processing that risks mobile performance or browser compatibility.",
-          "Provide a fallback path for mobile, reduced-motion, or weaker GPUs.",
-          "Test shader changes on desktop and phone landscape before merging.",
-          "Avoid service-worker/offline scope unless explicitly approved; v1 should not risk stale cached JS chunks."
+          "Recommended: keep the internal upgrade id thickJacket for save compatibility but rename it to a grading-era upgrade such as Recovery Matrix, Stage Curve, or Grade Buffer.",
+          "Suggested mechanic: each rank grants a small per-stage grade buffer, forgiveness for the first escaped raven, or a minimum reward floor without granting free 5-star grades.",
+          "Do not make the upgrade simply raise star ratings for free; mastery should still require strong play.",
+          "Extra Life powerup should become a grading-era powerup such as Recovery Token, Grade Shield, Combo Restore, or Retake Spark.",
+          "If UpgradeId/stat names change, update save normalization and test returning saves carefully."
         ]
       },
       {
         "priority": 5,
-        "title": "Protect release confidence",
+        "title": "Retune rewards and release confidence",
         "details": [
+          "Grade should affect coins, records, stage medals, and upgrade recommendations.",
+          "Run npm run balance:report after changing rewards, economy, stage flow, enemy accounting, boss behavior, or upgrades.",
           "Run npm run typecheck and npm run build after code changes.",
-          "Run npm run balance:report if gameplay timing, rewards, enemy behavior, or economy changes.",
-          "Run npm run release:check and npm run release:smoke after release-shell, asset, Vite, public, manifest, or dist path changes.",
-          "Run npm run release:verify before handoff or release candidate tagging.",
-          "After deploy, validate the live GitHub Pages URL in a fresh browser profile or private window."
+          "Run npm run release:check and npm run release:smoke after build, asset, manifest, release-shell, or dist-path changes.",
+          "Run npm run release:verify before handoff or release-candidate tagging."
         ]
       }
     ]
   },
   "currentBacklogFromDocs": [
-    "Re-test Armory scrolling on real target phones after the latest mobile page-scroll change.",
-    "Create a v1 visual-effects pass for weapon shots, impacts, kills, combos, powerups, boss warnings, boss defeats, stage clears, and game over.",
-    "Add stronger stage-specific GFX and shader-style atmosphere while preserving raven/reticle readability.",
-    "Improve boss spectacle and Jackpot Alley reward presentation.",
-    "Profile long-session phone performance after effects work; watch particle counts, pooled graphics reuse, CPU/GPU pressure, and late-stage readability.",
-    "Run DOCS/RELEASE-QA-CHECKLIST.md end to end before final v1 release.",
-    "Complete published-build fresh-save and returning-save checks after deployment."
+    "Convert missed ravens from lives loss into grade/escape accounting.",
+    "Add explicit grade-eligible spawned/killed counters so splitter children and boss-spit mini ravens do not inflate grades.",
+    "Implement 5-star stage grades using 90/80/70/60 percent thresholds.",
+    "Revamp stage-clear UI around stars, grade percentage, escaped ravens, reward explanation, and next-stage preview.",
+    "Remove or redesign HUD life pips, low-life overlay, 0-lives game-over flow, and lives-related text.",
+    "Rebrand/rework Thick Jacket / starting lives into a grading-era upgrade while preserving existing saves if possible.",
+    "Replace or redesign Extra Life powerup.",
+    "Add records for best stage grade, total stars, and full-run grade performance.",
+    "Retune coin rewards and balance notes around grade-based payouts.",
+    "Retest mobile landscape and boss stages after the progression conversion."
   ],
   "recommendedFirstSprint": [
     {
-      "slice": "V1 effects architecture and weapon-impact pass",
-      "reason": "The next biggest v1 gap is feel and presentation. Weapon and impact feedback are high-frequency moments that will make the whole game feel more official quickly.",
+      "slice": "Grade model and stage-flow conversion",
+      "reason": "This is the core product change. Until grade accounting exists, UI/reward work will be guessing.",
       "likelyFiles": [
+        "src/game/systems/RunState.ts",
         "src/game/scenes/GameScene.ts",
-        "src/game/data/weapons.ts",
-        "src/game/data/enemies.ts",
-        "src/game/data/tuning.ts",
-        "src/styles.css"
+        "src/game/types.ts",
+        "src/ui/events.ts",
+        "src/ui/app.ts"
       ],
       "acceptance": [
-        "Each weapon has visibly distinct shot and impact feedback.",
-        "Enemy archetypes have readable hit/destroy cues without obscuring targets.",
-        "Effects are pooled or capped and do not accumulate during long sessions.",
-        "Reduced-motion settings reduce non-essential motion and flashes.",
+        "Missed non-bonus ravens no longer end the run through lives.",
+        "Stage clear still occurs after the stage spawn quota and field drain.",
+        "Each stage snapshot contains grade percent and star count.",
+        "Boss-spit mini ravens and splitter children do not incorrectly inflate grade percentage.",
         "npm run typecheck and npm run build pass."
       ]
     },
     {
-      "slice": "Stage and boss spectacle pass",
-      "reason": "The game already has nine stages and recurring boss fights; v1 needs those moments to feel authored and memorable instead of simple palette swaps.",
+      "slice": "Stage clear and HUD grading UI",
+      "reason": "The player must understand that low-grade clears still advance while high grades remain the mastery target.",
       "likelyFiles": [
-        "src/game/scenes/GameScene.ts",
-        "src/game/data/stages.ts",
-        "src/game/data/enemies.ts",
-        "src/game/systems/WaveDirector.ts",
-        "src/game/systems/ArcadeAudio.ts"
+        "src/ui/app.ts",
+        "src/ui/events.ts",
+        "src/styles.css",
+        "src/game/types.ts"
       ],
       "acceptance": [
-        "At least three early-to-mid stages have stronger distinctive visual identity.",
-        "Boss warning, boss active state, boss damage, and boss defeat each have upgraded presentation.",
-        "Jackpot Alley has clearer bonus-round visual treatment.",
-        "Phone landscape remains readable and playable.",
-        "npm run release:smoke passes after asset/runtime changes."
+        "HUD no longer emphasizes lives as the primary resource.",
+        "Stage clear presents 1-5 stars, grade percent, kills/misses, reward coins, and next-stage preview.",
+        "Text fits in desktop, iPad, and phone landscape layouts.",
+        "Reduced-motion and existing visual settings remain respected.",
+        "Manual phone landscape check is queued after implementation."
       ]
     },
     {
-      "slice": "Shader-style polish exploration",
-      "reason": "Shader and post-processing effects can raise the official v1 feel, but they must be scoped and validated carefully for mobile.",
+      "slice": "Upgrade and powerup rework",
+      "reason": "Starting lives and extra life no longer fit once lives stop being the progression gate.",
       "likelyFiles": [
-        "src/game/scenes/GameScene.ts",
-        "src/main.ts",
+        "src/game/data/upgrades.ts",
         "src/game/data/tuning.ts",
-        "src/game/systems"
+        "src/game/systems/progression.ts",
+        "src/game/systems/RunState.ts",
+        "src/game/save.ts",
+        "src/ui/app.ts",
+        "scripts/report-balance.mjs",
+        "DOCS/BALANCE-NOTES.md"
       ],
       "acceptance": [
-        "One or two scoped shader-style effects are prototyped behind clear runtime conditions.",
-        "Effects have a fallback or can be disabled without breaking gameplay.",
-        "No global shader effect makes phone gameplay harder to read.",
-        "Reduced-motion and mobile performance are explicitly considered.",
-        "npm run typecheck and npm run build pass."
+        "Thick Jacket is replaced or rebranded into a fitting grade-era upgrade.",
+        "Existing saves with thickJacket ranks remain valid or are migrated intentionally.",
+        "Extra Life powerup is replaced or assigned a new non-lives effect.",
+        "Balance report reflects changed upgrade/economy assumptions.",
+        "Returning-save manual test is listed before release."
       ]
     }
   ],
   "architecturePointers": {
     "runtime": "src/main.ts creates the Phaser game with BootScene, AttractScene, and GameScene and imports src/styles.css.",
-    "boot": "src/game/scenes/BootScene.ts loads seed sprites/audio and creates raven-flap plus boom-pop animations. boom.png currently has five frames, indexed 0-4.",
-    "gameplayScene": "src/game/scenes/GameScene.ts owns active run spawning, input, hit resolution, touch/crosshair behavior, stage flow, boss flow, background set dressing, procedural effects, pooled transient effects, and HUD dispatch. This is the primary v1 effects/GFX work file.",
-    "menuScene": "src/game/scenes/AttractScene.ts owns attract screen state, idle cabinet demo rotation, armory/records/options/credits commands, save mutations, menu music, pooled title-screen ravens, and armory transaction FX.",
-    "uiLayer": "src/ui/app.ts renders DOM overlays for attract, armory, records, options, HUD, stage clear, pause, and game over. src/ui/events.ts is the scene/UI command bridge.",
-    "styles": "src/styles.css controls the responsive DOM overlay, HUD placement, modal sizing, phone landscape layout, Armory scroll model, reduced-motion CSS, safe-area padding, and static SEO fallback styling.",
-    "releaseShell": "index.html and public/ are the primary places for SEO, Open Graph/Twitter metadata, favicon/app icons, web manifest, social preview images, mobile web app tags, robots, and sitemap.",
-    "pwaManifest": "public/manifest.webmanifest currently sets id './', start_url './', scope './', display 'standalone', orientation 'landscape', and icon paths under public/icons/.",
-    "data": "src/game/data/stages.ts, enemies.ts, weapons.ts, upgrades.ts, and tuning.ts are the main data/tuning entry points. Avoid changing balance constants for visual-only work.",
-    "audio": "src/game/systems/ArcadeAudio.ts owns procedural WebAudio and now waits for a user gesture before creating/resuming AudioContext.",
-    "save": "src/game/save.ts normalizes localStorage save data and applies purchases/rewards. Preserve returning saves unless v1 explicitly changes save shape.",
-    "balance": "scripts/report-balance.mjs reads live TypeScript data and estimates stage pacing, rewards, and economy costs.",
+    "gameplayScene": "src/game/scenes/GameScene.ts owns active run spawning, input, hit resolution, misses, stage flow, boss flow, stage clear, game over, procedural effects, pooled transient effects, and HUD dispatch. Current lives loss happens here when non-boss enemies leave screen.",
+    "runState": "src/game/systems/RunState.ts owns lives, maxLives, loseLife(), addLife(), stageKills, stageTargetKills, combo, accuracy, active powerups, weapon cooldown, and RunSnapshot creation. This should own or expose grade state.",
+    "types": "src/game/types.ts defines UpgradeId, UpgradeDefinition.stat, PlayerStats.startingLives, RunSnapshot lives/maxLives fields, RunRewards, and StageClearSummary. Grade fields and stat replacements start here.",
+    "uiLayer": "src/ui/app.ts renders DOM overlays for attract, armory, records, options, HUD, stage clear, pause, and game over. Life pips, stage-clear stats, game-over stats, and upgrade stat labels live here.",
+    "uiEvents": "src/ui/events.ts carries UiState payloads from Phaser scenes to DOM UI. Update this when RunSnapshot or StageClearSummary gains grade fields.",
+    "upgrades": "src/game/data/upgrades.ts defines Thick Jacket as starting-lives today. Rename/rework carefully; keep internal id if preserving saves.",
+    "progression": "src/game/systems/progression.ts maps save upgrades into PlayerStats. It currently converts thickJacket ranks into startingLives.",
+    "tuning": "src/game/data/tuning.ts contains baseStartingLives, thickJacketRanksPerLife, extraLifeOverflowCap, accuracy bonus, economy, powerup, presentation, and overflow tuning. Grade thresholds and grade payout multipliers can live here.",
+    "save": "src/game/save.ts normalizes localStorage save data, applies purchases/rewards, calculates run rewards, and normalizes upgrade ranks. Any save shape or UpgradeId/stat change must preserve returning saves.",
+    "balance": "scripts/report-balance.mjs reads live TypeScript data and estimates stage pacing, rewards, and economy costs. Update it when grade payouts or upgrade identities change.",
+    "releaseShell": "index.html and public/ own SEO, Open Graph/Twitter metadata, favicon/app icons, web manifest, social preview images, mobile web app tags, robots, and sitemap.",
     "releaseChecks": "scripts/check-release.mjs validates dist files, release-shell metadata, and public web kit assets. scripts/smoke-dist.mjs serves dist from /Knotz-Raven-Mayhem/ and fetches linked assets, seed assets, and release-shell assets."
   },
   "importantCommands": {
@@ -209,31 +230,19 @@
   },
   "verificationStatusAtHandoff": {
     "lastKnownPassingTypecheck": "npm.cmd run typecheck",
+    "lastKnownPassingBalanceReport": "npm.cmd run balance:report",
     "lastKnownPassingBuild": "npm.cmd run build",
-    "lastKnownPassingReleaseCheck": "npm.cmd run release:check printed Release check passed: linkedAssets=3 seedAssets=4 releaseShellAssets=10. In one run, the shell wrapper timed out after the passing output; rerun if a clean process exit is required.",
+    "lastKnownPassingReleaseCheck": "npm.cmd run release:check printed Release check passed: linkedAssets=3 seedAssets=4 releaseShellAssets=10.",
     "lastKnownPassingSmoke": "npm.cmd run release:smoke",
     "lastKnownReleaseSmokeSignal": "Dist smoke passed: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10",
-    "recentManualPlaytestSignals": [
-      "Laptop and iPad layouts work well.",
-      "Landscape mobile can change options and play the game.",
-      "Armory is a major progression surface and must remain usable as more content is added.",
-      "User wants the next phase to focus on special effects, GFX, shader effects, and official v1 release presentation."
-    ],
-    "releaseVerifyCoverage": [
-      "balance report",
-      "TypeScript build",
-      "Vite production build",
-      "dist asset/link verifier",
-      "release-shell metadata and public web kit asset verifier",
-      "served dist smoke from /Knotz-Raven-Mayhem/"
-    ],
     "manualValidationStillRequired": [
-      "Re-test latest Armory scroll behavior on real target phones.",
-      "Real iPhone landscape validation after the effects pass.",
-      "Real Android landscape validation after the effects pass.",
-      "PWA install and standalone launch checks on iOS Safari and Android Chrome if v1 will promote installability.",
+      "Manual playtest of several low-grade stages to confirm the player advances instead of being stopped.",
+      "Manual playtest of at least Stage 3, Stage 6, and Stage 9 boss fights after lives are removed.",
+      "Manual check that boss-spit mini ravens affect score/pressure without corrupting grade math.",
+      "Real iPhone and Android landscape validation after HUD and stage-clear UI changes.",
+      "Returning-save test with existing Thick Jacket ranks before and after the upgrade rework.",
       "Fresh-save and returning-save checks from browser and installed app.",
-      "Final full release QA checklist after v1 effects work."
+      "Final full release QA checklist after grading conversion."
     ]
   },
   "releaseFilesAndDocs": {
@@ -245,7 +254,14 @@
     "entryHtml": "index.html",
     "stylesheet": "src/styles.css",
     "uiOverlay": "src/ui/app.ts",
+    "uiEvents": "src/ui/events.ts",
     "gameplayScene": "src/game/scenes/GameScene.ts",
+    "runState": "src/game/systems/RunState.ts",
+    "progression": "src/game/systems/progression.ts",
+    "save": "src/game/save.ts",
+    "types": "src/game/types.ts",
+    "upgrades": "src/game/data/upgrades.ts",
+    "tuning": "src/game/data/tuning.ts",
     "bootScene": "src/game/scenes/BootScene.ts",
     "attractScene": "src/game/scenes/AttractScene.ts",
     "audioSystem": "src/game/systems/ArcadeAudio.ts",
@@ -256,24 +272,24 @@
   },
   "recommendedSubagents": [
     {
-      "name": "VFX Systems Agent",
-      "focus": "Own reusable hit, kill, combo, coin, powerup, stage-clear, and game-over effect systems in GameScene.ts. Keep effects pooled, capped, reduced-motion aware, and reusable for future content."
+      "name": "Grade Systems Agent",
+      "focus": "Own RunState/types/GameScene grade accounting, grade-eligible spawn tracking, star thresholds, snapshots, and non-lives stage progression."
     },
     {
-      "name": "Weapon And Enemy Feel Agent",
-      "focus": "Own distinct visual feedback for weapons and enemy archetypes, including projectile traces, impact bursts, armor/shield/wraith/splitter treatments, and boss damage readability."
+      "name": "Stage Transition UI Agent",
+      "focus": "Own HUD, stage-clear, game-over/run-summary, records, and responsive grading presentation in src/ui/app.ts and src/styles.css."
     },
     {
-      "name": "Stage And Boss GFX Agent",
-      "focus": "Own stage atmosphere, background/foreground motion, boss warning/entry/defeat spectacle, Jackpot Alley presentation, and stage-specific visual identity."
+      "name": "Upgrade And Economy Agent",
+      "focus": "Own Thick Jacket replacement, Extra Life replacement, grade-based rewards, save compatibility, balance report updates, and balance notes."
     },
     {
-      "name": "Shader And Performance Agent",
-      "focus": "Evaluate Phaser shader/pipeline or shader-style effects, add fallbacks, profile phone landscape performance, and prevent visual polish from damaging readability or frame rate."
+      "name": "Boss And Difficulty Agent",
+      "focus": "Own boss-stage behavior after lives are removed, especially Raven King duration, boss-spit minion pressure, grade impact, and phone readability."
     },
     {
       "name": "Release QA And Deployment Agent",
-      "focus": "Own npm run release:verify, release:smoke, published-build validation, fresh-save/returning-save checks, GitHub Pages Actions deployment, and final v1 QA evidence."
+      "focus": "Own npm run release:verify, grade conversion QA, fresh-save/returning-save checks, published-build validation, GitHub Pages Actions deployment, and final v1 evidence."
     }
   ],
   "githubPagesDeploymentNote": {
@@ -285,26 +301,27 @@
     "why": "The classic Pages branch/folder source can show a blank white screen after the Vite migration because it may serve stale or mismatched static output. The Actions deployment uploads the freshly built dist artifact."
   },
   "implementationGuidance": [
-    "The next team's main mission is v1 visual polish: special effects, GFX, shader-style treatments, stage identity, boss spectacle, and release presentation.",
-    "Do not restart mobile/PWA as the main workstream. Preserve the accepted landscape-mobile baseline and re-test it after effects changes.",
-    "Do not drift into online leaderboards, accounts, databases, or cloud systems for v1.",
-    "Preserve the current gameplay loop, armory economy, stage pacing, and local save behavior unless the user explicitly approves tuning changes.",
-    "Use DOM overlays for text-heavy UI such as armory, records, options, stage-clear summaries, upgrade recommendations, and game-over prompts.",
-    "Use Phaser graphics/sprites/pipelines for playfield effects, shader-style treatments, touch/crosshair feedback, projectile traces, impact bursts, stage/boss presentation, and reward moments.",
-    "Use only existing assets under public/assets/ or procedural Phaser/CSS work unless the user explicitly approves new asset production.",
-    "If adding real shader/pipeline effects, keep them scoped, test on phone landscape, and provide fallback behavior.",
-    "If adding new assets, keep paths compatible with the /Knotz-Raven-Mayhem/ base path and rerun release:check plus release:smoke.",
-    "When save shape changes, update normalization in src/game/save.ts and test returning-save behavior manually.",
-    "After content or tuning changes, rerun npm run balance:report and update DOCS/BALANCE-NOTES.md if the baseline changes materially.",
+    "The next team's main mission is not more VFX. It is the progression conversion from lives to stage grades.",
+    "Preserve the accepted landscape-mobile baseline and retest it after HUD/stage-clear changes.",
+    "Do not drift into online leaderboards, accounts, databases, cloud systems, or service-worker caching for this grading pass.",
+    "Do not make low grades block progression; use stars, records, coins, and upgrade recommendations as the pressure loop.",
+    "Track grade-eligible enemies explicitly. Boss-spit mini ravens, splitter children, bonus spawns, and future optional threats should not accidentally inflate grade percentage.",
+    "Keep boss fights challenging, but remove lives as the thing that prevents players from seeing later stages.",
+    "Keep current VFX, boss clamp/spit behavior, stage atmosphere, weapon feedback, and release-shell work unless a grading bug requires a targeted change.",
+    "Use DOM overlays for text-heavy grading UI such as stage-clear summaries, run recap, records, upgrade recommendations, and grade explanations.",
+    "If save shape changes, update normalization in src/game/save.ts and test returning-save behavior manually.",
+    "After grade/reward/tuning changes, rerun npm run balance:report and update DOCS/BALANCE-NOTES.md if the baseline changes materially.",
     "After runtime, asset, manifest, release-shell, Vite config, or deploy-script changes, run npm run release:verify before handoff.",
     "After deployment, validate the live GitHub Pages URL in a fresh browser profile or private window."
   ],
   "openDesignQuestions": [
-    "Which three stage identities should receive the first v1 GFX pass?",
-    "Should shader-style effects be global atmosphere, weapon-specific, boss-specific, or stage-specific?",
-    "How intense should screen shake, bloom-like glow, and flash feedback be on phones versus desktop?",
-    "Should future Armory expansion add more weapons/chips before v1, or should v1 polish the existing loadout set first?",
-    "Should v1 include new production art assets, or stay procedural/seed-asset based until after launch?",
-    "What is the desired final benchmark for phone performance during late-stage runs with effects enabled?"
+    "Should 1 star always advance the player, or should there be a separate explicit quit/abandon/failure state?",
+    "Should boss defeat be mandatory for boss-stage progression, or should boss stages also grade out after a time/spawn quota?",
+    "Should boss-spit mini ravens affect grade directly, only combo/score, or a separate boss-pressure bonus?",
+    "What should Thick Jacket become: grade buffer, recovery token, reward floor, combo recovery, or miss forgiveness?",
+    "What should Extra Life become in the new system?",
+    "Should grade-based rewards multiply coins, unlock stage medals, affect armory recommendations, or all three?",
+    "Should records show best star count per stage, total stars, full-run average grade, perfect clears, or a cabinet-style report card?",
+    "What is the desired target experience for newer players: reach all 9 stages in one session with low grades, or reach late stages over several upgraded runs?"
   ]
 }
