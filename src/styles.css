@@ -998,7 +998,7 @@ a:hover {
 }
 
 .upgrade-thickJacket {
-  border-color: rgba(255, 49, 90, 0.34);
+  border-color: rgba(157, 255, 87, 0.34);
 }
 
 .upgrade-bountyChip {
@@ -1168,14 +1168,14 @@ a:hover {
   border-color: rgba(32, 242, 255, 0.32);
 }
 
-.life-cluster {
+.grade-cluster {
   top: 14px;
   right: 14px;
   min-width: 184px;
-  border-color: rgba(255, 49, 90, 0.32);
+  border-color: rgba(157, 255, 87, 0.32);
 }
 
-.life-cluster button {
+.grade-cluster button {
   width: 100%;
   min-height: 34px;
   margin-top: 8px;
@@ -1226,24 +1226,39 @@ a:hover {
   background: linear-gradient(90deg, var(--green), var(--gold), var(--red));
 }
 
-.life-pips {
+.star-row {
   display: flex;
-  gap: 6px;
-  margin-top: 5px;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 8px;
 }
 
-.life-pips span {
+.star-row i {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 56%, 79% 91%, 50% 70%, 21% 91%, 32% 56%, 2% 35%, 39% 35%);
+  background: rgba(255, 255, 255, 0.18);
 }
 
-.life-pips span.on {
-  border-color: var(--red);
-  background: var(--red);
-  box-shadow: 0 0 12px rgba(255, 49, 90, 0.7);
+.star-row i.filled {
+  background: var(--gold);
+  filter: drop-shadow(0 0 8px rgba(255, 229, 106, 0.72));
+}
+
+.mini-stars {
+  justify-content: flex-start;
+  min-height: 18px;
+}
+
+.mini-stars i {
+  width: 14px;
+  height: 14px;
+}
+
+.bonus-star {
+  color: var(--gold);
+  font-size: 12px;
+  text-transform: uppercase;
 }
 
 .powerup-rack {
@@ -1305,6 +1320,126 @@ a:hover {
 .stage-clear-card h2 {
   color: var(--gold);
   text-shadow: 0 0 18px rgba(255, 229, 106, 0.5);
+}
+
+.grade-report {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0 12px;
+  border: 1px solid rgba(255, 229, 106, 0.28);
+  border-radius: 8px;
+  padding: 14px;
+  background:
+    linear-gradient(90deg, rgba(255, 229, 106, 0.12), rgba(32, 242, 255, 0.08)),
+    rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+.grade-report::before {
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  background: conic-gradient(from 90deg, transparent, rgba(255, 229, 106, 0.18), transparent, rgba(32, 242, 255, 0.14), transparent);
+  animation: grade-glint 1.2s ease-out both;
+  content: "";
+}
+
+.grade-report span,
+.grade-detail {
+  color: var(--gold);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.grade-kicker {
+  letter-spacing: 0;
+}
+
+.grade-emblem {
+  animation: grade-unveil 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
+  color: var(--text);
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: clamp(84px, 18vw, 168px);
+  line-height: 0.82;
+  text-transform: uppercase;
+}
+
+.rank-S .grade-emblem {
+  color: var(--gold);
+  text-shadow:
+    0 0 14px rgba(255, 229, 106, 0.9),
+    0 0 34px rgba(157, 255, 87, 0.48);
+}
+
+.rank-A .grade-emblem {
+  color: var(--cyan);
+  text-shadow: 0 0 28px rgba(32, 242, 255, 0.52);
+}
+
+.rank-B .grade-emblem {
+  color: var(--green);
+}
+
+.rank-C .grade-emblem {
+  color: var(--gold);
+}
+
+.rank-D .grade-emblem {
+  color: var(--red);
+}
+
+.grade-detail {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+}
+
+.grade-report small {
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.bonus-grade {
+  border-color: rgba(255, 212, 71, 0.36);
+}
+
+@keyframes grade-unveil {
+  0% {
+    opacity: 0;
+    transform: scale(0.45) rotate(-7deg);
+    filter: blur(10px);
+  }
+
+  62% {
+    opacity: 1;
+    transform: scale(1.12) rotate(1deg);
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes grade-glint {
+  0% {
+    opacity: 0;
+    transform: rotate(-40deg) scale(0.72);
+  }
+
+  45% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.38;
+    transform: rotate(12deg) scale(1);
+  }
 }
 
 .final-score {
@@ -1507,13 +1642,13 @@ a:hover {
     transform: none;
   }
 
-  .life-cluster {
+  .grade-cluster {
     top: 10px;
     right: 10px;
     min-width: 124px;
   }
 
-  .life-cluster button {
+  .grade-cluster button {
     min-height: 44px;
     font-size: 16px;
   }
@@ -1530,7 +1665,7 @@ a:hover {
     bottom: 10px;
     left: 10px;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
     padding: 8px;
   }
@@ -1899,25 +2034,21 @@ a:hover {
     transform: translateX(-50%);
   }
 
-  .life-cluster {
+  .grade-cluster {
     top: calc(var(--safe-top) + 7px);
     right: calc(var(--safe-right) + 7px);
     min-width: 118px;
   }
 
-  .life-cluster button {
+  .grade-cluster button {
     min-height: 32px;
     margin-top: 5px;
     font-size: 12px;
   }
 
-  .life-pips {
-    gap: 5px;
-  }
-
-  .life-pips span {
-    width: 14px;
-    height: 14px;
+  .mini-stars i {
+    width: 11px;
+    height: 11px;
   }
 
   .combo-cluster {
@@ -1977,6 +2108,19 @@ a:hover {
 
   .modal-card h2 {
     font-size: clamp(34px, 14vh, 62px);
+  }
+
+  .grade-report {
+    margin: 8px 0;
+    padding: 10px;
+  }
+
+  .grade-emblem {
+    font-size: clamp(62px, 26vh, 112px);
+  }
+
+  .grade-detail {
+    gap: 8px;
   }
 
   .final-score {

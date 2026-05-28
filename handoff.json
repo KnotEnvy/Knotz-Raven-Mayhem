@@ -4,219 +4,111 @@
     "repo": "KnotEnvy/Knotz-Raven-Mayhem",
     "handoffDate": "2026-05-28",
     "currentBranch": "master",
-    "productGoal": "Move Knotz Raven Mayhem from a lives-gated arcade run into a stage-grading arcade campaign where players can keep seeing later content while still being ranked on performance.",
+    "productGoal": "Knotz Raven Mayhem is now a stage-grading arcade campaign: players keep advancing through the stage arc while stars, grade percent, coins, records, and upgrades preserve mastery pressure.",
     "v1ScopeDecision": "Local records and local progression only. Online leaderboards, databases, backend accounts, cloud saves, and service-worker/offline caching remain deferred beyond v1."
   },
   "handoffSummary": {
-    "nextTeamMission": "Own the major progression conversion from lives-based failure to stage grades, star ratings, grade-aware rewards, and stage transitions that advance even after low-performance clears.",
-    "whyThisMatters": "The game has become visually strong and mechanically more demanding, especially with late-stage enemy pressure and boss fights. Players are not reliably reaching later stages under the current lives model. A grading system lets the full 9-stage arc be experienced while preserving mastery goals through stars, score, coins, records, and upgrade incentives.",
-    "workingBaseline": "Preserve the current desktop, iPad, landscape-phone, VFX, boss, Jackpot Alley, armory, local save, release-shell, and GitHub Pages baseline while changing progression rules. Do not restart mobile/PWA or visual-polish workstreams.",
-    "latestKnownGate": "Recent local code gates from the gameplay/presentation work passed individually: npm.cmd run typecheck, npm.cmd run balance:report, npm.cmd run build, npm.cmd run release:check, and npm.cmd run release:smoke. Release check signal: Release check passed: linkedAssets=3 seedAssets=4 releaseShellAssets=10. Dist smoke signal: Dist smoke passed: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10.",
+    "completedThisPass": "Converted the lives-gated progression model into explicit stage-grade accounting, 1-5 star ratings, grade-adjusted stage rewards, stage retry, dramatic grade reveals, S-rank confetti, run reports, grade records, a Recovery Matrix upgrade, and a Grade Shield powerup.",
+    "workingBaseline": "Preserve the current desktop, iPad, landscape-phone, VFX, boss, Jackpot Alley, armory, local save, release-shell, and GitHub Pages baseline. The main progression blocker from the prior handoff is now implemented locally.",
+    "latestKnownGate": "npm.cmd run release:verify passed on 2026-05-28. It ran balance:report, build, release:check, and release:smoke. Release check signal: linkedAssets=3 seedAssets=4 releaseShellAssets=10. Dist smoke signal: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10.",
+    "devServer": "A Vite dev server is already responding at http://127.0.0.1:5173/ for manual playtesting.",
     "handoffWarning": "CI verification does not publish the live game. The GitHub Pages site updates only after the Deploy GitHub Pages workflow is manually run with workflow_dispatch on master."
   },
-  "currentState": {
-    "summary": "The original raven click-target prototype is now a Phaser 3 + TypeScript + Vite arcade shooter with 9 named stages, bosses, Jackpot Alley, armory progression, local saves, DOM overlays, landscape-first mobile layout, SEO/PWA shell, release verification scripts, procedural stage art/audio, pooled transient VFX, shader-style screen polish, weapon/enemy impact signatures, stage atmosphere, boss spectacle, and improved Raven King behavior.",
-    "implementedContent": {
-      "stages": "9 named stages with different spawn pools, palettes, speed multipliers, rewards, procedural set dressing, Jackpot Alley bonus pacing, overflow scaling after the final named stage, and field-drain stage transitions that wait for active ravens and powerups before showing stage clear.",
-      "enemies": "11 enemy definitions: normal, fast, golden, armored, mini, shield, splitter, dive, wraith, brute, and boss. Stage pools reveal enemy types gradually across the full 9-stage arc.",
-      "bosses": "The Raven King appears on boss stages, is vertically clamped inside a fair arena lane, has boss warning/pressure/defeat presentation, and now spits mini ravens from a clamped mouth position with active boss-minion caps.",
-      "weapons": "4 guns: Quarter Pistol, Burst Rifle, Scattergun, Arc Laser. Weapon-specific muzzle, trace, impact, and reticle feedback are implemented.",
-      "assistChips": "4 Assist Chip unlocks: Stock Cabinet, Turbo Capacitor, Threat Scanner, Chaos Net. These tune recharge feel and target forgiveness while the live reticle identity follows the equipped gun.",
-      "currentUpgrades": "4 permanent upgrade tracks currently exist: cooldown, combo window, starting lives, and payout scaling. The starting-lives upgrade is the main upgrade that must be redesigned for the grading-system conversion.",
-      "powerups": "6 powerups: slow-mo, multi-shot, score boost, extra life, overdrive, coin rush. Extra life is also affected by the grading-system conversion and should be redesigned or retired.",
-      "audio": "Procedural WebAudio with menu/run/boss modes, stage-aware motifs, weapon-specific shots, enemy-specific hit cues, powerup cues, boss warning/defeat stings, stage clear, miss, and game over. AudioContext creation is gated until a real user gesture.",
-      "visuals": "Seed raven/explosion assets plus procedural stage set dressing, cabinet HUD, stage atmosphere overlays, screen polish, weapon-driven reticles, cooldown feedback, projectile traces, scoring bursts, coin showers, Jackpot Alley FX, boss FX, powerup field FX, and pooled transient graphics for long-session performance.",
-      "mobile": "Landscape-first mobile is the accepted mobile direction. Portrait phones show a rotate gate, the manifest requests landscape, HUD density and enemy visual scale are reduced for phone landscape, and Armory uses a phone-landscape page scroll model.",
-      "releaseOps": "Release verification scripts, balance report, SEO/release-shell asset checks, served dist smoke for /Knotz-Raven-Mayhem/, GitHub Actions CI, and manual GitHub Pages deployment workflow are in place.",
-      "pwaShell": "index.html and public/ include mobile web app tags, icons, manifest.webmanifest, robots.txt, sitemap.xml, social-preview.png, and canonical metadata. Manifest uses id './', start_url './', scope './', display 'standalone', and orientation 'landscape'."
+  "implementedGradeSystem": {
+    "stageProgression": "Missed non-bonus ravens now become escaped grade-eligible enemies instead of removing lives or ending the run. Stage flow still waits for the spawn quota plus field drain, and boss stages still require the Raven King to be defeated.",
+    "gradeMath": {
+      "gradeEligibleSpawned": "Incremented only for normal stage quota spawns.",
+      "gradeEligibleKilled": "Incremented only when a grade-eligible quota enemy is killed.",
+      "excludedFromGradeInflation": "Splitter children, boss-spit mini ravens, bosses, bonus-stage enemies, and future optional spawns do not inflate grade percentage.",
+      "thresholds": "5 stars at 90%+, 4 at 80-89%, 3 at 70-79%, 2 at 60-69%, 1 below 60%.",
+      "gradeBuffer": "Recovery Matrix keeps the internal thickJacket save id and adds a small grade buffer per rank without granting free perfect grades."
     },
-    "currentProgressionProblem": {
-      "problem": "The current run model is lives-gated. Missed non-bonus ravens call run.loseLife(), and 0 lives ends the run. Because the game is harder now, players can lose access to later stages instead of receiving a poor stage grade and continuing.",
-      "targetChange": "Stages should advance after the spawn quota and field drain complete, even when the player misses many ravens. Misses should lower grade, rewards, and records rather than hard-stopping the run.",
-      "recommendedGradeScale": [
-        "5 stars: 90% or higher grade-eligible kill percentage.",
-        "4 stars: 80% to 89%.",
-        "3 stars: 70% to 79%.",
-        "2 stars: 60% to 69%.",
-        "1 star: below 60%, still a stage pass unless the player quits or a new explicit failure rule is approved."
-      ],
-      "importantNuance": "Do not calculate stars by blindly using total stageKills divided by stageTargetKills. Splitter children, boss-spit mini ravens, and possibly future bonus spawns can inflate kills. Track grade-eligible spawned enemies and grade-eligible kills explicitly, then clamp percentages to 100%.",
-      "bossStages": "Boss stages should no longer be life-gated. The boss can remain a required objective, but missed ravens and boss-spit minions should hurt grade/rewards rather than causing game over. If boss duration becomes too long, tune boss health/spit cadence separately instead of reintroducing lives as the main progression gate."
+    "rewards": {
+      "stageRewards": "Non-bonus stage rewards are adjusted by star count. Bonus rounds keep their flat payout.",
+      "runRewards": "Run payout now includes score coins, stage coins, accuracy bonus, star bonus, boss bonus, enemy/drop coins, and Bounty Chip multiplier.",
+      "balanceReport": "scripts/report-balance.mjs now models learning, solid, and hot runs by grade percent and stars per stage."
     },
-    "latestPlaytestUpdate": {
-      "date": "2026-05-28",
-      "summary": "The game looks and feels substantially better after VFX, screen polish, boss spectacle, and boss-spit work. The next product-level issue is progression accessibility: the game is hard enough that the lives model blocks many players from seeing later levels.",
-      "acceptedSignals": [
-        "Desktop and iPad gameplay are strong.",
-        "Landscape-phone direction remains accepted.",
-        "The VFX and shader-style presentation work should be preserved.",
-        "Raven King boss clamp and boss-spit behavior should be preserved unless playtesting shows difficulty spikes.",
-        "Armory and local progression remain important; the grading system should feed that loop rather than replacing it."
-      ],
-      "remainingValidation": [
-        "Design and implement stage-grade data, UI, rewards, and records.",
-        "Playtest whether low-grade stage advancement keeps the game exciting without making mastery feel irrelevant.",
-        "Retest boss stages after lives are removed because boss-spit pressure will shift from survival pressure to grade pressure.",
-        "Retest phone landscape after changing HUD/stage-clear/game-over UI.",
-        "Run DOCS/RELEASE-QA-CHECKLIST.md end to end after the grading conversion."
-      ]
+    "records": {
+      "saveCompatibility": "Save version remains 1. Existing thickJacket ranks are preserved and now power Recovery Matrix.",
+      "newLocalRecords": "bestRunStars, bestRunGradePercent, perfectStages, and bestStageStars are normalized into existing local saves.",
+      "recordsUi": "Records now show best stars, best run grade, perfect stages, stage medals, and existing score/stage/combo/kills records."
     },
-    "knownUnfinishedAreas": [
-      "Lives-based run failure must be converted into grade-based stage evaluation.",
-      "Stage-clear interstitials need star/grade presentation, grade-eligible kill percentage, missed/escaped count, and grade-based reward explanation.",
-      "HUD life pips should be removed or repurposed into grade/progress/pressure indicators.",
-      "Game over flow needs to be redefined. It may become end-of-arc summary, quit/abandon summary, or grade recap rather than 0-lives failure.",
-      "The Thick Jacket / starting-lives upgrade needs a new player-facing identity and mechanic.",
-      "The Extra Life powerup needs a replacement or new meaning because lives should no longer be the core resource.",
-      "Records and rewards should store/display best stage grades and possibly total stars.",
-      "Manual balance and real-device validation are required after the progression conversion."
-    ]
+    "ui": {
+      "hud": "Life pips are replaced by a grade cluster showing grade percent/stars, escaped count, stage aim, shield charges, and coins.",
+      "stageClear": "Stage clear now shows a large dramatic grade label, supporting grade percent, stars, escaped count, grade kills, stage aim, grade-adjusted reward, total coins, run stars, next-stage preview, Continue, Retry Stage, and Quit Run.",
+      "stageRetry": "Retry Stage restores score, coins, stars, boss credit, grade records, kills, shots, powerups, and shield charges to the checkpoint captured at the start of the current stage before replaying that same stage.",
+      "sRankCelebration": "S-grade clears trigger a Phaser-side confetti pop, extra spark bursts, S RANK text, and a short flash/shake when motion settings allow it.",
+      "runReport": "The old game-over surface is now a Run Report. Quitting from pause or stage clear banks rewards and shows total stars, average grade, perfect stages, coins, and armory recommendations."
+    },
+    "powerups": {
+      "gradeShield": "The existing extraLife powerup id is now presented as Grade Shield. It stores up to three shield charges and forgives one escaped grade-eligible raven per charge.",
+      "otherPowerups": "Slow-Mo, Multi-Shot, Score Boost, Overdrive, and Coin Rush behavior remains intact."
+    }
   },
-  "nextTeamPrimaryFocus": {
-    "theme": "Stage grading, star ratings, reward conversion, and lives-system removal.",
-    "priorityOrder": [
-      {
-        "priority": 1,
-        "title": "Define the grade model and data contract",
-        "details": [
-          "Add an explicit stage-grade model instead of deriving grades from existing total kills.",
-          "Recommended fields: gradeEligibleSpawned, gradeEligibleKilled, escapedGradeEligible, optionalKills, stageAccuracy, starCount, gradeLabel, and gradePercent.",
-          "Use 5 stars for 90%+, 4 for 80%+, 3 for 70%+, 2 for 60%+, and 1 below 60%.",
-          "Decide whether boss death is a required objective. Recommended: boss must be defeated, but misses/minions only lower grade.",
-          "Document whether bonus-stage Jackpot Raven misses affect grade, coins only, or a separate bonus grade."
-        ]
-      },
-      {
-        "priority": 2,
-        "title": "Replace lives as the progression gate",
-        "details": [
-          "Change missed non-bonus ravens in GameScene.ts from loseLife/endRun into escaped/missed grade accounting.",
-          "Keep stage flow based on spawn quota plus field clear, then show stage clear with a grade rather than ending the run.",
-          "Remove or redesign low-life screen polish and HUD life pips.",
-          "Update RunState.ts so per-stage grade state resets on startStage() and snapshots expose grade fields.",
-          "Preserve combo reset and miss feedback on misses so skill still matters."
-        ]
-      },
-      {
-        "priority": 3,
-        "title": "Revamp stage-clear, game-over, and records UI",
-        "details": [
-          "Stage clear should show stars, grade percentage, killed/escaped grade-eligible enemies, accuracy, combo, reward coins, and next-stage preview.",
-          "Game over should become a run summary, quit summary, or end-of-arc recap rather than a lives failure screen.",
-          "Records should track best grade per stage, total stars, best full-run grade, and possibly perfect-stage count.",
-          "HUD should show current stage grade trend or kill percentage instead of life pips.",
-          "Keep DOM overlays for text-heavy summaries; do not move this UI into Phaser canvas."
-        ]
-      },
-      {
-        "priority": 4,
-        "title": "Redesign lives-related progression",
-        "details": [
-          "Recommended: keep the internal upgrade id thickJacket for save compatibility but rename it to a grading-era upgrade such as Recovery Matrix, Stage Curve, or Grade Buffer.",
-          "Suggested mechanic: each rank grants a small per-stage grade buffer, forgiveness for the first escaped raven, or a minimum reward floor without granting free 5-star grades.",
-          "Do not make the upgrade simply raise star ratings for free; mastery should still require strong play.",
-          "Extra Life powerup should become a grading-era powerup such as Recovery Token, Grade Shield, Combo Restore, or Retake Spark.",
-          "If UpgradeId/stat names change, update save normalization and test returning saves carefully."
-        ]
-      },
-      {
-        "priority": 5,
-        "title": "Retune rewards and release confidence",
-        "details": [
-          "Grade should affect coins, records, stage medals, and upgrade recommendations.",
-          "Run npm run balance:report after changing rewards, economy, stage flow, enemy accounting, boss behavior, or upgrades.",
-          "Run npm run typecheck and npm run build after code changes.",
-          "Run npm run release:check and npm run release:smoke after build, asset, manifest, release-shell, or dist-path changes.",
-          "Run npm run release:verify before handoff or release-candidate tagging."
-        ]
-      }
-    ]
-  },
-  "currentBacklogFromDocs": [
-    "Convert missed ravens from lives loss into grade/escape accounting.",
-    "Add explicit grade-eligible spawned/killed counters so splitter children and boss-spit mini ravens do not inflate grades.",
-    "Implement 5-star stage grades using 90/80/70/60 percent thresholds.",
-    "Revamp stage-clear UI around stars, grade percentage, escaped ravens, reward explanation, and next-stage preview.",
-    "Remove or redesign HUD life pips, low-life overlay, 0-lives game-over flow, and lives-related text.",
-    "Rebrand/rework Thick Jacket / starting lives into a grading-era upgrade while preserving existing saves if possible.",
-    "Replace or redesign Extra Life powerup.",
-    "Add records for best stage grade, total stars, and full-run grade performance.",
-    "Retune coin rewards and balance notes around grade-based payouts.",
-    "Retest mobile landscape and boss stages after the progression conversion."
-  ],
-  "recommendedFirstSprint": [
+  "subagentWorkIntegrated": [
     {
-      "slice": "Grade model and stage-flow conversion",
-      "reason": "This is the core product change. Until grade accounting exists, UI/reward work will be guessing.",
-      "likelyFiles": [
-        "src/game/systems/RunState.ts",
-        "src/game/scenes/GameScene.ts",
-        "src/game/types.ts",
-        "src/ui/events.ts",
-        "src/ui/app.ts"
-      ],
-      "acceptance": [
-        "Missed non-bonus ravens no longer end the run through lives.",
-        "Stage clear still occurs after the stage spawn quota and field drain.",
-        "Each stage snapshot contains grade percent and star count.",
-        "Boss-spit mini ravens and splitter children do not incorrectly inflate grade percentage.",
-        "npm run typecheck and npm run build pass."
-      ]
+      "name": "Grade Systems Agent",
+      "result": "Confirmed lives loss was isolated to GameScene.updateEnemies() calling RunState.loseLife(), and flagged stageKills/stageTargetKills as unsafe for stars because splitter children, boss kills, and boss-spit minis inflate kills."
     },
     {
-      "slice": "Stage clear and HUD grading UI",
-      "reason": "The player must understand that low-grade clears still advance while high grades remain the mastery target.",
-      "likelyFiles": [
-        "src/ui/app.ts",
-        "src/ui/events.ts",
-        "src/styles.css",
-        "src/game/types.ts"
-      ],
-      "acceptance": [
-        "HUD no longer emphasizes lives as the primary resource.",
-        "Stage clear presents 1-5 stars, grade percent, kills/misses, reward coins, and next-stage preview.",
-        "Text fits in desktop, iPad, and phone landscape layouts.",
-        "Reduced-motion and existing visual settings remain respected.",
-        "Manual phone landscape check is queued after implementation."
-      ]
+      "name": "Stage Transition UI Agent",
+      "result": "Mapped HUD life pips, stage-clear, game-over, records, upgrade labels, and responsive CSS areas. The implementation moved those surfaces to grade, stars, and run-report UI."
     },
     {
-      "slice": "Upgrade and powerup rework",
-      "reason": "Starting lives and extra life no longer fit once lives stop being the progression gate.",
-      "likelyFiles": [
-        "src/game/data/upgrades.ts",
-        "src/game/data/tuning.ts",
-        "src/game/systems/progression.ts",
-        "src/game/systems/RunState.ts",
-        "src/game/save.ts",
-        "src/ui/app.ts",
-        "scripts/report-balance.mjs",
-        "DOCS/BALANCE-NOTES.md"
-      ],
-      "acceptance": [
-        "Thick Jacket is replaced or rebranded into a fitting grade-era upgrade.",
-        "Existing saves with thickJacket ranks remain valid or are migrated intentionally.",
-        "Extra Life powerup is replaced or assigned a new non-lives effect.",
-        "Balance report reflects changed upgrade/economy assumptions.",
-        "Returning-save manual test is listed before release."
-      ]
+      "name": "Upgrade And Economy Agent",
+      "result": "Mapped thickJacket, startingLives, extraLife, save compatibility, rewards, and balance-report hooks. The implementation kept the internal thickJacket id, rebranded it, replaced extra-life semantics, and updated balance modeling."
     }
   ],
-  "architecturePointers": {
-    "runtime": "src/main.ts creates the Phaser game with BootScene, AttractScene, and GameScene and imports src/styles.css.",
-    "gameplayScene": "src/game/scenes/GameScene.ts owns active run spawning, input, hit resolution, misses, stage flow, boss flow, stage clear, game over, procedural effects, pooled transient effects, and HUD dispatch. Current lives loss happens here when non-boss enemies leave screen.",
-    "runState": "src/game/systems/RunState.ts owns lives, maxLives, loseLife(), addLife(), stageKills, stageTargetKills, combo, accuracy, active powerups, weapon cooldown, and RunSnapshot creation. This should own or expose grade state.",
-    "types": "src/game/types.ts defines UpgradeId, UpgradeDefinition.stat, PlayerStats.startingLives, RunSnapshot lives/maxLives fields, RunRewards, and StageClearSummary. Grade fields and stat replacements start here.",
-    "uiLayer": "src/ui/app.ts renders DOM overlays for attract, armory, records, options, HUD, stage clear, pause, and game over. Life pips, stage-clear stats, game-over stats, and upgrade stat labels live here.",
-    "uiEvents": "src/ui/events.ts carries UiState payloads from Phaser scenes to DOM UI. Update this when RunSnapshot or StageClearSummary gains grade fields.",
-    "upgrades": "src/game/data/upgrades.ts defines Thick Jacket as starting-lives today. Rename/rework carefully; keep internal id if preserving saves.",
-    "progression": "src/game/systems/progression.ts maps save upgrades into PlayerStats. It currently converts thickJacket ranks into startingLives.",
-    "tuning": "src/game/data/tuning.ts contains baseStartingLives, thickJacketRanksPerLife, extraLifeOverflowCap, accuracy bonus, economy, powerup, presentation, and overflow tuning. Grade thresholds and grade payout multipliers can live here.",
-    "save": "src/game/save.ts normalizes localStorage save data, applies purchases/rewards, calculates run rewards, and normalizes upgrade ranks. Any save shape or UpgradeId/stat change must preserve returning saves.",
-    "balance": "scripts/report-balance.mjs reads live TypeScript data and estimates stage pacing, rewards, and economy costs. Update it when grade payouts or upgrade identities change.",
-    "releaseShell": "index.html and public/ own SEO, Open Graph/Twitter metadata, favicon/app icons, web manifest, social preview images, mobile web app tags, robots, and sitemap.",
-    "releaseChecks": "scripts/check-release.mjs validates dist files, release-shell metadata, and public web kit assets. scripts/smoke-dist.mjs serves dist from /Knotz-Raven-Mayhem/ and fetches linked assets, seed assets, and release-shell assets."
+  "importantFilesChanged": {
+    "gradeContract": [
+      "src/game/types.ts",
+      "src/game/systems/grades.ts",
+      "src/game/systems/RunState.ts"
+    ],
+    "gameplayFlow": [
+      "src/game/scenes/GameScene.ts",
+      "src/game/data/tuning.ts",
+      "src/game/data/stages.ts"
+    ],
+    "progressionAndSave": [
+      "src/game/systems/progression.ts",
+      "src/game/data/upgrades.ts",
+      "src/game/save.ts"
+    ],
+    "uiAndCss": [
+      "src/ui/app.ts",
+      "src/styles.css",
+      "src/game/scenes/AttractScene.ts"
+    ],
+    "balanceAndDocs": [
+      "scripts/report-balance.mjs",
+      "DOCS/BALANCE-NOTES.md",
+      "DOCS/RELEASE-QA-CHECKLIST.md",
+      "DOCS/RELEASE-ROADMAP.md",
+      "DOCS/DEPLOYMENT-RUNBOOK.md",
+      "DOCS/SUBAGENTS.md",
+      "README.md"
+    ]
   },
+  "manualPlaytestNeededNow": [
+    "From http://127.0.0.1:5173/, start a fresh run and intentionally miss several Stage 1 ravens. Expected: no 0-lives failure, escaped count rises, grade percent/stars drop, and stage clear still appears after quota plus field drain.",
+    "Use Retry Stage from a stage-clear screen. Expected: the same stage restarts, the prior attempt does not double-count score/coins/stars, and a better replay can replace that stage result.",
+    "Clear a stage with S rank. Expected: the stage transition emphasizes the S grade first, percent reads as supporting detail, and a confetti pop celebration appears without hiding the controls.",
+    "Continue through Stage 2 and confirm stage-clear rewards explain grade-adjusted coins and the HUD still fits while grade, escapes, shields, stage aim, and coins update.",
+    "Collect a Grade Shield powerup if it drops. Expected: HUD shield count increases; the next grade-eligible escape shows GRADE SHIELD and does not increase escaped count.",
+    "Reach or simulate boss stages in normal play if possible: Stage 3, Stage 6, and Stage 9. Expected: boss defeat is still required; boss-spit minis add score/pressure without inflating grade percent.",
+    "Play Jackpot Alley. Expected: it behaves as a bonus payout round, missed enemies do not lower stage stars, and the stage clear report says Bonus Round.",
+    "From a stage-clear screen and from pause, choose Quit Run. Expected: rewards are banked, the Run Report appears, and Open Armory, Run It Back, and Menu route correctly.",
+    "Check Armory with a returning save that had thickJacket ranks. Expected: Recovery Matrix shows the preserved rank and no save reset occurs.",
+    "Check desktop, iPad, and phone landscape HUD/stage-clear/run-report layouts for overlap after the grade UI changes."
+  ],
+  "remainingProductWork": [
+    "Manual balance tuning after real play: decide whether 90/80/70/60 star thresholds and reward multipliers feel right.",
+    "Boss pressure tuning after lives removal, especially Raven King duration and boss-spit readability.",
+    "Real-device phone landscape validation after grade HUD and run-report changes.",
+    "Final production art/audio pass remains optional before public release, as documented in DOCS/RELEASE-ROADMAP.md.",
+    "Final release QA checklist still must be run end to end before sharing a new GitHub Pages build."
+  ],
   "importantCommands": {
     "install": "npm install",
     "devLocalhost": "npm run dev",
@@ -228,100 +120,19 @@
     "releaseSmoke": "npm run release:smoke",
     "fullReleaseGate": "npm run release:verify"
   },
-  "verificationStatusAtHandoff": {
-    "lastKnownPassingTypecheck": "npm.cmd run typecheck",
-    "lastKnownPassingBalanceReport": "npm.cmd run balance:report",
-    "lastKnownPassingBuild": "npm.cmd run build",
-    "lastKnownPassingReleaseCheck": "npm.cmd run release:check printed Release check passed: linkedAssets=3 seedAssets=4 releaseShellAssets=10.",
-    "lastKnownPassingSmoke": "npm.cmd run release:smoke",
-    "lastKnownReleaseSmokeSignal": "Dist smoke passed: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10",
-    "manualValidationStillRequired": [
-      "Manual playtest of several low-grade stages to confirm the player advances instead of being stopped.",
-      "Manual playtest of at least Stage 3, Stage 6, and Stage 9 boss fights after lives are removed.",
-      "Manual check that boss-spit mini ravens affect score/pressure without corrupting grade math.",
-      "Real iPhone and Android landscape validation after HUD and stage-clear UI changes.",
-      "Returning-save test with existing Thick Jacket ranks before and after the upgrade rework.",
-      "Fresh-save and returning-save checks from browser and installed app.",
-      "Final full release QA checklist after grading conversion."
-    ]
-  },
-  "releaseFilesAndDocs": {
-    "roadmap": "DOCS/RELEASE-ROADMAP.md",
-    "qaChecklist": "DOCS/RELEASE-QA-CHECKLIST.md",
-    "balanceNotes": "DOCS/BALANCE-NOTES.md",
-    "deploymentRunbook": "DOCS/DEPLOYMENT-RUNBOOK.md",
-    "subagentRoster": "DOCS/SUBAGENTS.md",
-    "entryHtml": "index.html",
-    "stylesheet": "src/styles.css",
-    "uiOverlay": "src/ui/app.ts",
-    "uiEvents": "src/ui/events.ts",
-    "gameplayScene": "src/game/scenes/GameScene.ts",
-    "runState": "src/game/systems/RunState.ts",
-    "progression": "src/game/systems/progression.ts",
-    "save": "src/game/save.ts",
-    "types": "src/game/types.ts",
-    "upgrades": "src/game/data/upgrades.ts",
-    "tuning": "src/game/data/tuning.ts",
-    "bootScene": "src/game/scenes/BootScene.ts",
-    "attractScene": "src/game/scenes/AttractScene.ts",
-    "audioSystem": "src/game/systems/ArcadeAudio.ts",
-    "manifest": "public/manifest.webmanifest",
-    "publicAssets": "public/",
-    "ciWorkflow": ".github/workflows/ci.yml",
-    "pagesWorkflow": ".github/workflows/pages.yml"
-  },
-  "recommendedSubagents": [
-    {
-      "name": "Grade Systems Agent",
-      "focus": "Own RunState/types/GameScene grade accounting, grade-eligible spawn tracking, star thresholds, snapshots, and non-lives stage progression."
-    },
-    {
-      "name": "Stage Transition UI Agent",
-      "focus": "Own HUD, stage-clear, game-over/run-summary, records, and responsive grading presentation in src/ui/app.ts and src/styles.css."
-    },
-    {
-      "name": "Upgrade And Economy Agent",
-      "focus": "Own Thick Jacket replacement, Extra Life replacement, grade-based rewards, save compatibility, balance report updates, and balance notes."
-    },
-    {
-      "name": "Boss And Difficulty Agent",
-      "focus": "Own boss-stage behavior after lives are removed, especially Raven King duration, boss-spit minion pressure, grade impact, and phone readability."
-    },
-    {
-      "name": "Release QA And Deployment Agent",
-      "focus": "Own npm run release:verify, grade conversion QA, fresh-save/returning-save checks, published-build validation, GitHub Pages Actions deployment, and final v1 evidence."
-    }
-  ],
   "githubPagesDeploymentNote": {
     "requiredPagesSource": "GitHub Actions",
     "manualWorkflow": "Deploy GitHub Pages",
     "requiredEvent": "workflow_dispatch",
     "liveUrl": "https://knotenvy.github.io/Knotz-Raven-Mayhem/",
-    "currentStatus": "The correct publish path remains manual Deploy GitHub Pages on master after release verification is green. CI verification alone does not publish.",
+    "currentStatus": "Local release verification is green after the grade conversion. The correct publish path remains manual Deploy GitHub Pages on master after manual QA is acceptable. CI verification alone does not publish.",
     "why": "The classic Pages branch/folder source can show a blank white screen after the Vite migration because it may serve stale or mismatched static output. The Actions deployment uploads the freshly built dist artifact."
   },
-  "implementationGuidance": [
-    "The next team's main mission is not more VFX. It is the progression conversion from lives to stage grades.",
-    "Preserve the accepted landscape-mobile baseline and retest it after HUD/stage-clear changes.",
-    "Do not drift into online leaderboards, accounts, databases, cloud systems, or service-worker caching for this grading pass.",
-    "Do not make low grades block progression; use stars, records, coins, and upgrade recommendations as the pressure loop.",
-    "Track grade-eligible enemies explicitly. Boss-spit mini ravens, splitter children, bonus spawns, and future optional threats should not accidentally inflate grade percentage.",
-    "Keep boss fights challenging, but remove lives as the thing that prevents players from seeing later stages.",
-    "Keep current VFX, boss clamp/spit behavior, stage atmosphere, weapon feedback, and release-shell work unless a grading bug requires a targeted change.",
-    "Use DOM overlays for text-heavy grading UI such as stage-clear summaries, run recap, records, upgrade recommendations, and grade explanations.",
-    "If save shape changes, update normalization in src/game/save.ts and test returning-save behavior manually.",
-    "After grade/reward/tuning changes, rerun npm run balance:report and update DOCS/BALANCE-NOTES.md if the baseline changes materially.",
-    "After runtime, asset, manifest, release-shell, Vite config, or deploy-script changes, run npm run release:verify before handoff.",
-    "After deployment, validate the live GitHub Pages URL in a fresh browser profile or private window."
-  ],
-  "openDesignQuestions": [
-    "Should 1 star always advance the player, or should there be a separate explicit quit/abandon/failure state?",
-    "Should boss defeat be mandatory for boss-stage progression, or should boss stages also grade out after a time/spawn quota?",
-    "Should boss-spit mini ravens affect grade directly, only combo/score, or a separate boss-pressure bonus?",
-    "What should Thick Jacket become: grade buffer, recovery token, reward floor, combo recovery, or miss forgiveness?",
-    "What should Extra Life become in the new system?",
-    "Should grade-based rewards multiply coins, unlock stage medals, affect armory recommendations, or all three?",
-    "Should records show best star count per stage, total stars, full-run average grade, perfect clears, or a cabinet-style report card?",
-    "What is the desired target experience for newer players: reach all 9 stages in one session with low grades, or reach late stages over several upgraded runs?"
+  "openDesignQuestionsForPlaytest": [
+    "Do low-grade clears still feel exciting when the player advances instead of losing the run?",
+    "Are grade shields helpful without making 5-star clears feel automatic?",
+    "Should boss-spit mini ravens remain optional score/pressure only, or should they affect a separate boss-pressure bonus later?",
+    "Are star-adjusted stage rewards strong enough to motivate mastery without blocking progression?",
+    "Should a completed Stage 9 run show a special end-of-arc recap before overflow stages?"
   ]
 }

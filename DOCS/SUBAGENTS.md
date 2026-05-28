@@ -70,7 +70,7 @@ Use these subagent roles to parallelize Beta-release work. Each subagent should 
 
 - Add between-stage session UI before the next stage starts.
 - Show stage rewards, stats, next-stage preview, and enemy/boss warnings.
-- Improve game-over flow so players are pushed toward armory upgrades naturally.
+- Improve run-report flow so players are pushed toward armory upgrades naturally.
 - Keep Run It Back available, but make spending coins feel like the primary progression path.
 
 **Definition of done:**

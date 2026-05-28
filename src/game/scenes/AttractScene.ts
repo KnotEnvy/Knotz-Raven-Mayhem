@@ -458,7 +458,7 @@ function upgradeFxColor(id: string): number {
     case 'comboCore':
       return 0xff3fb4;
     case 'thickJacket':
-      return 0xff315a;
+      return 0x9dff57;
     case 'bountyChip':
       return 0xffd447;
     default:

@@ -139,7 +139,7 @@ export const STAGES: StageDefinition[] = [
   {
     id: 'jackpot-alley',
     title: 'Jackpot Alley',
-    subtitle: 'Bonus round: grab coins, keep the streak, no lives lost.',
+    subtitle: 'Bonus round: grab coins, keep the streak, no grade penalty.',
     targetKills: 22,
     spawnEveryMs: 430,
     speedMultiplier: 1.38,

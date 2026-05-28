@@ -9,7 +9,7 @@ export function getPlayerStats(save: SaveData): PlayerStats {
   const bountyChip = save.upgrades.bountyChip ?? 0;
 
   return {
-    startingLives: PLAYER_TUNING.baseStartingLives + Math.floor(thickJacket / PLAYER_TUNING.thickJacketRanksPerLife),
+    gradeBufferPercent: thickJacket * PLAYER_TUNING.gradeBufferPercentPerRank,
     comboWindowMs: PLAYER_TUNING.baseComboWindowMs + comboCore * PLAYER_TUNING.comboCoreWindowBonusMs,
     cooldownMultiplier: Math.max(
       PLAYER_TUNING.minimumCooldownMultiplier,

@@ -5,6 +5,7 @@ import type {
   EnemyDefinition,
   GameSettings,
   SaveData,
+  StageGrade,
   UpgradeDefinition,
   WeaponDefinition,
 } from '../game/types';
@@ -384,7 +385,7 @@ function formatUpgradeStat(stat: UpgradeDefinition['stat']): string {
   const labels: Record<UpgradeDefinition['stat'], string> = {
     cooldown: 'Trigger speed',
     comboWindow: 'Combo timer',
-    startingLives: 'Starting lives',
+    gradeBuffer: 'Grade buffer',
     scoreMultiplier: 'Score payout',
   };
 
@@ -418,6 +419,10 @@ function renderHomeStats(save: SaveData): string {
       <div>
         <span class="panel-label">Best Stage</span>
         <strong>${save.bestStage}</strong>
+      </div>
+      <div>
+        <span class="panel-label">Best Stars</span>
+        <strong>${save.bestRunStars}</strong>
       </div>
       <div>
         <span class="panel-label">Coins</span>
@@ -492,12 +497,22 @@ function renderRecords(save: SaveData): string {
       <div class="record-grid">
         <div><span>High Score</span><strong>${save.highScore}</strong></div>
         <div><span>Best Stage</span><strong>${save.bestStage}</strong></div>
+        <div><span>Best Stars</span><strong>${save.bestRunStars}</strong></div>
+        <div><span>Best Run Grade</span><strong>${save.bestRunGradePercent}%</strong></div>
         <div><span>Best Combo</span><strong>${save.bestCombo}x</strong></div>
+        <div><span>Perfect Stages</span><strong>${save.perfectStages}</strong></div>
+        <div><span>Stage Medals</span><strong>${formatStageMedals(save.bestStageStars)}</strong></div>
         <div><span>Lifetime Kills</span><strong>${save.lifetimeKills}</strong></div>
       </div>
       <button class="danger-command" data-action="reset-save">Reset Save</button>
     </section>
   `;
+}
+
+function formatStageMedals(starsByStage: SaveData['bestStageStars']): string {
+  const entries = Object.values(starsByStage);
+  if (entries.length === 0) return '0';
+  return `${entries.reduce((total, stars) => total + stars, 0)} / ${entries.length}`;
 }
 
 function renderArmory(
@@ -593,9 +608,9 @@ function renderUpgradeCard(save: SaveData, upgrade: UpgradeDefinition): string {
 
 function renderHud(state: Extract<UiState, { screen: 'hud' }>): string {
   const { snapshot, stage, weapon, crosshair } = state;
-  const lifePips = Array.from({ length: snapshot.maxLives }, (_, index) => `<span class="${index < snapshot.lives ? 'on' : ''}"></span>`).join('');
-  const progress = Math.min(100, (snapshot.stageKills / snapshot.stageTargetKills) * 100);
+  const progress = Math.min(100, (snapshot.stageSpawns / snapshot.stageTargetKills) * 100);
   const comboProgress = snapshot.comboWindowMs > 0 ? Math.max(0, (snapshot.comboTimerMs / snapshot.comboWindowMs) * 100) : 0;
+  const grade = snapshot.stageGrade;
 
   return `
     <div class="hud">
@@ -609,9 +624,10 @@ function renderHud(state: Extract<UiState, { screen: 'hud' }>): string {
         <strong>${stage.title}</strong>
         <div class="meter"><i style="width:${progress}%"></i></div>
       </section>
-      <section class="hud-cluster life-cluster">
-        <span>Lives</span>
-        <div class="life-pips">${lifePips}</div>
+      <section class="hud-cluster grade-cluster">
+        <span>${grade.gradeLabel === 'Bonus' ? 'Bonus' : 'Grade'}</span>
+        <strong>${grade.gradeLabel === 'Bonus' ? 'Jackpot' : `${grade.gradePercent}%`}</strong>
+        <div class="star-row mini-stars">${renderStars(grade.starCount)}</div>
         <button data-action="pause">Pause</button>
       </section>
       <section class="hud-cluster combo-cluster ${snapshot.comboMultiplier >= 4 ? 'hot' : ''}">
@@ -620,8 +636,9 @@ function renderHud(state: Extract<UiState, { screen: 'hud' }>): string {
         <div class="meter combo-meter"><i style="width:${comboProgress}%"></i></div>
       </section>
       <section class="hud-cluster stat-strip">
-        <span>Accuracy ${snapshot.accuracy}%</span>
-        <span>Kills ${snapshot.kills}</span>
+        <span>Escaped ${grade.escapedGradeEligible}</span>
+        <span>Stage Aim ${snapshot.stageAccuracy}%</span>
+        <span>Shields ${snapshot.gradeShieldCharges}</span>
         <span>Coins +${snapshot.coinsEarned}</span>
       </section>
       ${snapshot.activePowerups.length ? renderPowerups(snapshot.activePowerups) : ''}
@@ -668,9 +685,15 @@ function renderPause(state: Extract<UiState, { screen: 'pause' }>): string {
 function renderStageClear(state: Extract<UiState, { screen: 'stage-clear' }>): string {
   const { summary } = state;
   const { snapshot, currentStage, nextStage } = summary;
+  const grade = snapshot.stageGrade;
   const newThreats = summary.newEnemyLabels.length
     ? summary.newEnemyLabels.map((label) => `<span>${label}</span>`).join('')
     : '<span>Known flock mix</span>';
+  const rewardText = summary.baseRewardCoins === summary.rewardCoins
+    ? `+${summary.rewardCoins}`
+    : `+${summary.rewardCoins} from ${summary.baseRewardCoins}`;
+  const escapedText = grade.gradeLabel === 'Bonus' ? '-' : `${grade.escapedGradeEligible}`;
+  const gradeKillsText = grade.gradeLabel === 'Bonus' ? `${snapshot.stageKills}` : `${grade.gradeEligibleKilled}/${grade.gradeEligibleSpawned}`;
 
   return `
     ${renderHud({ screen: 'hud', snapshot, stage: currentStage, weapon: { name: snapshot.weaponName } as WeaponDefinition, crosshair: { name: snapshot.crosshairName } as CrosshairDefinition })}
@@ -678,15 +701,18 @@ function renderStageClear(state: Extract<UiState, { screen: 'stage-clear' }>): s
       <div class="modal-card stage-clear-card">
         <p class="eyebrow">${summary.nextStageIsBonus ? 'Bonus Round Incoming' : 'Stage Clear'}</p>
         <h2>${currentStage.title}</h2>
+        ${renderGradeReport(grade)}
         <div class="reward-line">
-          <span>Stage reward</span>
-          <strong>+${summary.rewardCoins}</strong>
+          <span>${grade.gradeLabel === 'Bonus' ? 'Bonus reward' : 'Grade-adjusted reward'}</span>
+          <strong>${rewardText}</strong>
         </div>
         <div class="record-grid">
-          <div><span>Accuracy</span><strong>${snapshot.accuracy}%</strong></div>
+          <div><span>Stage Aim</span><strong>${snapshot.stageAccuracy}%</strong></div>
+          <div><span>Escaped</span><strong>${escapedText}</strong></div>
+          <div><span>${grade.gradeLabel === 'Bonus' ? 'Bonus Kills' : 'Grade Kills'}</span><strong>${gradeKillsText}</strong></div>
           <div><span>Best Combo</span><strong>${snapshot.bestCombo}x</strong></div>
           <div><span>Total Coins</span><strong>+${snapshot.coinsEarned}</strong></div>
-          <div><span>Kills</span><strong>${snapshot.kills}</strong></div>
+          <div><span>Run Stars</span><strong>${snapshot.totalStars}</strong></div>
         </div>
         <section class="next-stage-card">
           <span>Next</span>
@@ -696,6 +722,7 @@ function renderStageClear(state: Extract<UiState, { screen: 'stage-clear' }>): s
         </section>
         <div class="modal-actions">
           <button class="primary-command" data-action="continue-stage">Continue</button>
+          <button data-action="retry-stage">Retry Stage</button>
           <button data-action="return-menu">Quit Run</button>
         </div>
       </div>
@@ -711,10 +738,13 @@ function renderGameOver(state: Extract<UiState, { screen: 'gameover' }>): string
     <section class="modal-screen gameover-screen">
       <div class="modal-card gameover-card">
         <p class="eyebrow">${rewards.newHighScore ? 'New High Score' : 'Run Complete'}</p>
-        <h2>Game Over</h2>
+        <h2>Run Report</h2>
         <div class="final-score">${snapshot.score}</div>
         <div class="record-grid">
           <div><span>Stage</span><strong>${snapshot.stageIndex}</strong></div>
+          <div><span>Total Stars</span><strong>${snapshot.totalStars}</strong></div>
+          <div><span>Avg Grade</span><strong>${snapshot.averageGradePercent}%</strong></div>
+          <div><span>Perfect Stages</span><strong>${snapshot.perfectStages}</strong></div>
           <div><span>Accuracy</span><strong>${snapshot.accuracy}%</strong></div>
           <div><span>Best Combo</span><strong>${snapshot.bestCombo}x</strong></div>
           <div><span>Kills</span><strong>${snapshot.kills}</strong></div>
@@ -732,6 +762,36 @@ function renderGameOver(state: Extract<UiState, { screen: 'gameover' }>): string
       </div>
     </section>
   `;
+}
+
+function renderGradeReport(grade: StageGrade): string {
+  if (grade.gradeLabel === 'Bonus') {
+    return `
+      <section class="grade-report bonus-grade">
+        <span class="grade-kicker">Bonus Round</span>
+        <strong class="grade-emblem">Jackpot</strong>
+        <small>Bonus birds pay coins without changing stage stars.</small>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="grade-report rank-${grade.gradeLabel}">
+      <span class="grade-kicker">Stage Grade</span>
+      <strong class="grade-emblem">${grade.gradeLabel}</strong>
+      <div class="grade-detail">
+        <span>${grade.gradePercent}% clear</span>
+        <span>${grade.gradeEligibleKilled}/${grade.gradeEligibleSpawned} targets</span>
+      </div>
+      <div class="star-row">${renderStars(grade.starCount)}</div>
+      <small>${grade.gradeEligibleKilled}/${grade.gradeEligibleSpawned} cleared / ${grade.escapedGradeEligible} escaped${grade.shieldedEscapes ? ` / ${grade.shieldedEscapes} shielded` : ''}</small>
+    </section>
+  `;
+}
+
+function renderStars(starCount: number): string {
+  if (starCount <= 0) return '<span class="bonus-star">Bonus</span>';
+  return Array.from({ length: 5 }, (_, index) => `<i class="${index < starCount ? 'filled' : ''}"></i>`).join('');
 }
 
 function renderArmoryRecommendations(save: SaveData): string {

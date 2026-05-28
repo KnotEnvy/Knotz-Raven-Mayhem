@@ -10,12 +10,12 @@ const { ENEMIES } = loadTsModule(resolve(root, 'src/game/data/enemies.ts'));
 const { STAGES } = loadTsModule(resolve(root, 'src/game/data/stages.ts'));
 const { WEAPONS, CROSSHAIRS } = loadTsModule(resolve(root, 'src/game/data/weapons.ts'));
 const { UPGRADES, getUpgradeCost } = loadTsModule(resolve(root, 'src/game/data/upgrades.ts'));
-const { ECONOMY_TUNING, POWERUP_TUNING } = loadTsModule(resolve(root, 'src/game/data/tuning.ts'));
+const { ECONOMY_TUNING, GRADE_TUNING, POWERUP_TUNING } = loadTsModule(resolve(root, 'src/game/data/tuning.ts'));
 
 const profiles = [
-  { label: 'Learning run', accuracy: 62, comboScoreMultiplier: 1.05 },
-  { label: 'Solid run', accuracy: 78, comboScoreMultiplier: 1.35 },
-  { label: 'Hot run', accuracy: 90, comboScoreMultiplier: 1.75 },
+  { label: 'Learning run', accuracy: 62, gradePercent: 58, comboScoreMultiplier: 1.05 },
+  { label: 'Solid run', accuracy: 78, gradePercent: 76, comboScoreMultiplier: 1.35 },
+  { label: 'Hot run', accuracy: 90, gradePercent: 92, comboScoreMultiplier: 1.75 },
 ];
 
 const failures = [];
@@ -88,6 +88,7 @@ function describeStage(stage, index) {
     enemyCoins: expectedEnemyCoins,
     clearCoins: stage.rewardCoins,
     boss: stage.boss ? ENEMIES[stage.boss].label : '-',
+    bonus: stage.bonus ? 'yes' : 'no',
   };
 }
 
@@ -95,18 +96,27 @@ function describeRunProfile(profile) {
   let cumulativeScore = 0;
   let cumulativeDropCoins = 0;
   let bossKills = 0;
+  let totalStars = 0;
   const milestones = [];
 
   for (const stageRow of stageRows) {
-    cumulativeScore += Math.round(stageRow.score * profile.comboScoreMultiplier);
-    cumulativeDropCoins += stageRow.enemyCoins + stageRow.clearCoins;
+    const stars = stageRow.bonus === 'yes' ? 0 : getStarCount(profile.gradePercent);
+    const killRatio = stageRow.bonus === 'yes' ? 1 : Math.min(1, profile.gradePercent / 100);
+    const gradeReward = stageRow.bonus === 'yes'
+      ? stageRow.clearCoins
+      : Math.round(stageRow.clearCoins * getGradeRewardMultiplier(stars));
+
+    cumulativeScore += Math.round(stageRow.score * killRatio * profile.comboScoreMultiplier);
+    cumulativeDropCoins += Math.round(stageRow.enemyCoins * killRatio) + gradeReward;
     if (stageRow.boss !== '-') bossKills++;
+    totalStars += stars;
 
     const snapshot = {
       score: cumulativeScore,
       stageIndex: stageRow.stage + 1,
       accuracy: profile.accuracy,
       coinsEarned: cumulativeDropCoins,
+      totalStars,
     };
     const payout = calculateReward(snapshot, bossKills);
     milestones.push({
@@ -119,6 +129,8 @@ function describeRunProfile(profile) {
   return {
     profile: profile.label,
     accuracy: profile.accuracy,
+    gradePercent: profile.gradePercent,
+    starsPerStage: getStarCount(profile.gradePercent),
     clearStage1: milestones[0].coins,
     clearStage3: milestones[2].coins,
     clearStage6: milestones[5].coins,
@@ -181,13 +193,26 @@ function calculateReward(snapshot, bossKills) {
   const accuracyBonus = snapshot.accuracy >= ECONOMY_TUNING.accuracyBonusThreshold
     ? Math.floor(snapshot.accuracy / ECONOMY_TUNING.accuracyBonusStepPercent) * ECONOMY_TUNING.accuracyBonusCoinsPerStep
     : 0;
+  const gradeBonus = snapshot.totalStars * ECONOMY_TUNING.starBonusCoins;
   const bossBonus = bossKills * ECONOMY_TUNING.bossKillBonusCoins;
   const totalCoins = Math.max(
     ECONOMY_TUNING.minimumRunCoins,
-    Math.floor(scoreCoins + stageCoins + accuracyBonus + bossBonus + snapshot.coinsEarned),
+    Math.floor(scoreCoins + stageCoins + accuracyBonus + gradeBonus + bossBonus + snapshot.coinsEarned),
   );
 
   return { totalCoins };
+}
+
+function getStarCount(gradePercent) {
+  if (gradePercent >= GRADE_TUNING.fiveStarPercent) return 5;
+  if (gradePercent >= GRADE_TUNING.fourStarPercent) return 4;
+  if (gradePercent >= GRADE_TUNING.threeStarPercent) return 3;
+  if (gradePercent >= GRADE_TUNING.twoStarPercent) return 2;
+  return 1;
+}
+
+function getGradeRewardMultiplier(stars) {
+  return GRADE_TUNING.rewardMultipliers[stars] ?? 1;
 }
 
 function printReport(stageRows, runRows, economyRows) {

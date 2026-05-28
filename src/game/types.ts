@@ -15,6 +15,7 @@ export type WeaponId = 'pistol' | 'burstRifle' | 'scattergun' | 'arcLaser';
 export type CrosshairId = 'classic' | 'neonDot' | 'eagleEye' | 'wideNet';
 export type UpgradeId = 'steadyHands' | 'comboCore' | 'thickJacket' | 'bountyChip';
 export type PowerupId = 'slowmo' | 'multishot' | 'scoreBoost' | 'extraLife' | 'overdrive' | 'coinRush';
+export type StageGradeLabel = 'S' | 'A' | 'B' | 'C' | 'D' | 'Bonus';
 
 export interface WeightedEntry<TId extends string> {
   id: TId;
@@ -85,14 +86,28 @@ export interface UpgradeDefinition {
   maxRank: number;
   baseCost: number;
   perRank: number;
-  stat: 'cooldown' | 'comboWindow' | 'startingLives' | 'scoreMultiplier';
+  stat: 'cooldown' | 'comboWindow' | 'gradeBuffer' | 'scoreMultiplier';
 }
 
 export interface PlayerStats {
-  startingLives: number;
+  gradeBufferPercent: number;
   comboWindowMs: number;
   cooldownMultiplier: number;
   scoreMultiplier: number;
+}
+
+export interface StageGrade {
+  gradeEligibleSpawned: number;
+  gradeEligibleKilled: number;
+  escapedGradeEligible: number;
+  shieldedEscapes: number;
+  optionalKills: number;
+  stageAccuracy: number;
+  rawGradePercent: number;
+  gradePercent: number;
+  gradeBufferPercent: number;
+  starCount: number;
+  gradeLabel: StageGradeLabel;
 }
 
 export interface SaveData {
@@ -101,6 +116,10 @@ export interface SaveData {
   bestStage: number;
   bestCombo: number;
   lifetimeKills: number;
+  bestRunStars: number;
+  bestRunGradePercent: number;
+  perfectStages: number;
+  bestStageStars: Record<string, number>;
   coins: number;
   selectedWeapon: WeaponId;
   selectedCrosshair: CrosshairId;
@@ -119,12 +138,17 @@ export interface GameSettings {
 
 export interface RunSnapshot {
   score: number;
-  lives: number;
-  maxLives: number;
   stageIndex: number;
+  stageId: string;
   stageTitle: string;
+  stagesCleared: number;
   stageKills: number;
   stageTargetKills: number;
+  stageSpawns: number;
+  stageShotsFired: number;
+  stageHits: number;
+  stageAccuracy: number;
+  stageGrade: StageGrade;
   combo: number;
   comboMultiplier: number;
   comboTimerMs: number;
@@ -135,6 +159,12 @@ export interface RunSnapshot {
   kills: number;
   bestCombo: number;
   coinsEarned: number;
+  totalStars: number;
+  gradedStagesCleared: number;
+  perfectStages: number;
+  averageGradePercent: number;
+  runStageStars: Record<string, number>;
+  gradeShieldCharges: number;
   weaponName: string;
   crosshairName: string;
   activePowerups: ActivePowerupSnapshot[];
@@ -151,6 +181,7 @@ export interface RunRewards {
   scoreCoins: number;
   stageCoins: number;
   accuracyBonus: number;
+  gradeBonus: number;
   bossBonus: number;
   totalCoins: number;
   newHighScore: boolean;
@@ -162,6 +193,7 @@ export interface StageClearSummary {
   currentStage: StageDefinition;
   nextStage: StageDefinition;
   rewardCoins: number;
+  baseRewardCoins: number;
   newEnemyLabels: string[];
   nextStageIsBonus: boolean;
 }

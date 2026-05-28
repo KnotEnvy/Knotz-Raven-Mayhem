@@ -21,12 +21,12 @@ export const UPGRADES: UpgradeDefinition[] = [
   },
   {
     id: 'thickJacket',
-    name: 'Thick Jacket',
-    tagline: 'Adds extra starting lives at higher ranks.',
+    name: 'Recovery Matrix',
+    tagline: 'Adds a small stage-grade buffer while preserving star mastery.',
     maxRank: 3,
     baseCost: 90,
     perRank: 75,
-    stat: 'startingLives',
+    stat: 'gradeBuffer',
   },
   {
     id: 'bountyChip',

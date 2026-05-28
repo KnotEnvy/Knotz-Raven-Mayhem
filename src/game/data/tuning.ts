@@ -1,8 +1,7 @@
 import type { PowerupId } from '../types';
 
 export const PLAYER_TUNING = {
-  baseStartingLives: 3,
-  thickJacketRanksPerLife: 2,
+  gradeBufferPercentPerRank: 2,
   baseComboWindowMs: 1900,
   comboCoreWindowBonusMs: 220,
   steadyHandsCooldownReduction: 0.055,
@@ -11,7 +10,7 @@ export const PLAYER_TUNING = {
   overdriveCooldownMultiplier: 0.58,
   killsPerComboMultiplierStep: 4,
   maxComboMultiplier: 6,
-  extraLifeOverflowCap: 2,
+  maxGradeShieldCharges: 3,
 } as const;
 
 export const ECONOMY_TUNING = {
@@ -20,9 +19,25 @@ export const ECONOMY_TUNING = {
   accuracyBonusThreshold: 70,
   accuracyBonusStepPercent: 10,
   accuracyBonusCoinsPerStep: 3,
+  starBonusCoins: 4,
   bossKillBonusCoins: 35,
   minimumRunCoins: 8,
   bountyChipPayoutMultiplierPerRank: PLAYER_TUNING.bountyChipMultiplierPerRank,
+} as const;
+
+export const GRADE_TUNING = {
+  fiveStarPercent: 90,
+  fourStarPercent: 80,
+  threeStarPercent: 70,
+  twoStarPercent: 60,
+  rewardMultipliers: {
+    0: 1,
+    1: 0.7,
+    2: 0.85,
+    3: 1,
+    4: 1.12,
+    5: 1.25,
+  },
 } as const;
 
 export const POWERUP_TUNING: {

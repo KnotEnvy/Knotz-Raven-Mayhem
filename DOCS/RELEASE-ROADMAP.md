@@ -3,15 +3,15 @@
 ## Built
 
 - Phaser + TypeScript + Vite runtime with static GitHub Pages-friendly output.
-- Arcade attract screen, armory, records, options, credits, HUD, pause, and game-over overlays.
-- Run-based progression with stages, bosses, coins, unlockable guns, Assist Chips, upgrades, and local saves.
-- Enemy roster, powerups, combo scoring, stage rewards, high score tracking, and reward payout.
-- Stage-clear interstitials with reward, accuracy, combo, next-stage preview, bonus-round warning, and new enemy warnings.
-- Armory-forward game-over flow with affordable upgrade/unlock recommendations.
+- Arcade attract screen, armory, records, options, credits, HUD, pause, stage-clear, and run-report overlays.
+- Grade-based stage progression with stages, bosses, coins, unlockable guns, Assist Chips, upgrades, and local saves.
+- Enemy roster, powerups, combo scoring, star grades, grade-adjusted stage rewards, high score tracking, and reward payout.
+- Stage-clear interstitials with a dramatic grade reveal, stars, grade percent, escapes, reward explanation, retry-stage action, combo, next-stage preview, bonus-round warning, and new enemy warnings.
+- Armory-forward run-report flow with affordable upgrade/unlock recommendations.
 - Weapon-driven reticles, cooldown-readiness feedback, projectile traces, multishot chain traces, shotgun spread visualization, and laser lane feedback.
 - Expanded 9-stage content arc with a slower enemy introduction curve, Jackpot Alley bonus round, Wraith Raven, Brute Raven, and Coin Rush powerup.
 - Procedural arcade music and sound effects with persistent audio/motion settings.
-- Stronger death sequence before the final run summary.
+- Run-report sequence for banking rewards after quitting from pause or stage clear.
 - Release tuning constants in `src/game/data/tuning.ts` for player stats, overflow stages, powerup behavior, combo pacing, and economy payouts.
 - First-pass mobile tuning for touch hit forgiveness, compact HUD layout, touch-action handling, and mobile/reduced-motion particle caps.
 - First-pass production-feel art pass with procedural set dressing for all six named stages and stronger cabinet HUD framing.
@@ -26,12 +26,12 @@
 ## Remaining Before Public Release
 
 - Add final original production visuals: final raven variants, boss sprite work, and richer UI cabinet art. Optional recorded music beds or SFX can replace the procedural audio if desired.
-- Validate the economy and difficulty curve from real play sessions using `DOCS/BALANCE-NOTES.md` and the named tuning constants: early unlock timing, boss health, staggered enemy reveal pacing, Jackpot Alley payout feel, late Wraith/Brute readability, powerup drop rates, stage length, and coin payouts.
-- Run the remaining manual release QA checklist: first-load, new save, returning save, all menu buttons, every weapon, every powerup, boss stage, game over, mobile layout, and `npm run release:verify`.
+- Validate the economy and difficulty curve from real play sessions using `DOCS/BALANCE-NOTES.md` and the named tuning constants: grade thresholds, low-grade advancement feel, boss health, staggered enemy reveal pacing, Jackpot Alley payout feel, late Wraith/Brute readability, powerup drop rates, stage length, and coin payouts.
+- Run the remaining manual release QA checklist: first-load, new save, returning save, all menu buttons, every weapon, every powerup, boss stage, run report, mobile layout, and `npm run release:verify`.
 - Validate mobile-specific tuning on real touch devices: hit radius, HUD density, pause affordance, and performance particle caps.
 
 ## Next Recommended Build Slices
 
-1. Manual balance pass on the new 9-stage arc using `src/game/data/tuning.ts`, `src/game/data/stages.ts`, and the release QA checklist.
+1. Manual balance pass on the grade-based 9-stage arc using `src/game/data/tuning.ts`, `src/game/data/stages.ts`, and the release QA checklist.
 2. Final production asset pass using the existing raven/explosion assets, new Wraith/Brute color identities, and procedural stage art as seed references.
 3. Mobile polish and final checklist pass.

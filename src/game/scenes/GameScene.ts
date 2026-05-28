@@ -7,6 +7,7 @@ import { INPUT_TUNING, POWERUP_TUNING, PRESENTATION_TUNING } from '../data/tunin
 import { applyRunRewards, calculateRunRewards, loadSave } from '../save';
 import { getLoadout } from '../systems/progression';
 import { RunState, powerupLabel } from '../systems/RunState';
+import { calculateGradeAdjustedStageReward } from '../systems/grades';
 import { WaveDirector } from '../systems/WaveDirector';
 import { arcadeAudio } from '../systems/ArcadeAudio';
 import type { EnemyDefinition, EnemyId, PowerupId, RunRewards, SaveData, StageClearSummary, StageDefinition, WeaponDefinition } from '../types';
@@ -26,6 +27,7 @@ interface EnemyActor {
   visualScale: number;
   boss: boolean;
   splitDepth: number;
+  gradeEligible: boolean;
 }
 
 interface PowerupActor {
@@ -70,6 +72,7 @@ export class GameScene extends Phaser.Scene {
   private bossSpawned = false;
   private bossDefeated = false;
   private bossKills = 0;
+  private stageStartBossKills = 0;
   private gameEnded = false;
   private crosshair!: Phaser.GameObjects.Graphics;
   private background!: Phaser.GameObjects.Graphics;
@@ -97,10 +100,11 @@ export class GameScene extends Phaser.Scene {
     this.crosshairRadiusBonus = loadout.crosshair.radiusBonus;
     this.run = new RunState(loadout.stats, loadout.weapon, loadout.crosshair);
     this.stage = getStage(0);
-    this.run.startStage(1, this.stage.targetKills);
+    this.run.startStage(1, this.stage.id, this.stage.targetKills);
     this.nextShotAt = 0;
     this.gameEnded = false;
     this.bossKills = 0;
+    this.stageStartBossKills = 0;
     this.bossSpawned = false;
     this.bossDefeated = false;
     this.stageEnemiesSpawned = 0;
@@ -158,11 +162,17 @@ export class GameScene extends Phaser.Scene {
       onCommand('pause', () => this.pauseRun()),
       onCommand('resume', () => this.resumeRun()),
       onCommand('continue-stage', () => this.continueToNextStage()),
+      onCommand('retry-stage', () => this.retryCurrentStage()),
       onCommand('open-armory', () => {
         dispatchUiState({ screen: 'blank' });
         this.scene.start('AttractScene', { mode: 'armory' });
       }),
       onCommand('return-menu', () => {
+        if (!this.gameEnded && (this.pausedByUi || this.stageTransition)) {
+          this.endRun();
+          return;
+        }
+
         dispatchUiState({ screen: 'blank' });
         this.scene.start('AttractScene');
       }),
@@ -795,7 +805,6 @@ export class GameScene extends Phaser.Scene {
     this.drawV1Vignette(this.screenPolishFx, width, height, compact);
     this.drawArcadeScanlines(this.screenPolishFx, width, height, time, compact, reducedMotion);
     if (boss) this.drawBossPressureOverlay(this.screenPolishFx, width, height, boss, time, compact, reducedMotion);
-    if (this.run.lives <= 1 && !this.stage.bonus) this.drawLowLifeOverlay(this.screenPolishFx, width, height, time, reducedMotion);
 
     this.powerupFieldFx.clear();
     this.powerupFieldFx.setBlendMode(Phaser.BlendModes.ADD);
@@ -857,22 +866,6 @@ export class GameScene extends Phaser.Scene {
     graphics.lineStyle(1, 0xffffff, 0.16);
     graphics.lineBetween(width, boss.sprite.y - boss.visualRadius * 0.8, Math.max(width * 0.62, boss.sprite.x), boss.sprite.y);
     graphics.lineBetween(width, boss.sprite.y + boss.visualRadius * 0.8, Math.max(width * 0.62, boss.sprite.x), boss.sprite.y);
-  }
-
-  private drawLowLifeOverlay(
-    graphics: Phaser.GameObjects.Graphics,
-    width: number,
-    height: number,
-    time: number,
-    reducedMotion: boolean,
-  ): void {
-    const pulse = reducedMotion ? 0.45 : (Math.sin(time / 180) + 1) / 2;
-    graphics.fillStyle(0xff315a, 0.045 + pulse * 0.035);
-    graphics.fillRect(0, 0, width, 18);
-    graphics.fillRect(0, height - 18, width, 18);
-    graphics.lineStyle(2, 0xff315a, 0.18 + pulse * 0.24);
-    graphics.lineBetween(0, height * 0.18, width * 0.16, 0);
-    graphics.lineBetween(width, height * 0.82, width * 0.84, height);
   }
 
   private drawActivePowerupField(
@@ -1002,11 +995,12 @@ export class GameScene extends Phaser.Scene {
     const enemyId = this.waveDirector.update(delta, this.stage);
     if (enemyId) {
       this.stageEnemiesSpawned++;
-      this.spawnEnemy(enemyId);
+      this.run.recordStageSpawn(!this.stage.bonus);
+      this.spawnEnemy(enemyId, undefined, undefined, 0, true, !this.stage.bonus);
     }
   }
 
-  private spawnEnemy(enemyId: EnemyId, x = this.scale.width + 120, y?: number, splitDepth = 0, telegraph = true): void {
+  private spawnEnemy(enemyId: EnemyId, x = this.scale.width + 120, y?: number, splitDepth = 0, telegraph = true, gradeEligible = false): void {
     const def = ENEMIES[enemyId];
     const spawnY = y ?? Phaser.Math.Between(80, this.scale.height - 90);
     const sprite = this.acquireEnemySprite(x, spawnY);
@@ -1035,6 +1029,7 @@ export class GameScene extends Phaser.Scene {
       visualScale,
       boss: def.behavior === 'boss',
       splitDepth,
+      gradeEligible,
     };
 
     if (actor.boss) {
@@ -1098,10 +1093,12 @@ export class GameScene extends Phaser.Scene {
           this.floatText(120, this.scale.height - 120, 'BONUS LOST', '#ffe56a', 30);
           arcadeAudio.playMiss();
         } else {
-          this.floatText(120, this.scale.height - 120, 'MISSED', '#ff315a', 34);
+          const escapeResult = this.run.recordEnemyEscaped(actor.gradeEligible);
+          const label = escapeResult === 'shielded' ? 'GRADE SHIELD' : 'ESCAPED';
+          const color = escapeResult === 'shielded' ? '#9dff57' : '#ff315a';
+          this.floatText(120, this.scale.height - 120, label, color, 34);
           arcadeAudio.playMiss();
-          this.shakeCamera(250, 0.01);
-          if (this.run.loseLife()) this.endRun();
+          this.shakeCamera(escapeResult === 'shielded' ? 120 : 250, escapeResult === 'shielded' ? 0.004 : 0.01);
         }
         continue;
       }
@@ -1148,7 +1145,7 @@ export class GameScene extends Phaser.Scene {
         this.scale.height - BOSS_MOUTH_SAFE_PADDING,
       );
       const minionX = Phaser.Math.Clamp(mouth.x - index * 14, 116, this.scale.width - 108);
-      this.spawnEnemy('mini', minionX, minionY, 2, false);
+      this.spawnEnemy('mini', minionX, minionY, 2, false, false);
       const minion = this.enemies[this.enemies.length - 1];
       if (minion?.def.id === 'mini') {
         minion.velocityX = (0.19 + index * 0.025) * minion.def.speed * this.stage.speedMultiplier;
@@ -1307,7 +1304,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private killEnemy(actor: EnemyActor): void {
-    const points = this.run.killEnemy(actor.def);
+    const points = this.run.killEnemy(actor.def, actor.gradeEligible);
     const x = actor.sprite.x;
     const y = actor.sprite.y;
     const radius = actor.radius;
@@ -1334,8 +1331,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (actor.def.behavior === 'splitter' && actor.splitDepth < 1) {
-      this.spawnEnemy('mini', x + 34, y - 36, actor.splitDepth + 1, false);
-      this.spawnEnemy('mini', x + 34, y + 36, actor.splitDepth + 1, false);
+      this.spawnEnemy('mini', x + 34, y - 36, actor.splitDepth + 1, false, false);
+      this.spawnEnemy('mini', x + 34, y + 36, actor.splitDepth + 1, false, false);
     }
 
     arcadeAudio.playEnemyDestroyed(actor.def.id, this.run.comboMultiplier);
@@ -1360,7 +1357,7 @@ export class GameScene extends Phaser.Scene {
     if (!powerup) return false;
 
     if (powerup.id === 'extraLife') {
-      this.run.addLife();
+      this.run.addGradeShield();
     } else {
       this.run.activatePowerup(powerup.id);
     }
@@ -1443,7 +1440,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.stage.boss && !this.bossSpawned && !this.bossDefeated && fieldClear) {
       this.bossSpawned = true;
-      this.spawnEnemy(this.stage.boss);
+      this.spawnEnemy(this.stage.boss, undefined, undefined, 0, true, false);
       return;
     }
 
@@ -1465,10 +1462,15 @@ export class GameScene extends Phaser.Scene {
     const clearedStageIndex = this.run.stageIndex;
     const currentStage = this.stage;
     const nextStage = getStage(clearedStageIndex);
-    this.run.coinsEarned += this.stage.rewardCoins;
+    const stageGrade = this.run.completeStage(this.stage.id, this.stage.bonus === true);
+    const rewardCoins = this.stage.bonus
+      ? this.stage.rewardCoins
+      : calculateGradeAdjustedStageReward(this.stage.rewardCoins, stageGrade.starCount);
+    this.run.coinsEarned += rewardCoins;
     arcadeAudio.playStageClear(this.run.stageIndex);
-    this.floatText(this.scale.width / 2, this.scale.height * 0.38, `STAGE CLEAR +${this.stage.rewardCoins}`, '#ffe56a', 36);
+    this.floatText(this.scale.width / 2, this.scale.height * 0.38, `STAGE CLEAR +${rewardCoins}`, '#ffe56a', 36);
     this.playStageClearSweep(currentStage);
+    if (stageGrade.gradeLabel === 'S') this.playSGradeConfetti(currentStage);
     if (this.stage.bonus) {
       this.playJackpotStageClear();
     } else {
@@ -1477,10 +1479,11 @@ export class GameScene extends Phaser.Scene {
     if (!this.save.settings.reducedMotion) this.cameras.main.flash(220, 255, 225, 106, false);
 
     this.completedStageSummary = {
-      snapshot: this.run.snapshot(this.stage.title),
+      snapshot: this.run.snapshot(this.stage.title, this.stage.bonus === true),
       currentStage,
       nextStage,
-      rewardCoins: currentStage.rewardCoins,
+      rewardCoins,
+      baseRewardCoins: currentStage.rewardCoins,
       newEnemyLabels: getNewEnemyLabelsForStage(clearedStageIndex),
       nextStageIsBonus: nextStage.bonus === true,
     };
@@ -1497,7 +1500,8 @@ export class GameScene extends Phaser.Scene {
 
     const nextStage = this.completedStageSummary.nextStage;
     this.stage = nextStage;
-    this.run.startStage(this.run.stageIndex + 1, nextStage.targetKills);
+    this.run.startStage(this.run.stageIndex + 1, nextStage.id, nextStage.targetKills);
+    this.stageStartBossKills = this.bossKills;
     this.waveDirector.reset();
     this.stageEnemiesSpawned = 0;
     this.bossSpawned = false;
@@ -1514,6 +1518,30 @@ export class GameScene extends Phaser.Scene {
     if (this.stage.bonus) this.playJackpotIntro();
   }
 
+  private retryCurrentStage(): void {
+    if (!this.stageTransition || !this.completedStageSummary || this.gameEnded) return;
+
+    const currentStage = this.completedStageSummary.currentStage;
+    this.stage = currentStage;
+    this.run.retryStage();
+    this.bossKills = this.stageStartBossKills;
+    this.waveDirector.reset();
+    this.stageEnemiesSpawned = 0;
+    this.bossSpawned = false;
+    this.bossDefeated = false;
+    this.stageTransition = false;
+    this.pausedByUi = false;
+    this.completedStageSummary = undefined;
+    this.nextShotAt = 0;
+    this.clearActorsForStageAdvance();
+    this.drawBackground();
+    arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
+    this.renderHud();
+    this.showStageBanner('Retry Stage', `${this.stage.title} / chase a better grade`);
+    this.playStageIntroFx(this.stage);
+    if (this.stage.bonus) this.playJackpotIntro();
+  }
+
   private clearActorsForStageAdvance(): void {
     for (const enemy of this.enemies) this.destroyEnemyActor(enemy);
     this.enemies = [];
@@ -1526,7 +1554,7 @@ export class GameScene extends Phaser.Scene {
     this.pausedByUi = true;
     dispatchUiState({
       screen: 'pause',
-      snapshot: this.run.snapshot(this.stage.title),
+      snapshot: this.run.snapshot(this.stage.title, this.stage.bonus === true),
       stage: this.stage,
     });
   }
@@ -1542,12 +1570,12 @@ export class GameScene extends Phaser.Scene {
 
     this.gameEnded = true;
     this.input.setDefaultCursor('auto');
-    const snapshot = this.run.snapshot(this.stage.title);
+    const snapshot = this.run.snapshot(this.stage.title, this.stage.bonus === true);
     const rewards: RunRewards = calculateRunRewards(this.save, snapshot, this.bossKills);
     this.save = applyRunRewards(this.save, snapshot, rewards);
     arcadeAudio.stopMusic();
-    arcadeAudio.playGameOver();
-    this.playDeathSequence(() => {
+    arcadeAudio.playStageClear(snapshot.stageIndex);
+    this.playRunSummarySequence(() => {
       dispatchUiState({
         screen: 'gameover',
         snapshot,
@@ -1560,7 +1588,7 @@ export class GameScene extends Phaser.Scene {
   private renderHud(): void {
     dispatchUiState({
       screen: 'hud',
-      snapshot: this.run.snapshot(this.stage.title),
+      snapshot: this.run.snapshot(this.stage.title, this.stage.bonus === true),
       stage: this.stage,
       weapon: WEAPONS.find((item) => item.id === this.save.selectedWeapon) ?? WEAPONS[0],
       crosshair: CROSSHAIRS.find((item) => item.id === this.save.selectedCrosshair) ?? CROSSHAIRS[0],
@@ -1860,6 +1888,47 @@ export class GameScene extends Phaser.Scene {
       onComplete: () => this.releaseTransientGraphics(burst),
     });
     this.emitSparkBurst(x, y, color, 28, 83, 180);
+  }
+
+  private playSGradeConfetti(stage: StageDefinition): void {
+    const x = this.scale.width / 2;
+    const y = this.scale.height * 0.34;
+    const reducedMotion = this.save.settings.reducedMotion;
+    const colors = [stage.palette.neon, 0xffe56a, 0x9dff57, 0x20f2ff, 0xff3fb4, 0xffffff];
+    const count = reducedMotion ? 18 : 72;
+
+    this.floatText(x, y - 88, 'S RANK!', '#ffe56a', 54);
+    this.emitSparkBurst(x, y, 0xffe56a, reducedMotion ? 16 : 42, 91, 260, true);
+    this.emitSparkBurst(x, y, stage.palette.neon, reducedMotion ? 12 : 34, 91, 220, true);
+    if (!reducedMotion) this.cameras.main.flash(260, 255, 229, 106, false);
+    this.shakeCamera(360, 0.01);
+
+    for (let index = 0; index < count; index++) {
+      const angle = (Math.PI * 2 * index) / count + Phaser.Math.FloatBetween(-0.22, 0.22);
+      const distance = Phaser.Math.Between(120, reducedMotion ? 260 : 420);
+      const confetti = this.add.rectangle(
+        x,
+        y,
+        Phaser.Math.Between(5, 12),
+        Phaser.Math.Between(3, 9),
+        Phaser.Math.RND.pick(colors),
+        0.95,
+      );
+
+      confetti.setDepth(218);
+      confetti.setAngle(Phaser.Math.Between(0, 180));
+      this.tweens.add({
+        targets: confetti,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance + Phaser.Math.Between(30, 120),
+        alpha: 0,
+        angle: confetti.angle + Phaser.Math.Between(180, 720),
+        scaleX: Phaser.Math.FloatBetween(0.45, 1.4),
+        duration: reducedMotion ? 460 : Phaser.Math.Between(760, 1180),
+        ease: 'Quad.easeOut',
+        onComplete: () => confetti.destroy(),
+      });
+    }
   }
 
   private playJackpotIntro(): void {
@@ -2339,8 +2408,9 @@ export class GameScene extends Phaser.Scene {
         break;
       case 'extraLife':
         collect.lineStyle(5, 0x9dff57, 0.78);
-        collect.lineBetween(-34, 0, 34, 0);
-        collect.lineBetween(0, -34, 0, 34);
+        collect.strokeRoundedRect(-28, -34, 56, 68, 10);
+        collect.lineBetween(-20, -2, -4, 16);
+        collect.lineBetween(-4, 16, 24, -18);
         break;
       case 'overdrive':
         collect.lineStyle(3, 0xff5fbb, 0.78);
@@ -2697,7 +2767,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private playDeathSequence(onComplete: () => void): void {
+  private playRunSummarySequence(onComplete: () => void): void {
     this.enemies.forEach((enemy) => {
       enemy.velocityX *= -0.25;
       enemy.velocityY *= 0.2;
@@ -2707,17 +2777,17 @@ export class GameScene extends Phaser.Scene {
     const overlay = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x05030a, 0.1);
     overlay.setOrigin(0);
     overlay.setDepth(300);
-    const title = this.add.text(this.scale.width / 2, this.scale.height * 0.42, 'SYSTEM FAILURE', {
+    const title = this.add.text(this.scale.width / 2, this.scale.height * 0.42, 'RUN REPORT', {
       fontFamily: 'Impact, Haettenschweiler, sans-serif',
       fontSize: '64px',
-      color: '#ff315a',
+      color: '#20f2ff',
       stroke: '#05030a',
       strokeThickness: 8,
       align: 'center',
     });
     title.setOrigin(0.5);
     title.setDepth(310);
-    const prompt = this.add.text(this.scale.width / 2, this.scale.height * 0.42 + 64, 'THE FLOCK CLAIMED THIS RUN', {
+    const prompt = this.add.text(this.scale.width / 2, this.scale.height * 0.42 + 64, 'STARS BANKED / COINS PAID', {
       fontFamily: 'Arial, sans-serif',
       fontSize: '18px',
       color: '#ffe56a',
@@ -2826,7 +2896,7 @@ function powerupGlyph(id: PowerupId): string {
     case 'scoreBoost':
       return '2X';
     case 'extraLife':
-      return '+';
+      return 'G';
     case 'overdrive':
       return 'O';
     case 'coinRush':

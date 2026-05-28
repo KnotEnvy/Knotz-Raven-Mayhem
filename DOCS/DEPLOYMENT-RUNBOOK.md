@@ -20,7 +20,7 @@ Complete `DOCS/RELEASE-QA-CHECKLIST.md` against a production preview or Pages de
 The final deploy should not proceed until these areas are checked:
 
 - Fresh save and returning save behavior.
-- Menu, armory, records, options, credits, pause, and game-over navigation.
+- Menu, armory, records, options, credits, pause, stage-clear, and run-report navigation.
 - Every weapon, Assist Chip, upgrade, enemy family, powerup, bonus round, and boss stage.
 - Desktop and mobile viewport layout.
 - Reduced motion and screen shake settings.

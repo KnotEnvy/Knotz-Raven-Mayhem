@@ -58,6 +58,7 @@ export type CommandName =
   | 'pause'
   | 'resume'
   | 'continue-stage'
+  | 'retry-stage'
   | 'reset-save'
   | 'purchase-weapon'
   | 'select-weapon'

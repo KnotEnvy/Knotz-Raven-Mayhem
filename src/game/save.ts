@@ -18,6 +18,10 @@ export const DEFAULT_SAVE: SaveData = {
   bestStage: 1,
   bestCombo: 0,
   lifetimeKills: 0,
+  bestRunStars: 0,
+  bestRunGradePercent: 0,
+  perfectStages: 0,
+  bestStageStars: {},
   coins: 0,
   selectedWeapon: 'pistol',
   selectedCrosshair: 'classic',
@@ -135,6 +139,12 @@ export function applyRunRewards(save: SaveData, snapshot: RunSnapshot, rewards: 
   next.bestStage = Math.max(next.bestStage, snapshot.stageIndex);
   next.bestCombo = Math.max(next.bestCombo, snapshot.bestCombo);
   next.lifetimeKills += snapshot.kills;
+  next.bestRunStars = Math.max(next.bestRunStars, snapshot.totalStars);
+  next.bestRunGradePercent = Math.max(next.bestRunGradePercent, snapshot.averageGradePercent);
+  next.perfectStages = Math.max(next.perfectStages, snapshot.perfectStages);
+  for (const [stageId, starCount] of Object.entries(snapshot.runStageStars)) {
+    next.bestStageStars[stageId] = Math.max(next.bestStageStars[stageId] ?? 0, starCount);
+  }
   persistSave(next);
   return next;
 }
@@ -145,17 +155,19 @@ export function calculateRunRewards(save: SaveData, snapshot: RunSnapshot, bossK
   const accuracyBonus = snapshot.accuracy >= ECONOMY_TUNING.accuracyBonusThreshold
     ? Math.floor(snapshot.accuracy / ECONOMY_TUNING.accuracyBonusStepPercent) * ECONOMY_TUNING.accuracyBonusCoinsPerStep
     : 0;
+  const gradeBonus = snapshot.totalStars * ECONOMY_TUNING.starBonusCoins;
   const bossBonus = bossKills * ECONOMY_TUNING.bossKillBonusCoins;
   const payoutMultiplier = 1 + (save.upgrades.bountyChip ?? 0) * ECONOMY_TUNING.bountyChipPayoutMultiplierPerRank;
   const totalCoins = Math.max(
     ECONOMY_TUNING.minimumRunCoins,
-    Math.floor((scoreCoins + stageCoins + accuracyBonus + bossBonus + snapshot.coinsEarned) * payoutMultiplier),
+    Math.floor((scoreCoins + stageCoins + accuracyBonus + gradeBonus + bossBonus + snapshot.coinsEarned) * payoutMultiplier),
   );
 
   return {
     scoreCoins,
     stageCoins,
     accuracyBonus,
+    gradeBonus,
     bossBonus,
     totalCoins,
     newHighScore: snapshot.score > save.highScore,
@@ -179,6 +191,10 @@ function normalizeSave(input: Partial<SaveData>): SaveData {
     bestStage: Number.isFinite(input.bestStage) ? Math.max(1, Number(input.bestStage)) : 1,
     bestCombo: Number.isFinite(input.bestCombo) ? Number(input.bestCombo) : 0,
     lifetimeKills: Number.isFinite(input.lifetimeKills) ? Number(input.lifetimeKills) : 0,
+    bestRunStars: Number.isFinite(input.bestRunStars) ? Math.max(0, Number(input.bestRunStars)) : 0,
+    bestRunGradePercent: Number.isFinite(input.bestRunGradePercent) ? Math.max(0, Math.min(100, Number(input.bestRunGradePercent))) : 0,
+    perfectStages: Number.isFinite(input.perfectStages) ? Math.max(0, Number(input.perfectStages)) : 0,
+    bestStageStars: normalizeBestStageStars(input.bestStageStars),
     coins: Number.isFinite(input.coins) ? Math.max(0, Number(input.coins)) : 0,
     selectedWeapon,
     selectedCrosshair,
@@ -205,6 +221,16 @@ function normalizeUpgrades(input: SaveData['upgrades'] | undefined): SaveData['u
     output[upgrade.id] = Math.max(0, Math.min(upgrade.maxRank, Math.floor(value)));
   }
   return output;
+}
+
+function normalizeBestStageStars(input: SaveData['bestStageStars'] | undefined): SaveData['bestStageStars'] {
+  if (!input || typeof input !== 'object') return {};
+
+  return Object.fromEntries(
+    Object.entries(input)
+      .filter(([id, value]) => typeof id === 'string' && Number.isFinite(value))
+      .map(([id, value]) => [id, Math.max(0, Math.min(5, Math.floor(Number(value))))]),
+  );
 }
 
 function sanitizeIds<TId extends string>(input: TId[] | undefined, allowed: TId[], fallback: TId[]): TId[] {
