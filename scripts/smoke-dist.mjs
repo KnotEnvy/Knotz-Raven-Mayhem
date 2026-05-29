@@ -74,9 +74,12 @@ try {
     await fetchOk(new URL(`./${asset}`, pageUrl).toString(), `release shell asset ${asset}`);
   }
 
+  const manifest = await fetchManifest(new URL('./manifest.webmanifest', pageUrl).toString());
+  await validateServedManifest(manifest, pageUrl);
+
   if (failures.length === 0) {
     console.log(
-      `Dist smoke passed: basePath=${basePath} linkedAssets=${linkedAssets.length} seedAssets=4 releaseShellAssets=${releaseShellAssets.length}`,
+      `Dist smoke passed: basePath=${basePath} linkedAssets=${linkedAssets.length} seedAssets=4 releaseShellAssets=${releaseShellAssets.length} pwaManifest=ok`,
     );
   }
 } finally {
@@ -136,6 +139,46 @@ async function fetchOk(url, label) {
     fail(`${label} failed over HTTP: ${response.status} ${url}`);
   }
   return response;
+}
+
+async function fetchManifest(url) {
+  const text = await fetchText(url, 'web manifest');
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    fail(`served web manifest is not valid JSON: ${error.message}`);
+    return {};
+  }
+}
+
+async function validateServedManifest(manifest, pageUrl) {
+  const expectedFields = {
+    id: './',
+    start_url: './',
+    scope: './',
+    display: 'standalone',
+    orientation: 'landscape',
+    background_color: '#12131d',
+    theme_color: '#181923',
+  };
+
+  for (const [field, expected] of Object.entries(expectedFields)) {
+    if (manifest[field] !== expected) {
+      fail(`served manifest ${field} must be ${JSON.stringify(expected)}; found ${JSON.stringify(manifest[field])}.`);
+    }
+  }
+
+  for (const icon of manifest.icons ?? []) {
+    if (typeof icon.src === 'string') {
+      await fetchOk(new URL(icon.src, pageUrl).toString(), `manifest icon ${icon.src}`);
+    }
+  }
+
+  for (const screenshot of manifest.screenshots ?? []) {
+    if (typeof screenshot.src === 'string') {
+      await fetchOk(new URL(screenshot.src, pageUrl).toString(), `manifest screenshot ${screenshot.src}`);
+    }
+  }
 }
 
 function fail(message) {

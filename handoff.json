@@ -11,7 +11,7 @@
     "completedBaseline": "The game is currently playable as a stage-grading arcade campaign with stage retry, dramatic grade reveals, S-rank confetti on the grading screen, run reports, armory upgrades, bosses, Jackpot Alley, local records, release shell assets, and GitHub Pages build support.",
     "nextTeamMission": "Return to the mobile/PWA-first track. The next pass should make phone landscape, tablet, installed-app, and GitHub Pages testing feel deliberate, polished, responsive, and reliable rather than merely functional.",
     "qualityBar": "A first-time tester opening the GitHub Pages link on a phone should understand orientation, start the game quickly, read the HUD, use touch controls comfortably, clear stages without layout overlap, and trust that the game is a real arcade build.",
-    "latestKnownGate": "npm.cmd run release:verify passed on 2026-05-28. It ran balance:report, build, release:check, and release:smoke. Release check signal: linkedAssets=3 seedAssets=4 releaseShellAssets=10. Dist smoke signal: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10.",
+    "latestKnownGate": "npm.cmd run release:verify passed on 2026-05-28. It ran balance:report, build, release:check, and release:smoke. Release check signal: linkedAssets=3 seedAssets=4 releaseShellAssets=10 pwaManifest=ok. Dist smoke signal: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10 pwaManifest=ok.",
     "devServer": "A Vite dev server has been used at http://127.0.0.1:5173/ for manual playtesting. Use npm run dev for local desktop checks, or npm.cmd run dev -- --host 0.0.0.0 --port 5173 for same-network phone testing.",
     "handoffWarning": "CI verification does not publish the live game. The GitHub Pages site updates only after the Deploy GitHub Pages workflow is manually run with workflow_dispatch on master."
   },
@@ -38,7 +38,7 @@
     },
     "htmlShell": "index.html includes viewport-fit=cover, theme color, manifest link, apple-mobile-web-app-capable, apple-mobile-web-app-title, apple status bar styling, and social preview metadata.",
     "cssShell": "src/styles.css owns safe-area variables, touch-action controls, portrait orientation gate styles, and short landscape viewport rules.",
-    "releaseShell": "public/ owns icons and social preview assets. release:check currently expects releaseShellAssets=10.",
+    "releaseShell": "public/ owns icons and social preview assets. release:check currently expects releaseShellAssets=10 and validates the PWA manifest contract.",
     "offlineCaching": "No service worker or offline caching is currently approved for v1. Do not add caching semantics without an explicit product decision and a stale-asset invalidation plan."
   },
   "nextTeamPrimaryFocus": [
