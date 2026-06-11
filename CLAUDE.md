@@ -64,6 +64,7 @@ Do not reintroduce root-relative asset links. Static links should work from the 
 npm install
 npm run dev
 npm run art:capsule
+npm run audit:mobile
 npm run balance:report
 npm run typecheck
 npm run build
@@ -75,6 +76,10 @@ npm run release:verify
 `npm run release:verify` is the main local gate. It runs the balance report, TypeScript build, Vite production build, static dist verifier, release-shell asset checks, and served dist smoke.
 
 `npm run art:capsule` regenerates `public/social-preview.png` (1200x630) by rendering `scripts/social-preview.html` with headless Chrome/Edge. Edit that HTML to change the capsule art; it composes the real sprite sheets from `public/assets/`.
+
+`npm run audit:mobile` drives the dev server (default `http://127.0.0.1:5173/`, override with `AUDIT_URL`) through every UI surface at six phone/tablet/desktop sizes using headless Chrome/Edge, screenshots into the gitignored `audit-shots/`, and flags unreachable/clipped/undersized tap targets. Run it after any HUD or overlay CSS change.
+
+Gameplay HUD invariant: `src/ui/app.ts` builds the HUD DOM once and patches values via `data-hud` refs because GameScene dispatches HUD state every frame. Never switch the hud screen back to per-dispatch `innerHTML` rendering — that destroys buttons mid-touch on mobile and caused touch freezes.
 
 ## Deployment Notes
 

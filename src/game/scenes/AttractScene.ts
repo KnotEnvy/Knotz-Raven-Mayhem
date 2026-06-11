@@ -229,7 +229,11 @@ export class AttractScene extends Phaser.Scene {
   }
 
   private bindIdleInput(): void {
-    this.input.on('pointerdown', () => this.resetAttractIdle());
+    // Listen at the window level so taps and scrolls on the DOM overlay
+    // (which can sit above the canvas on touch devices) also reset idle.
+    const resetIdle = () => this.resetAttractIdle();
+    window.addEventListener('pointerdown', resetIdle, { capture: true, passive: true });
+    this.unsubscribers.push(() => window.removeEventListener('pointerdown', resetIdle, { capture: true }));
     this.input.keyboard?.on('keydown', () => this.resetAttractIdle());
   }
 

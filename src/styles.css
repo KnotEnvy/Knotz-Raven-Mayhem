@@ -35,6 +35,13 @@ body,
 
 html {
   overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 body {
@@ -48,6 +55,7 @@ body.game-shell-ready .seo-landing {
 
 button {
   min-height: 42px;
+  touch-action: manipulation;
   border: 2px solid var(--line);
   border-radius: 6px;
   padding: 9px 16px;
@@ -278,6 +286,7 @@ a:hover {
   position: relative;
   z-index: 2;
   display: grid;
+  height: 100%;
   min-height: 100%;
   grid-template-rows: 1fr auto auto;
   align-content: center;
@@ -285,7 +294,10 @@ a:hover {
   gap: 22px;
   padding: clamp(18px, 4vw, 54px);
   text-align: center;
-  pointer-events: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  touch-action: pan-y;
 }
 
 .demo-shell {
@@ -1120,8 +1132,45 @@ a:hover {
   position: fixed;
   inset: 0;
   z-index: 3;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: calc(var(--safe-top) + 14px) calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 14px) calc(var(--safe-left) + 16px);
   pointer-events: none;
+}
+
+.hud-bar {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.hud-bottom {
+  align-items: end;
+}
+
+.hud-top .score-cluster {
+  justify-self: start;
+}
+
+.hud-top .stage-cluster {
+  justify-self: center;
+  width: min(360px, 100%);
+}
+
+.hud-top .grade-cluster {
+  justify-self: end;
+}
+
+.hud-bottom .combo-cluster {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.hud-bottom .stat-strip {
+  grid-column: 3;
+  justify-self: end;
 }
 
 .hud::before {
@@ -1136,7 +1185,6 @@ a:hover {
 }
 
 .hud-cluster {
-  position: absolute;
   border: 1px solid rgba(255, 229, 106, 0.24);
   border-radius: 7px;
   padding: 10px 12px;
@@ -1164,16 +1212,10 @@ a:hover {
 }
 
 .score-cluster {
-  top: 14px;
-  left: 14px;
   min-width: 190px;
 }
 
 .stage-cluster {
-  top: 14px;
-  left: 50%;
-  width: min(360px, calc(100vw - 420px));
-  transform: translateX(-50%);
   border-color: rgba(32, 242, 255, 0.32);
 }
 
@@ -1182,23 +1224,30 @@ a:hover {
 }
 
 .grade-cluster {
-  top: 14px;
-  right: 14px;
   min-width: 184px;
   border-color: rgba(157, 255, 87, 0.32);
 }
 
+.grade-readout {
+  display: grid;
+}
+
 .grade-cluster button {
   width: 100%;
-  min-height: 34px;
+  min-height: 38px;
   margin-top: 8px;
   padding: 5px 12px;
   font-size: 15px;
 }
 
+@media (pointer: coarse) {
+  .grade-cluster button,
+  .utility-rail button {
+    min-height: 44px;
+  }
+}
+
 .combo-cluster {
-  bottom: 16px;
-  left: 14px;
   min-width: 210px;
 }
 
@@ -1208,8 +1257,6 @@ a:hover {
 }
 
 .stat-strip {
-  right: 14px;
-  bottom: 16px;
   display: flex;
   gap: 16px;
   border-color: rgba(157, 255, 87, 0.24);
@@ -1277,10 +1324,14 @@ a:hover {
 .powerup-rack {
   position: absolute;
   left: 50%;
-  bottom: 18px;
+  bottom: calc(var(--safe-bottom) + 16px);
   display: flex;
   gap: 8px;
   transform: translateX(-50%);
+}
+
+.powerup-rack[hidden] {
+  display: none;
 }
 
 .powerup-rack div {
@@ -1632,6 +1683,10 @@ a:hover {
   .attract-shell {
     align-content: start;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    pointer-events: auto;
+    touch-action: pan-y;
   }
 
   .demo-shell {
@@ -1693,11 +1748,15 @@ a:hover {
   }
 
   .hud {
-    padding: 10px;
+    padding: calc(var(--safe-top) + 8px) calc(var(--safe-right) + 10px) calc(var(--safe-bottom) + 8px) calc(var(--safe-left) + 10px);
   }
 
   .hud::before {
     inset: 5px;
+  }
+
+  .hud-bar {
+    gap: 8px;
   }
 
   .hud-cluster {
@@ -1705,14 +1764,15 @@ a:hover {
   }
 
   .hud-cluster strong {
-    font-size: clamp(22px, 7vw, 32px);
+    font-size: clamp(20px, 5vw, 30px);
   }
 
   .score-cluster {
-    top: 10px;
-    left: 10px;
-    min-width: 150px;
-    max-width: calc(100vw - 168px);
+    min-width: 0;
+  }
+
+  .score-cluster small {
+    display: none;
   }
 
   .armory-columns,
@@ -1722,18 +1782,13 @@ a:hover {
     grid-template-columns: 1fr;
   }
 
-  .stage-cluster {
-    top: 86px;
-    left: 10px;
-    right: 10px;
-    width: auto;
-    transform: none;
+  .hud-top .stage-cluster {
+    width: 100%;
+    max-width: 300px;
   }
 
   .grade-cluster {
-    top: 10px;
-    right: 10px;
-    min-width: 124px;
+    min-width: 0;
   }
 
   .grade-cluster button {
@@ -1742,24 +1797,17 @@ a:hover {
   }
 
   .combo-cluster {
-    bottom: 70px;
-    left: 10px;
-    min-width: 150px;
-    max-width: calc(100vw - 20px);
+    min-width: 130px;
   }
 
   .stat-strip {
-    right: 10px;
-    bottom: 10px;
-    left: 10px;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 10px;
     padding: 8px;
   }
 
   .stat-strip span {
-    text-align: center;
     font-size: 11px;
   }
 
@@ -1796,7 +1844,12 @@ a:hover {
     gap: 8px 14px;
     padding: calc(var(--safe-top) + 10px) calc(var(--safe-right) + 12px) calc(var(--safe-bottom) + 10px) calc(var(--safe-left) + 12px);
     text-align: left;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    pointer-events: auto;
+    touch-action: pan-y;
   }
 
   .demo-shell {
@@ -1849,7 +1902,7 @@ a:hover {
   }
 
   .utility-rail button {
-    min-height: 34px;
+    min-height: 42px;
     padding: 5px 7px;
     font-size: 12px;
   }
@@ -1913,7 +1966,7 @@ a:hover {
   }
 
   .compact-panel {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     align-self: stretch;
     width: 100%;
     gap: 8px;
@@ -1947,7 +2000,7 @@ a:hover {
   }
 
   .coin-line {
-    font-size: 12px;
+    display: none;
   }
 
   .arcade-panel {
@@ -2091,15 +2144,22 @@ a:hover {
   }
 
   .hud {
-    padding: calc(var(--safe-top) + 6px) calc(var(--safe-right) + 6px) calc(var(--safe-bottom) + 6px) calc(var(--safe-left) + 6px);
+    padding: calc(var(--safe-top) + 5px) calc(var(--safe-right) + 8px) calc(var(--safe-bottom) + 5px) calc(var(--safe-left) + 8px);
   }
 
   .hud::before {
-    inset: calc(var(--safe-top) + 4px) calc(var(--safe-right) + 4px) calc(var(--safe-bottom) + 4px) calc(var(--safe-left) + 4px);
+    display: none;
+  }
+
+  .hud-bar {
+    gap: 8px;
   }
 
   .hud-cluster {
-    padding: 5px 7px;
+    padding: 4px 8px;
+    background: rgba(7, 5, 16, 0.55);
+    border-color: rgba(255, 229, 106, 0.2);
+    box-shadow: none;
   }
 
   .hud-cluster span,
@@ -2108,56 +2168,85 @@ a:hover {
   }
 
   .hud-cluster strong {
-    font-size: clamp(17px, 6vh, 24px);
+    font-size: clamp(16px, 5.5vh, 22px);
   }
 
   .score-cluster {
-    top: calc(var(--safe-top) + 7px);
-    left: calc(var(--safe-left) + 7px);
-    min-width: 124px;
-    max-width: 22vw;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
   }
 
-  .stage-cluster {
-    top: calc(var(--safe-top) + 7px);
-    left: 50%;
-    right: auto;
-    width: min(31vw, 270px);
-    transform: translateX(-50%);
+  .score-cluster small {
+    display: none;
+  }
+
+  .hud-top .stage-cluster {
+    width: min(30vw, 240px);
+    align-self: center;
+  }
+
+  .stage-cluster strong {
+    display: none;
+  }
+
+  .stage-cluster .meter {
+    margin-top: 4px;
+    height: 5px;
   }
 
   .grade-cluster {
-    top: calc(var(--safe-top) + 7px);
-    right: calc(var(--safe-right) + 7px);
-    min-width: 118px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
   }
 
-  .grade-cluster button {
-    min-height: 42px;
-    margin-top: 5px;
-    font-size: 12px;
+  .grade-readout {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .grade-readout span {
+    display: none;
+  }
+
+  .grade-cluster .mini-stars {
+    margin-top: 0;
+    min-height: 0;
   }
 
   .mini-stars i {
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
+  }
+
+  .grade-cluster button {
+    width: auto;
+    min-height: 44px;
+    margin-top: 0;
+    padding: 4px 12px;
+    font-size: 12px;
   }
 
   .combo-cluster {
-    bottom: calc(var(--safe-bottom) + 7px);
-    left: calc(var(--safe-left) + 7px);
-    min-width: 118px;
-    max-width: 20vw;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .combo-cluster .meter {
+    width: 56px;
+    margin-top: 0;
   }
 
   .stat-strip {
-    right: calc(var(--safe-right) + 7px);
-    bottom: calc(var(--safe-bottom) + 7px);
-    left: auto;
     display: flex;
-    max-width: 36vw;
-    gap: 6px;
-    padding: 6px 8px;
+    gap: 8px;
+    padding: 5px 8px;
   }
 
   .stat-strip span {
@@ -2166,22 +2255,23 @@ a:hover {
   }
 
   .powerup-rack {
-    top: calc(var(--safe-top) + 62px);
-    right: calc(var(--safe-right) + 7px);
+    top: calc(var(--safe-top) + 56px);
+    right: calc(var(--safe-right) + 8px);
     bottom: auto;
     left: auto;
     display: grid;
-    gap: 5px;
-    width: 122px;
+    gap: 4px;
+    width: 112px;
     transform: none;
   }
 
   .powerup-rack div {
     min-width: 0;
+    background: rgba(7, 5, 16, 0.55);
   }
 
   .powerup-rack span {
-    padding: 4px 6px;
+    padding: 3px 6px;
     font-size: 9px;
   }
 
@@ -2270,7 +2360,7 @@ a:hover {
   }
 
   .modal-card h2 {
-    font-size: clamp(30px, 12vh, 54px);
+    font-size: clamp(24px, 9vh, 40px);
     line-height: 0.9;
   }
 
@@ -2280,16 +2370,24 @@ a:hover {
   }
 
   .grade-emblem {
-    font-size: clamp(50px, 23vh, 96px);
+    font-size: clamp(40px, 16vh, 72px);
   }
 
   .grade-detail {
     gap: 8px;
   }
 
+  .grade-report small {
+    display: none;
+  }
+
+  .record-grid div {
+    align-content: start;
+  }
+
   .final-score {
     margin: 4px 0 8px;
-    font-size: clamp(46px, 18vh, 82px);
+    font-size: clamp(36px, 14vh, 64px);
   }
 
   .reward-line,
@@ -2338,8 +2436,7 @@ a:hover {
     gap: 6px 8px;
   }
 
-  .stage-clear-card .record-grid,
-  .gameover-card .record-grid {
+  .stage-clear-card .record-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 

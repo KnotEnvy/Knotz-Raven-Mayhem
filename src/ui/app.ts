@@ -16,6 +16,33 @@ const RAVEN_MAYHEM_URL = 'https://knotenvy.github.io/Knotz-Raven-Mayhem/';
 
 const root = () => document.getElementById('ui-root');
 
+interface HudRefs {
+  root: HTMLElement;
+  score: HTMLElement;
+  loadout: HTMLElement;
+  stageLabel: HTMLElement;
+  stageTitle: HTMLElement;
+  stageMeter: HTMLElement;
+  gradeKicker: HTMLElement;
+  gradeValue: HTMLElement;
+  stars: HTMLElement;
+  comboCluster: HTMLElement;
+  comboValue: HTMLElement;
+  comboMeter: HTMLElement;
+  statEscaped: HTMLElement;
+  statAim: HTMLElement;
+  statShields: HTMLElement;
+  statCoins: HTMLElement;
+  powerupRack: HTMLElement;
+}
+
+// The HUD is dispatched every game frame. Rebuilding it with innerHTML each
+// time destroys the Pause button mid-touch on mobile and thrashes the DOM, so
+// the HUD is built once and only changed values are patched afterwards.
+let hudRefs: HudRefs | null = null;
+let hudStarCount = Number.NaN;
+let hudPowerupSignature = '';
+
 export function initializeUi(): void {
   document.body.classList.add('game-shell-ready');
   ensureOrientationGate();
@@ -73,6 +100,21 @@ function render(state: UiState): void {
 
   uiRoot.className = `ui-root ui-${state.screen}`;
 
+  if (state.screen === 'hud') {
+    if (hudRefs?.root.isConnected) {
+      patchHud(state);
+      return;
+    }
+
+    uiRoot.innerHTML = renderHud(state);
+    hudRefs = bindHudRefs(uiRoot);
+    hudStarCount = state.snapshot.stageGrade.starCount;
+    hudPowerupSignature = powerupSignature(state.snapshot.activePowerups);
+    return;
+  }
+
+  hudRefs = null;
+
   if (state.screen === 'blank') {
     uiRoot.innerHTML = '';
     return;
@@ -80,11 +122,6 @@ function render(state: UiState): void {
 
   if (state.screen === 'attract') {
     uiRoot.innerHTML = renderAttract(state);
-    return;
-  }
-
-  if (state.screen === 'hud') {
-    uiRoot.innerHTML = renderHud(state);
     return;
   }
 
@@ -614,49 +651,137 @@ function renderHud(state: Extract<UiState, { screen: 'hud' }>): string {
 
   return `
     <div class="hud">
-      <section class="hud-cluster score-cluster">
-        <span>Score</span>
-        <strong>${snapshot.score}</strong>
-        <small>${weapon.name} / ${crosshair.name}</small>
-      </section>
-      <section class="hud-cluster stage-cluster">
-        <span>Stage ${snapshot.stageIndex}</span>
-        <strong>${stage.title}</strong>
-        <div class="meter"><i style="width:${progress}%"></i></div>
-      </section>
-      <section class="hud-cluster grade-cluster">
-        <span>${grade.gradeLabel === 'Bonus' ? 'Bonus' : 'Grade'}</span>
-        <strong>${grade.gradeLabel === 'Bonus' ? 'Jackpot' : `${grade.gradePercent}%`}</strong>
-        <div class="star-row mini-stars">${renderStars(grade.starCount)}</div>
-        <button data-action="pause">Pause</button>
-      </section>
-      <section class="hud-cluster combo-cluster ${snapshot.comboMultiplier >= 4 ? 'hot' : ''}">
-        <span>Combo</span>
-        <strong>x${snapshot.comboMultiplier}</strong>
-        <div class="meter combo-meter"><i style="width:${comboProgress}%"></i></div>
-      </section>
-      <section class="hud-cluster stat-strip">
-        <span>Escaped ${grade.escapedGradeEligible}</span>
-        <span>Stage Aim ${snapshot.stageAccuracy}%</span>
-        <span>Shields ${snapshot.gradeShieldCharges}</span>
-        <span>Coins +${snapshot.coinsEarned}</span>
-      </section>
-      ${snapshot.activePowerups.length ? renderPowerups(snapshot.activePowerups) : ''}
+      <div class="hud-bar hud-top">
+        <section class="hud-cluster score-cluster">
+          <span>Score</span>
+          <strong data-hud="score">${snapshot.score}</strong>
+          <small data-hud="loadout">${weapon.name} / ${crosshair.name}</small>
+        </section>
+        <section class="hud-cluster stage-cluster">
+          <span data-hud="stage-label">Stage ${snapshot.stageIndex}</span>
+          <strong data-hud="stage-title">${stage.title}</strong>
+          <div class="meter"><i data-hud="stage-meter" style="width:${progress}%"></i></div>
+        </section>
+        <section class="hud-cluster grade-cluster">
+          <div class="grade-readout">
+            <span data-hud="grade-kicker">${grade.gradeLabel === 'Bonus' ? 'Bonus' : 'Grade'}</span>
+            <strong data-hud="grade-value">${grade.gradeLabel === 'Bonus' ? 'Jackpot' : `${grade.gradePercent}%`}</strong>
+            <div class="star-row mini-stars" data-hud="stars">${renderStars(grade.starCount)}</div>
+          </div>
+          <button data-action="pause">Pause</button>
+        </section>
+      </div>
+      <div class="hud-bar hud-bottom">
+        <section class="hud-cluster combo-cluster ${snapshot.comboMultiplier >= 4 ? 'hot' : ''}" data-hud="combo-cluster">
+          <span>Combo</span>
+          <strong data-hud="combo-value">x${snapshot.comboMultiplier}</strong>
+          <div class="meter combo-meter"><i data-hud="combo-meter" style="width:${comboProgress}%"></i></div>
+        </section>
+        <section class="hud-cluster stat-strip">
+          <span data-hud="stat-escaped">Escaped ${grade.escapedGradeEligible}</span>
+          <span data-hud="stat-aim">Stage Aim ${snapshot.stageAccuracy}%</span>
+          <span data-hud="stat-shields">Shields ${snapshot.gradeShieldCharges}</span>
+          <span data-hud="stat-coins">Coins +${snapshot.coinsEarned}</span>
+        </section>
+      </div>
+      <section class="powerup-rack" data-hud="powerups" ${snapshot.activePowerups.length ? '' : 'hidden'}>${renderPowerupItems(snapshot.activePowerups)}</section>
     </div>
   `;
 }
 
-function renderPowerups(powerups: Extract<UiState, { screen: 'hud' }>['snapshot']['activePowerups']): string {
-  return `
-    <section class="powerup-rack">
-      ${powerups
-        .map((powerup) => {
-          const width = Math.max(0, (powerup.timeLeftMs / powerup.durationMs) * 100);
-          return `<div><span>${powerup.label}</span><i style="width:${width}%"></i></div>`;
-        })
-        .join('')}
-    </section>
-  `;
+type ActivePowerups = Extract<UiState, { screen: 'hud' }>['snapshot']['activePowerups'];
+
+function renderPowerupItems(powerups: ActivePowerups): string {
+  return powerups
+    .map((powerup) => {
+      const width = Math.max(0, (powerup.timeLeftMs / powerup.durationMs) * 100);
+      return `<div><span>${powerup.label}</span><i style="width:${width}%"></i></div>`;
+    })
+    .join('');
+}
+
+function powerupSignature(powerups: ActivePowerups): string {
+  return powerups.map((powerup) => powerup.label).join('|');
+}
+
+function bindHudRefs(scope: HTMLElement): HudRefs | null {
+  const hudRoot = scope.querySelector<HTMLElement>('.hud');
+  const find = (key: string) => scope.querySelector<HTMLElement>(`[data-hud="${key}"]`);
+  const refs = {
+    root: hudRoot,
+    score: find('score'),
+    loadout: find('loadout'),
+    stageLabel: find('stage-label'),
+    stageTitle: find('stage-title'),
+    stageMeter: find('stage-meter'),
+    gradeKicker: find('grade-kicker'),
+    gradeValue: find('grade-value'),
+    stars: find('stars'),
+    comboCluster: find('combo-cluster'),
+    comboValue: find('combo-value'),
+    comboMeter: find('combo-meter'),
+    statEscaped: find('stat-escaped'),
+    statAim: find('stat-aim'),
+    statShields: find('stat-shields'),
+    statCoins: find('stat-coins'),
+    powerupRack: find('powerups'),
+  };
+
+  if (Object.values(refs).some((element) => element === null)) return null;
+  return refs as HudRefs;
+}
+
+function patchHud(state: Extract<UiState, { screen: 'hud' }>): void {
+  if (!hudRefs) return;
+
+  const { snapshot, stage, weapon, crosshair } = state;
+  const grade = snapshot.stageGrade;
+  const progress = Math.min(100, (snapshot.stageSpawns / snapshot.stageTargetKills) * 100);
+  const comboProgress = snapshot.comboWindowMs > 0 ? Math.max(0, (snapshot.comboTimerMs / snapshot.comboWindowMs) * 100) : 0;
+
+  setHudText(hudRefs.score, `${snapshot.score}`);
+  setHudText(hudRefs.loadout, `${weapon.name} / ${crosshair.name}`);
+  setHudText(hudRefs.stageLabel, `Stage ${snapshot.stageIndex}`);
+  setHudText(hudRefs.stageTitle, stage.title);
+  setHudWidth(hudRefs.stageMeter, progress);
+  setHudText(hudRefs.gradeKicker, grade.gradeLabel === 'Bonus' ? 'Bonus' : 'Grade');
+  setHudText(hudRefs.gradeValue, grade.gradeLabel === 'Bonus' ? 'Jackpot' : `${grade.gradePercent}%`);
+
+  if (grade.starCount !== hudStarCount) {
+    hudStarCount = grade.starCount;
+    hudRefs.stars.innerHTML = renderStars(grade.starCount);
+  }
+
+  setHudText(hudRefs.comboValue, `x${snapshot.comboMultiplier}`);
+  setHudWidth(hudRefs.comboMeter, comboProgress);
+  hudRefs.comboCluster.classList.toggle('hot', snapshot.comboMultiplier >= 4);
+
+  setHudText(hudRefs.statEscaped, `Escaped ${grade.escapedGradeEligible}`);
+  setHudText(hudRefs.statAim, `Stage Aim ${snapshot.stageAccuracy}%`);
+  setHudText(hudRefs.statShields, `Shields ${snapshot.gradeShieldCharges}`);
+  setHudText(hudRefs.statCoins, `Coins +${snapshot.coinsEarned}`);
+
+  const signature = powerupSignature(snapshot.activePowerups);
+  if (signature !== hudPowerupSignature) {
+    hudPowerupSignature = signature;
+    hudRefs.powerupRack.innerHTML = renderPowerupItems(snapshot.activePowerups);
+    hudRefs.powerupRack.hidden = snapshot.activePowerups.length === 0;
+  }
+
+  const bars = hudRefs.powerupRack.querySelectorAll<HTMLElement>('i');
+  snapshot.activePowerups.forEach((powerup, index) => {
+    const bar = bars[index];
+    if (bar) setHudWidth(bar, Math.max(0, (powerup.timeLeftMs / powerup.durationMs) * 100));
+  });
+}
+
+function setHudText(element: HTMLElement, value: string): void {
+  if (element.textContent !== value) element.textContent = value;
+}
+
+function setHudWidth(element: HTMLElement, percent: number): void {
+  const width = `${percent.toFixed(1)}%`;
+  if (element.style.width !== width) element.style.width = width;
 }
 
 function renderPause(state: Extract<UiState, { screen: 'pause' }>): string {

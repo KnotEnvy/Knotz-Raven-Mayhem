@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "art:capsule": "node scripts/render-social-preview.mjs",
+    "audit:mobile": "node scripts/audit-mobile.mjs",
     "balance:report": "node scripts/report-balance.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
@@ -18,6 +19,7 @@
     "phaser": "^3.90.0"
   },
   "devDependencies": {
+    "playwright-core": "^1.60.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0"
   }

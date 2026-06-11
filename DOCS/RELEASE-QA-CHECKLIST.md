@@ -65,6 +65,15 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 - [ ] Run It Back starts a fresh run from the run-report screen.
 - [ ] Open Armory routes directly to the Armory from the run-report screen, and Menu returns to the attract screen.
 
+## Automated Mobile Layout Audit
+
+`npm run audit:mobile` (with `npm run dev` serving; set `AUDIT_URL` if the port differs) drives headless Chrome/Edge through home, armory, records, options, credits, live HUD, pause, a synthetic S-rank stage clear, and the run report at 667x375, 740x360, 844x390, 932x430, 1180x820, and 1440x900. It screenshots every surface into `audit-shots/` and flags unreachable, clipped, or sub-36px tap targets.
+
+- [ ] `npm run audit:mobile` reports 0 flagged issues.
+- [ ] Spot-check the `audit-shots/` screenshots for visual regressions the probe cannot catch (overlap, contrast, truncation).
+
+Last run 2026-06-11: 0 issues flagged across all six sizes after the HUD bar restructure, persistent-HUD patching fix, attract-shell scroll fix, and stage-clear/run-report compact tightening.
+
 ## Mobile And Accessibility
 
 - [ ] Portrait phone view, such as 390x844, shows the landscape orientation gate clearly and returns cleanly to the game after rotating.
