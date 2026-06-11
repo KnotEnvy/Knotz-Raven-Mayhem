@@ -63,6 +63,7 @@ Do not reintroduce root-relative asset links. Static links should work from the 
 ```bash
 npm install
 npm run dev
+npm run art:capsule
 npm run balance:report
 npm run typecheck
 npm run build
@@ -72,6 +73,8 @@ npm run release:verify
 ```
 
 `npm run release:verify` is the main local gate. It runs the balance report, TypeScript build, Vite production build, static dist verifier, release-shell asset checks, and served dist smoke.
+
+`npm run art:capsule` regenerates `public/social-preview.png` (1200x630) by rendering `scripts/social-preview.html` with headless Chrome/Edge. Edit that HTML to change the capsule art; it composes the real sprite sheets from `public/assets/`.
 
 ## Deployment Notes
 

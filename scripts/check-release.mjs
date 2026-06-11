@@ -24,7 +24,7 @@ const requiredHtmlPatterns = [
   ['meta description', /name="description"\s+content="Play Knotz Raven Mayhem,/],
   ['canonical URL', new RegExp(`rel="canonical" href="${escapeRegExp(canonicalUrl)}"`)],
   ['Open Graph title', /property="og:title"/],
-  ['Open Graph image', new RegExp(`property="og:image" content="${escapeRegExp(canonicalUrl)}social-preview\\.png"`)],
+  ['Open Graph image', new RegExp(`property="og:image" content="${escapeRegExp(canonicalUrl)}social-preview\\.png(\\?v=\\d+)?"`)],
   ['Twitter card', /name="twitter:card" content="summary_large_image"/],
   ['web manifest', /rel="manifest" href="\.\/manifest\.webmanifest"/],
   ['apple touch icon', /rel="apple-touch-icon" href="\.\/apple-touch-icon\.png"/],

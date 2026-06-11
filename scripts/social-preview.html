@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Knotz Raven Mayhem social preview source</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+
+      body {
+        position: relative;
+        background: #070510;
+        font-family: Impact, Haettenschweiler, sans-serif;
+      }
+
+      .sky {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(820px 520px at 78% 26%, rgba(124, 60, 255, 0.3), transparent 68%),
+          radial-gradient(640px 420px at 10% 88%, rgba(32, 242, 255, 0.14), transparent 62%),
+          radial-gradient(760px 480px at 28% 6%, rgba(255, 63, 180, 0.13), transparent 60%),
+          #070510;
+      }
+
+      .stars {
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(1.6px 1.6px at 120px 90px, rgba(247, 244, 255, 0.9), transparent 100%),
+          radial-gradient(1.2px 1.2px at 310px 50px, rgba(247, 244, 255, 0.65), transparent 100%),
+          radial-gradient(1.8px 1.8px at 470px 140px, rgba(189, 180, 214, 0.7), transparent 100%),
+          radial-gradient(1.2px 1.2px at 640px 60px, rgba(247, 244, 255, 0.7), transparent 100%),
+          radial-gradient(1.6px 1.6px at 800px 110px, rgba(32, 242, 255, 0.7), transparent 100%),
+          radial-gradient(1.2px 1.2px at 980px 70px, rgba(247, 244, 255, 0.8), transparent 100%),
+          radial-gradient(1.8px 1.8px at 1120px 160px, rgba(247, 244, 255, 0.6), transparent 100%),
+          radial-gradient(1.4px 1.4px at 220px 220px, rgba(189, 180, 214, 0.55), transparent 100%),
+          radial-gradient(1.2px 1.2px at 1040px 320px, rgba(255, 63, 180, 0.55), transparent 100%),
+          radial-gradient(1.4px 1.4px at 90px 420px, rgba(247, 244, 255, 0.45), transparent 100%),
+          radial-gradient(1.6px 1.6px at 560px 260px, rgba(247, 244, 255, 0.5), transparent 100%);
+      }
+
+      .moon {
+        position: absolute;
+        right: 96px;
+        top: 64px;
+        width: 430px;
+        height: 430px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 38% 32%, rgba(214, 199, 255, 0.26), rgba(124, 60, 255, 0.16) 58%, rgba(124, 60, 255, 0.05) 78%, transparent 100%);
+      }
+
+      .grid {
+        position: absolute;
+        left: -200px;
+        right: -200px;
+        bottom: -130px;
+        height: 320px;
+        background:
+          repeating-linear-gradient(90deg, rgba(32, 242, 255, 0.28) 0 2px, transparent 2px 80px),
+          repeating-linear-gradient(0deg, rgba(32, 242, 255, 0.24) 0 2px, transparent 2px 52px);
+        transform: perspective(420px) rotateX(58deg);
+        transform-origin: 50% 100%;
+        -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 55%, #000 100%);
+        mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 55%, #000 100%);
+      }
+
+      .vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(120% 95% at 50% 45%, transparent 60%, rgba(2, 3, 10, 0.55) 100%);
+      }
+
+      /* --- real game sprites --- */
+      .raven {
+        position: absolute;
+        width: 271px;
+        height: 194px;
+        background: url('../public/assets/raven.png') no-repeat;
+        background-size: 1626px 194px;
+        filter: drop-shadow(0 10px 22px rgba(2, 3, 10, 0.85));
+      }
+
+      .raven.f0 { background-position: 0 0; }
+      .raven.f1 { background-position: -271px 0; }
+      .raven.f2 { background-position: -542px 0; }
+      .raven.f3 { background-position: -813px 0; }
+      .raven.f4 { background-position: -1084px 0; }
+      .raven.f5 { background-position: -1355px 0; }
+
+      .boom {
+        position: absolute;
+        width: 200px;
+        height: 179px;
+        background: url('../public/assets/boom.png') no-repeat;
+        background-size: 1000px 179px;
+      }
+
+      .boom.f0 { background-position: 0 0; }
+      .boom.f1 { background-position: -200px 0; }
+
+      /* --- hero target lock --- */
+      .lock {
+        position: absolute;
+        right: 118px;
+        top: 96px;
+        width: 386px;
+        height: 386px;
+      }
+
+      .lock .ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 6px solid #20f2ff;
+        box-shadow:
+          0 0 26px rgba(32, 242, 255, 0.55),
+          inset 0 0 26px rgba(32, 242, 255, 0.3);
+      }
+
+      .lock .tick {
+        position: absolute;
+        background: #20f2ff;
+        box-shadow: 0 0 12px rgba(32, 242, 255, 0.8);
+      }
+
+      .lock .tick.n { left: 50%; top: -26px; width: 6px; height: 44px; transform: translateX(-50%); }
+      .lock .tick.s { left: 50%; bottom: -26px; width: 6px; height: 44px; transform: translateX(-50%); }
+      .lock .tick.w { top: 50%; left: -26px; height: 6px; width: 44px; transform: translateY(-50%); }
+      .lock .tick.e { top: 50%; right: -26px; height: 6px; width: 44px; transform: translateY(-50%); }
+
+      .lock .raven {
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -54%) scale(1.32);
+        filter:
+          drop-shadow(0 0 16px rgba(32, 242, 255, 0.4))
+          drop-shadow(0 10px 22px rgba(2, 3, 10, 0.85));
+      }
+
+      .raven.mid {
+        right: 470px;
+        top: 330px;
+        transform: scale(0.62);
+        opacity: 0.95;
+      }
+
+      .raven.far {
+        right: 620px;
+        top: 110px;
+        transform: scale(0.4);
+        opacity: 0.8;
+      }
+
+      .hit {
+        position: absolute;
+        right: 96px;
+        top: 442px;
+        width: 220px;
+        height: 180px;
+      }
+
+      .hit .boom {
+        left: 10px;
+        top: 14px;
+        transform: scale(0.92);
+        opacity: 0.95;
+      }
+
+      .hit .raven {
+        left: 24px;
+        top: 24px;
+        transform: scale(0.42) rotate(14deg);
+        opacity: 0.85;
+      }
+
+      .hit .score {
+        position: absolute;
+        left: 32px;
+        top: -34px;
+        color: #ffe56a;
+        font-size: 44px;
+        letter-spacing: 0.04em;
+        text-shadow:
+          0 0 14px rgba(255, 229, 106, 0.85),
+          3px 3px 0 rgba(2, 3, 10, 0.9);
+        transform: rotate(-6deg);
+      }
+
+      /* --- title block --- */
+      .copy {
+        position: absolute;
+        left: 72px;
+        top: 86px;
+        width: 600px;
+      }
+
+      .eyebrow {
+        color: #20f2ff;
+        font-size: 22px;
+        letter-spacing: 0.42em;
+        text-shadow: 0 0 14px rgba(32, 242, 255, 0.75);
+        margin-bottom: 18px;
+      }
+
+      .knotz {
+        color: #ffe56a;
+        font-size: 58px;
+        letter-spacing: 0.16em;
+        text-shadow:
+          0 0 18px rgba(255, 229, 106, 0.55),
+          4px 4px 0 rgba(2, 3, 10, 0.95);
+        line-height: 1;
+      }
+
+      .title {
+        color: #f7f4ff;
+        font-size: 118px;
+        line-height: 0.92;
+        letter-spacing: 0.015em;
+        text-shadow:
+          5px 5px 0 #ff3fb4,
+          0 0 34px rgba(255, 63, 180, 0.55),
+          9px 9px 0 rgba(2, 3, 10, 0.9);
+        margin-top: 6px;
+      }
+
+      .tagline {
+        margin-top: 24px;
+        color: #ff3fb4;
+        font-size: 27px;
+        letter-spacing: 0.22em;
+        text-shadow: 0 0 16px rgba(255, 63, 180, 0.6), 2px 2px 0 rgba(2, 3, 10, 0.9);
+      }
+
+      .chips {
+        margin-top: 22px;
+        display: flex;
+        gap: 12px;
+      }
+
+      .chip {
+        border: 2px solid rgba(32, 242, 255, 0.75);
+        border-radius: 999px;
+        padding: 8px 16px 7px;
+        color: #d9fbff;
+        font-size: 19px;
+        letter-spacing: 0.12em;
+        background: rgba(7, 5, 16, 0.65);
+        box-shadow: 0 0 14px rgba(32, 242, 255, 0.25);
+        white-space: nowrap;
+      }
+
+      .cta {
+        margin-top: 30px;
+        display: inline-block;
+        color: #111018;
+        background: linear-gradient(180deg, #fff181, #ff9f28);
+        border-radius: 14px;
+        padding: 16px 30px 14px;
+        font-size: 30px;
+        letter-spacing: 0.1em;
+        box-shadow:
+          0 0 28px rgba(255, 159, 40, 0.55),
+          4px 5px 0 rgba(2, 3, 10, 0.9);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sky"></div>
+    <div class="stars"></div>
+    <div class="moon"></div>
+    <div class="grid"></div>
+
+    <div class="raven far f4"></div>
+    <div class="raven mid f2"></div>
+
+    <div class="hit">
+      <div class="raven f3"></div>
+      <div class="boom f0"></div>
+      <div class="score">+250</div>
+    </div>
+
+    <div class="lock">
+      <div class="ring"></div>
+      <div class="tick n"></div>
+      <div class="tick s"></div>
+      <div class="tick w"></div>
+      <div class="tick e"></div>
+      <div class="raven f0"></div>
+    </div>
+
+    <div class="vignette"></div>
+
+    <div class="copy">
+      <div class="eyebrow">KNOTENVY ARCADE</div>
+      <div class="knotz">KNOTZ</div>
+      <div class="title">RAVEN<br />MAYHEM</div>
+      <div class="tagline">STAGE-GRADED ARCADE SHOOTER</div>
+      <div class="chips">
+        <span class="chip">9 STAGES</span>
+        <span class="chip">BOSS FIGHTS</span>
+        <span class="chip">S-RANKS</span>
+        <span class="chip">JACKPOT ALLEY</span>
+      </div>
+      <div class="cta">&#9658; PLAY FREE IN YOUR BROWSER</div>
+    </div>
+  </body>
+</html>
