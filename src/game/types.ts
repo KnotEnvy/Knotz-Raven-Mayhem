@@ -129,11 +129,14 @@ export interface SaveData {
   settings: GameSettings;
 }
 
+export type GraphicsQuality = 'auto' | 'high' | 'balanced' | 'low';
+
 export interface GameSettings {
   musicVolume: number;
   sfxVolume: number;
   screenShake: boolean;
   reducedMotion: boolean;
+  graphicsQuality: GraphicsQuality;
 }
 
 export interface RunSnapshot {

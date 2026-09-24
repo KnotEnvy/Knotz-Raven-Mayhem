@@ -1,3 +1,27 @@
+@font-face {
+  font-family: 'Bungee';
+  src: url('./assets/fonts/bungee-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Chakra Petch';
+  src: url('./assets/fonts/chakra-petch-latin-500-normal.woff2') format('woff2');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Chakra Petch';
+  src: url('./assets/fonts/chakra-petch-latin-700-normal.woff2') format('woff2');
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: #070510;
   --panel: rgba(7, 5, 16, 0.78);
@@ -14,7 +38,10 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
-  font-family: Inter, Arial, Helvetica, sans-serif;
+  --font-display: 'Bungee', Impact, Haettenschweiler, sans-serif;
+  --font-label: 'Chakra Petch', Impact, 'Arial Narrow', sans-serif;
+  --font-ui: 'Chakra Petch', 'Segoe UI', Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui);
   color: var(--text);
   background: var(--bg);
 }
@@ -61,7 +88,8 @@ button {
   padding: 9px 16px;
   color: var(--text);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.02));
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 0;
@@ -127,7 +155,8 @@ a:hover {
 
 .seo-landing > p:first-child {
   color: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -135,7 +164,8 @@ a:hover {
 .noscript-card h2 {
   margin: 0;
   color: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: clamp(54px, 10vw, 132px);
   line-height: 0.9;
   text-transform: uppercase;
@@ -161,7 +191,8 @@ a:hover {
   padding: 8px 12px;
   color: var(--gold);
   background: rgba(255, 229, 106, 0.08);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -219,7 +250,8 @@ a:hover {
 .orientation-gate strong {
   max-width: 100%;
   color: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(34px, 10vw, 60px);
   line-height: 0.9;
   text-transform: uppercase;
@@ -319,7 +351,8 @@ a:hover {
 .coin-line {
   margin: 0;
   color: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: clamp(13px, 1.4vw, 18px);
   text-transform: uppercase;
 }
@@ -328,7 +361,8 @@ a:hover {
   display: grid;
   gap: 0;
   margin: 0;
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(54px, 11vw, 136px);
   line-height: 0.82;
   text-transform: uppercase;
@@ -410,7 +444,8 @@ a:hover {
 
 .utility-rail strong {
   color: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: clamp(22px, 3vw, 34px);
   line-height: 1;
   text-transform: uppercase;
@@ -485,7 +520,8 @@ a:hover {
 .compact-panel strong,
 .record-grid strong,
 .final-score {
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(24px, 4vw, 42px);
   color: var(--cyan);
 }
@@ -502,7 +538,8 @@ a:hover {
 .armory-panel h3,
 .modal-card h2 {
   margin: 0;
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -613,7 +650,8 @@ a:hover {
   display: block;
   margin-top: 4px;
   color: var(--cyan);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: 32px;
 }
 
@@ -631,7 +669,8 @@ a:hover {
 
 .platform-copy a {
   color: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -652,7 +691,8 @@ a:hover {
 .attract-demo-panel h2 {
   margin: 2px 0 0;
   color: var(--cyan);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: clamp(30px, 5vw, 54px);
   line-height: 1;
   text-transform: uppercase;
@@ -848,7 +888,8 @@ a:hover {
 .raven-bounty-card strong {
   display: block;
   color: var(--text);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: 24px;
   line-height: 1;
   text-transform: uppercase;
@@ -902,13 +943,15 @@ a:hover {
   border-radius: 50%;
   color: #111018;
   background: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: 22px;
 }
 
 .field-guide-grid strong {
   color: var(--cyan);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: clamp(26px, 3vw, 38px);
   line-height: 1;
   text-transform: uppercase;
@@ -962,7 +1005,8 @@ a:hover {
 
 .demo-info-card > span {
   color: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: 15px;
   text-transform: uppercase;
 }
@@ -971,7 +1015,8 @@ a:hover {
 .armory-demo-grid h3,
 .demo-loadout-card strong {
   color: var(--cyan);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -1206,7 +1251,8 @@ a:hover {
 
 .hud-cluster strong {
   display: block;
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: clamp(26px, 3.4vw, 42px);
   line-height: 1;
 }
@@ -1426,7 +1472,8 @@ a:hover {
 .grade-emblem {
   animation: grade-unveil 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
   color: var(--text);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(84px, 18vw, 168px);
   line-height: 0.82;
   text-transform: uppercase;
@@ -1486,7 +1533,8 @@ a:hover {
   top: clamp(24px, 9vh, 82px);
   left: 50%;
   color: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(44px, 10vw, 104px);
   line-height: 1;
   text-shadow:
@@ -1619,14 +1667,16 @@ a:hover {
 .next-stage-card > span,
 .recommendation-panel > strong {
   color: var(--gold);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: 18px;
   text-transform: uppercase;
 }
 
 .next-stage-card strong {
   color: var(--cyan);
-  font-family: Impact, Haettenschweiler, sans-serif;
+  font-family: var(--font-label);
+  font-weight: 700;
   font-size: clamp(30px, 6vw, 52px);
   line-height: 1;
   text-transform: uppercase;
@@ -1677,6 +1727,175 @@ a:hover {
 
 .recommendation-panel strong {
   color: var(--text);
+}
+
+.settings-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------------------
+   Presentation polish pass. Sits before the phone/tablet media queries so the
+   tuned compact layouts below still override it on small screens.
+   ------------------------------------------------------------------------- */
+
+button {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg, rgba(44, 28, 82, 0.94), rgba(14, 9, 30, 0.94));
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+  transition: transform 90ms ease, border-color 120ms ease, box-shadow 160ms ease, color 120ms ease;
+}
+
+button:hover:not(:disabled) {
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.42), 0 0 18px rgba(255, 229, 106, 0.35);
+}
+
+.primary-command {
+  background: linear-gradient(180deg, #fff181, #ff9f28);
+  animation: primary-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes primary-glow {
+  0%,
+  100% {
+    box-shadow: 0 5px 0 rgba(0, 0, 0, 0.42), 0 0 10px rgba(255, 190, 60, 0.3);
+  }
+  50% {
+    box-shadow: 0 5px 0 rgba(0, 0, 0, 0.42), 0 0 26px rgba(255, 190, 60, 0.7);
+  }
+}
+
+.cabinet-title h1 {
+  font-size: clamp(48px, min(11vw, 14vh), 136px);
+}
+
+.cabinet-title h1 span {
+  animation: title-flicker 9s linear infinite;
+}
+
+.cabinet-title h1 span:nth-child(2) {
+  animation-delay: 3.1s;
+}
+
+.cabinet-title h1 span:nth-child(3) {
+  animation-delay: 5.7s;
+}
+
+@keyframes title-flicker {
+  0%,
+  90%,
+  100% {
+    opacity: 1;
+  }
+  91% {
+    opacity: 0.55;
+  }
+  92% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 0.75;
+  }
+  95% {
+    opacity: 1;
+  }
+}
+
+.compact-panel {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-height: none;
+  overflow: visible;
+}
+
+.hud-cluster {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 42%),
+    rgba(8, 5, 20, 0.62);
+}
+
+.hud-top .score-cluster {
+  border-top: 2px solid rgba(255, 229, 106, 0.7);
+}
+
+.hud-top .stage-cluster {
+  border-top: 2px solid rgba(32, 242, 255, 0.7);
+}
+
+.hud-top .grade-cluster {
+  border-top: 2px solid rgba(157, 255, 87, 0.7);
+}
+
+.hud-bottom .combo-cluster {
+  border-bottom: 2px solid rgba(255, 63, 180, 0.7);
+}
+
+.score-cluster strong,
+.grade-cluster strong,
+.combo-cluster strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 1px;
+  transform-origin: left center;
+}
+
+.score-cluster strong {
+  color: #fff;
+  text-shadow: 0 0 16px rgba(255, 229, 106, 0.45);
+}
+
+.stage-cluster strong {
+  font-size: clamp(18px, 1.9vw, 28px);
+}
+
+.combo-cluster.hot strong {
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 229, 106, 0.8);
+}
+
+.combo-cluster.hot {
+  animation: combo-hot 0.9s ease-in-out infinite;
+}
+
+@keyframes combo-hot {
+  0%,
+  100% {
+    box-shadow: 0 0 18px rgba(255, 229, 106, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 34px rgba(255, 229, 106, 0.5);
+  }
+}
+
+.powerup-rack div {
+  border-color: var(--powerup-color, rgba(255, 255, 255, 0.18));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--powerup-color, #ffffff) 35%, transparent);
+}
+
+.powerup-rack span {
+  color: var(--powerup-color, var(--text));
+}
+
+.powerup-rack i {
+  background: var(--powerup-color, var(--cyan));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hud-cluster,
+  .arcade-panel,
+  .modal-card {
+    backdrop-filter: blur(6px) saturate(1.25);
+    -webkit-backdrop-filter: blur(6px) saturate(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary-command,
+  .cabinet-title h1 span,
+  .combo-cluster.hot {
+    animation: none;
+  }
 }
 
 @media (max-width: 860px) {

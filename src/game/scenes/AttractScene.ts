@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { ENEMIES } from '../data/enemies';
-import { SPRITE_KEYS } from '../data/assets';
 import { CROSSHAIRS, WEAPONS } from '../data/weapons';
 import { UPGRADES } from '../data/upgrades';
 import {
@@ -15,6 +14,11 @@ import {
 } from '../save';
 import type { GameSettings, SaveData } from '../types';
 import { arcadeAudio } from '../systems/ArcadeAudio';
+import { resolveQualityProfile } from '../systems/Quality';
+import { StageBackdrop } from '../fx/Backdrop';
+import { attachCabinetPipeline } from '../fx/CabinetPipeline';
+import { bakeRavenVariants, ravenAnimKey, ravenBakeScale, ravenTextureKey } from '../fx/TextureFactory';
+import { DISPLAY_FONT } from './BootScene';
 import { dispatchUiState, onCommand } from '../../ui/events';
 
 interface MenuRaven {
@@ -44,7 +48,7 @@ export class AttractScene extends Phaser.Scene {
   private demoTimer = 0;
   private demoSlideIndex = 0;
   private armorySparkPool: Phaser.GameObjects.Arc[] = [];
-  private backdropLayer?: Phaser.GameObjects.Container;
+  private backdrop?: StageBackdrop;
 
   constructor() {
     super('AttractScene');
@@ -58,6 +62,7 @@ export class AttractScene extends Phaser.Scene {
     this.armorySparkPool = [];
     this.cameras.main.setBackgroundColor(0x070510);
     this.createBackdrop();
+    this.input.setDefaultCursor('auto');
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.bindCommands();
     this.bindIdleInput();
@@ -68,12 +73,13 @@ export class AttractScene extends Phaser.Scene {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
       this.unsubscribers.forEach((unsubscribe) => unsubscribe());
       this.unsubscribers = [];
-      this.backdropLayer?.destroy(true);
-      this.backdropLayer = undefined;
+      this.backdrop?.destroy();
+      this.backdrop = undefined;
     });
   }
 
-  update(_time: number, delta: number): void {
+  update(time: number, delta: number): void {
+    this.backdrop?.update(time, delta);
     this.spawnTimer += delta;
     this.updateAttractDemo(delta);
     if (this.spawnTimer > 720) {
@@ -98,36 +104,27 @@ export class AttractScene extends Phaser.Scene {
   }
 
   private createBackdrop(): void {
-    this.backdropLayer?.destroy(true);
-
-    const width = this.scale.width;
-    const height = this.scale.height;
-    this.backdropLayer = this.add.container(0, 0).setDepth(-10);
-
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(0x070510, 0x130a2c, 0x241455, 0x071d35, 1);
-    bg.fillRect(0, 0, width, height);
-    this.backdropLayer.add(bg);
-
-    const grid = this.add.graphics();
-    grid.lineStyle(1, 0x24e6ff, 0.16);
-    for (let x = 0; x < width; x += 70) {
-      grid.lineBetween(x, height * 0.58, x - width * 0.24, height);
-    }
-    for (let y = height * 0.6; y < height; y += 34) {
-      grid.lineBetween(0, y, width, y);
-    }
-    this.backdropLayer.add(grid);
-
-    const neon = this.add.graphics();
-    neon.lineStyle(6, 0xff3fb4, 0.4);
-    neon.strokeCircle(width * 0.75, height * 0.25, Math.min(width, height) * 0.22);
-    neon.lineStyle(3, 0xffd84d, 0.38);
-    neon.strokeCircle(width * 0.75, height * 0.25, Math.min(width, height) * 0.28);
-    this.backdropLayer.add(neon);
+    const quality = resolveQualityProfile(this.save.settings);
+    attachCabinetPipeline(this.cameras.main, quality.postFx);
+    this.backdrop?.destroy();
+    this.backdrop = new StageBackdrop(this, quality, this.save.settings.reducedMotion);
+    this.backdrop.setTheme('attract');
   }
 
   private handleResize(): void {
+    this.backdrop?.requestResize();
+  }
+
+  // Graphics changes apply immediately: the raven sheets are re-baked at the
+  // new resolution and the backdrop/post pipeline are rebuilt for the tier.
+  private applyGraphicsSettings(rebakeSprites: boolean): void {
+    if (rebakeSprites) {
+      for (const raven of this.ravens) raven.sprite.destroy();
+      for (const sprite of this.ravenPool) sprite.destroy();
+      this.ravens = [];
+      this.ravenPool = [];
+      bakeRavenVariants(this, resolveQualityProfile(this.save.settings));
+    }
     this.createBackdrop();
   }
 
@@ -223,6 +220,7 @@ export class AttractScene extends Phaser.Scene {
         this.save = cycleSetting(this.save, id as keyof GameSettings);
         arcadeAudio.startMusic('menu', this.save.settings, 'menu');
         arcadeAudio.playMenuConfirm();
+        if (id === 'graphicsQuality' || id === 'reducedMotion') this.applyGraphicsSettings(id === 'graphicsQuality');
         this.renderUi();
       }),
     );
@@ -322,7 +320,7 @@ export class AttractScene extends Phaser.Scene {
     }
 
     const text = this.add.text(centerX, centerY - radius - 28, label.toUpperCase(), {
-      fontFamily: 'Impact, Haettenschweiler, sans-serif',
+      fontFamily: DISPLAY_FONT,
       fontSize: intensity === 'upgrade' ? '34px' : '26px',
       color: success ? '#ffe56a' : '#ff315a',
       stroke: '#070510',
@@ -414,24 +412,27 @@ export class AttractScene extends Phaser.Scene {
   private spawnRaven(): void {
     const fromLeft = Math.random() > 0.5;
     const enemy = Math.random() > 0.82 ? ENEMIES.golden : Math.random() > 0.62 ? ENEMIES.fast : ENEMIES.normal;
-    const sprite = this.acquireMenuRaven();
-    sprite.setPosition(fromLeft ? -120 : this.scale.width + 120, Phaser.Math.Between(50, this.scale.height - 80));
-    sprite.play('raven-flap');
-    sprite.setScale(enemy.scale * Phaser.Math.FloatBetween(0.8, 1.25));
-    sprite.setAlpha(0.5);
-    sprite.setDepth(4);
-    if (enemy.tint) sprite.setTint(enemy.tint);
+    const sprite = this.acquireMenuRaven(enemy.id);
+    const depthScale = Phaser.Math.FloatBetween(0.55, 1.2);
+    sprite.setPosition(fromLeft ? -120 : this.scale.width + 120, Phaser.Math.Between(50, Math.round(this.scale.height * 0.7)));
+    sprite.play({ key: ravenAnimKey(enemy.id), startFrame: Phaser.Math.Between(0, 5) });
+    sprite.setScale((enemy.scale * depthScale) / ravenBakeScale(enemy.id));
+    sprite.setAlpha(0.35 + depthScale * 0.35);
+    sprite.setDepth(depthScale > 0.9 ? 6 : -85);
+    if (depthScale < 0.8) sprite.setTint(0x8a7aa8);
     if (fromLeft) sprite.setFlipX(true);
 
     this.ravens.push({
       sprite,
-      velocityX: (fromLeft ? 1 : -1) * Phaser.Math.FloatBetween(0.05, 0.16),
+      velocityX: (fromLeft ? 1 : -1) * Phaser.Math.FloatBetween(0.05, 0.16) * depthScale,
       velocityY: Phaser.Math.FloatBetween(-0.035, 0.035),
     });
   }
 
-  private acquireMenuRaven(): Phaser.GameObjects.Sprite {
-    const sprite = this.ravenPool.pop() ?? this.add.sprite(0, 0, SPRITE_KEYS.raven);
+  private acquireMenuRaven(enemyId: keyof typeof ENEMIES): Phaser.GameObjects.Sprite {
+    const key = ravenTextureKey(enemyId);
+    const sprite = this.ravenPool.pop() ?? this.add.sprite(0, 0, key, 0);
+    sprite.setTexture(key, 0);
     sprite.setActive(true);
     sprite.setVisible(true);
     sprite.clearTint();

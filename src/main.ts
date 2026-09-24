@@ -28,4 +28,9 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, AttractScene, GameScene],
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+// Dev-only handle for local QA harnesses (screenshots, texture previews).
+if (import.meta.env.DEV) {
+  (window as Window & { __knotzGame?: Phaser.Game }).__knotzGame = game;
+}

@@ -5,16 +5,27 @@ import type {
   EnemyDefinition,
   GameSettings,
   SaveData,
+  StageDefinition,
   StageGrade,
   UpgradeDefinition,
   WeaponDefinition,
 } from '../game/types';
+import { describeQuality } from '../game/systems/Quality';
 import { dispatchCommand, onUiState, type UiState } from './events';
 
 const ARCADE_HOME_URL = 'https://knotenvy.github.io/';
 const RAVEN_MAYHEM_URL = 'https://knotenvy.github.io/Knotz-Raven-Mayhem/';
 
 const root = () => document.getElementById('ui-root');
+
+const POWERUP_COLORS: Record<string, string> = {
+  slowmo: '#31f4ff',
+  multishot: '#ff8a32',
+  scoreBoost: '#ffdf4d',
+  extraLife: '#9dff57',
+  overdrive: '#ff5fbb',
+  coinRush: '#ffd447',
+};
 
 interface HudRefs {
   root: HTMLElement;
@@ -42,6 +53,9 @@ interface HudRefs {
 let hudRefs: HudRefs | null = null;
 let hudStarCount = Number.NaN;
 let hudPowerupSignature = '';
+let hudScoreShown = 0;
+let hudScoreTarget = 0;
+let hudComboShown = 1;
 
 export function initializeUi(): void {
   document.body.classList.add('game-shell-ready');
@@ -108,8 +122,11 @@ function render(state: UiState): void {
 
     uiRoot.innerHTML = renderHud(state);
     hudRefs = bindHudRefs(uiRoot);
-    hudStarCount = state.snapshot.stageGrade.starCount;
+    hudStarCount = state.stage.bonus ? -1 : state.snapshot.stageGrade.gradeEligibleSpawned > 0 ? state.snapshot.stageGrade.starCount : 0;
     hudPowerupSignature = powerupSignature(state.snapshot.activePowerups);
+    hudScoreShown = state.snapshot.score;
+    hudScoreTarget = state.snapshot.score;
+    hudComboShown = state.snapshot.comboMultiplier;
     return;
   }
 
@@ -484,7 +501,9 @@ function renderOptions(settings: GameSettings): string {
         ${renderSetting('SFX', formatVolume(settings.sfxVolume), 'sfxVolume')}
         ${renderSetting('Screen Shake', settings.screenShake ? 'On' : 'Off', 'screenShake')}
         ${renderSetting('Motion', settings.reducedMotion ? 'Reduced' : 'Full', 'reducedMotion')}
+        ${renderSetting('Graphics', describeQuality(settings), 'graphicsQuality')}
       </div>
+      <p class="settings-note">Auto picks High on desktop GPUs (bloom, CRT glass, dense particles) and Balanced on phones, and steps down if the frame rate drops.</p>
     </section>
   `;
 }
@@ -664,9 +683,9 @@ function renderHud(state: Extract<UiState, { screen: 'hud' }>): string {
         </section>
         <section class="hud-cluster grade-cluster">
           <div class="grade-readout">
-            <span data-hud="grade-kicker">${grade.gradeLabel === 'Bonus' ? 'Bonus' : 'Grade'}</span>
-            <strong data-hud="grade-value">${grade.gradeLabel === 'Bonus' ? 'Jackpot' : `${grade.gradePercent}%`}</strong>
-            <div class="star-row mini-stars" data-hud="stars">${renderStars(grade.starCount)}</div>
+            <span data-hud="grade-kicker">${hudGradeKicker(stage)}</span>
+            <strong data-hud="grade-value">${hudGradeValue(stage, grade)}</strong>
+            <div class="star-row mini-stars" data-hud="stars">${renderHudStars(stage, grade)}</div>
           </div>
           <button data-action="pause">Pause</button>
         </section>
@@ -695,7 +714,7 @@ function renderPowerupItems(powerups: ActivePowerups): string {
   return powerups
     .map((powerup) => {
       const width = Math.max(0, (powerup.timeLeftMs / powerup.durationMs) * 100);
-      return `<div><span>${powerup.label}</span><i style="width:${width}%"></i></div>`;
+      return `<div style="--powerup-color:${POWERUP_COLORS[powerup.id] ?? '#20f2ff'}"><span>${powerup.label}</span><i style="width:${width}%"></i></div>`;
     })
     .join('');
 }
@@ -739,19 +758,33 @@ function patchHud(state: Extract<UiState, { screen: 'hud' }>): void {
   const progress = Math.min(100, (snapshot.stageSpawns / snapshot.stageTargetKills) * 100);
   const comboProgress = snapshot.comboWindowMs > 0 ? Math.max(0, (snapshot.comboTimerMs / snapshot.comboWindowMs) * 100) : 0;
 
-  setHudText(hudRefs.score, `${snapshot.score}`);
+  // Roll the score up toward its target and bump it when points land.
+  if (snapshot.score !== hudScoreTarget) {
+    if (snapshot.score > hudScoreTarget) bumpHud(hudRefs.score, 1.16);
+    hudScoreTarget = snapshot.score;
+  }
+  if (hudScoreShown > hudScoreTarget) hudScoreShown = hudScoreTarget;
+  else if (hudScoreShown < hudScoreTarget) {
+    hudScoreShown = Math.min(hudScoreTarget, hudScoreShown + Math.max(1, Math.ceil((hudScoreTarget - hudScoreShown) * 0.2)));
+  }
+  setHudText(hudRefs.score, `${hudScoreShown}`);
   setHudText(hudRefs.loadout, `${weapon.name} / ${crosshair.name}`);
   setHudText(hudRefs.stageLabel, `Stage ${snapshot.stageIndex}`);
   setHudText(hudRefs.stageTitle, stage.title);
   setHudWidth(hudRefs.stageMeter, progress);
-  setHudText(hudRefs.gradeKicker, grade.gradeLabel === 'Bonus' ? 'Bonus' : 'Grade');
-  setHudText(hudRefs.gradeValue, grade.gradeLabel === 'Bonus' ? 'Jackpot' : `${grade.gradePercent}%`);
+  setHudText(hudRefs.gradeKicker, hudGradeKicker(stage));
+  setHudText(hudRefs.gradeValue, hudGradeValue(stage, grade));
 
-  if (grade.starCount !== hudStarCount) {
-    hudStarCount = grade.starCount;
-    hudRefs.stars.innerHTML = renderStars(grade.starCount);
+  const starKey = stage.bonus ? -1 : grade.gradeEligibleSpawned > 0 ? grade.starCount : 0;
+  if (starKey !== hudStarCount) {
+    hudStarCount = starKey;
+    hudRefs.stars.innerHTML = renderHudStars(stage, grade);
   }
 
+  if (snapshot.comboMultiplier !== hudComboShown) {
+    if (snapshot.comboMultiplier > hudComboShown) bumpHud(hudRefs.comboValue, 1.35);
+    hudComboShown = snapshot.comboMultiplier;
+  }
   setHudText(hudRefs.comboValue, `x${snapshot.comboMultiplier}`);
   setHudWidth(hudRefs.comboMeter, comboProgress);
   hudRefs.comboCluster.classList.toggle('hot', snapshot.comboMultiplier >= 4);
@@ -772,6 +805,15 @@ function patchHud(state: Extract<UiState, { screen: 'hud' }>): void {
   snapshot.activePowerups.forEach((powerup, index) => {
     const bar = bars[index];
     if (bar) setHudWidth(bar, Math.max(0, (powerup.timeLeftMs / powerup.durationMs) * 100));
+  });
+}
+
+function bumpHud(element: HTMLElement, scale: number): void {
+  if (typeof element.animate !== 'function') return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  element.animate([{ transform: `scale(${scale})` }, { transform: 'scale(1)' }], {
+    duration: 220,
+    easing: 'cubic-bezier(0.2, 1.6, 0.4, 1)',
   });
 }
 
@@ -913,6 +955,24 @@ function renderGradeReport(grade: StageGrade): string {
       <small>${grade.gradeEligibleKilled}/${grade.gradeEligibleSpawned} cleared / ${grade.escapedGradeEligible} escaped${grade.shieldedEscapes ? ` / ${grade.shieldedEscapes} shielded` : ''}</small>
     </section>
   `;
+}
+
+// Graded stages report "Bonus" from the grade calculator until the first
+// grade-eligible raven spawns, so the HUD keys off the stage itself.
+function hudGradeKicker(stage: StageDefinition): string {
+  return stage.bonus ? 'Bonus' : 'Grade';
+}
+
+function hudGradeValue(stage: StageDefinition, grade: StageGrade): string {
+  if (stage.bonus) return 'Jackpot';
+  if (grade.gradeEligibleSpawned <= 0) return '--';
+  return `${grade.gradePercent}%`;
+}
+
+function renderHudStars(stage: StageDefinition, grade: StageGrade): string {
+  if (stage.bonus) return renderStars(0);
+  if (grade.gradeEligibleSpawned <= 0) return Array.from({ length: 5 }, () => '<i></i>').join('');
+  return renderStars(grade.starCount);
 }
 
 function renderStars(starCount: number): string {

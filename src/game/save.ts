@@ -1,7 +1,7 @@
 import { CROSSHAIRS, WEAPONS } from './data/weapons';
 import { UPGRADES, getUpgradeCost } from './data/upgrades';
 import { ECONOMY_TUNING } from './data/tuning';
-import type { CrosshairId, GameSettings, RunRewards, RunSnapshot, SaveData, UpgradeId, WeaponId } from './types';
+import type { CrosshairId, GameSettings, GraphicsQuality, RunRewards, RunSnapshot, SaveData, UpgradeId, WeaponId } from './types';
 
 const SAVE_KEY = 'knotz-raven-mayhem-save-v1';
 
@@ -10,7 +10,10 @@ export const DEFAULT_SETTINGS: GameSettings = {
   sfxVolume: 0.75,
   screenShake: true,
   reducedMotion: false,
+  graphicsQuality: 'auto',
 };
+
+const GRAPHICS_QUALITY_CYCLE: GraphicsQuality[] = ['auto', 'high', 'balanced', 'low'];
 
 export const DEFAULT_SAVE: SaveData = {
   version: 1,
@@ -126,6 +129,11 @@ export function cycleSetting(save: SaveData, setting: keyof GameSettings): SaveD
     case 'reducedMotion':
       next.settings.reducedMotion = !next.settings.reducedMotion;
       break;
+    case 'graphicsQuality': {
+      const index = GRAPHICS_QUALITY_CYCLE.indexOf(next.settings.graphicsQuality);
+      next.settings.graphicsQuality = GRAPHICS_QUALITY_CYCLE[(index + 1) % GRAPHICS_QUALITY_CYCLE.length];
+      break;
+    }
   }
 
   persistSave(next);
@@ -211,6 +219,9 @@ function normalizeSettings(input: Partial<GameSettings> | undefined): GameSettin
     sfxVolume: clampVolume(input?.sfxVolume, DEFAULT_SETTINGS.sfxVolume),
     screenShake: typeof input?.screenShake === 'boolean' ? input.screenShake : DEFAULT_SETTINGS.screenShake,
     reducedMotion: typeof input?.reducedMotion === 'boolean' ? input.reducedMotion : DEFAULT_SETTINGS.reducedMotion,
+    graphicsQuality: GRAPHICS_QUALITY_CYCLE.includes(input?.graphicsQuality as GraphicsQuality)
+      ? (input?.graphicsQuality as GraphicsQuality)
+      : DEFAULT_SETTINGS.graphicsQuality,
   };
 }
 
