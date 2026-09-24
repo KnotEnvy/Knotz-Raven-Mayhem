@@ -54,7 +54,7 @@ const MINOR_SCALE = [0, 2, 3, 5, 7, 8, 10];
 const LOOKAHEAD_SECONDS = 0.14;
 const SCHEDULER_INTERVAL_MS = 25;
 
-class ArcadeAudio {
+export class ArcadeAudio {
   private context?: AudioContext;
   private master?: GainNode;
   private musicBus?: GainNode;
@@ -126,8 +126,8 @@ class ArcadeAudio {
   playMenuConfirm(): void {
     const t = this.now();
     if (t === undefined) return;
-    this.osc('square', 660, t, 0.05, 0.08, { freqEnd: 990 });
-    this.osc('triangle', 1320, t + 0.045, 0.09, 0.05);
+    this.osc('square', 660, t, 0.05, 0.14, { freqEnd: 990, filter: 5000 });
+    this.osc('triangle', 1320, t + 0.045, 0.09, 0.1);
   }
 
   playShot(weaponId: WeaponId, pan = 0): void {
@@ -142,9 +142,10 @@ class ArcadeAudio {
     }
 
     if (weaponId === 'arcLaser') {
-      this.osc('sawtooth', 1900, t, 0.26, 0.12, { freqEnd: 260, filter: 2600, pan, reverb: 0.3 });
-      this.osc('sine', 2600, t, 0.2, 0.08, { freqEnd: 1300, pan, reverb: 0.3 });
-      this.noise(t, 0.12, 0.12, { type: 'bandpass', freq: 5000, freqEnd: 1200, q: 3, pan });
+      this.osc('sawtooth', 1900, t, 0.26, 0.26, { freqEnd: 260, filter: 2600, pan, reverb: 0.3 });
+      this.osc('sine', 2600, t, 0.2, 0.16, { freqEnd: 1300, pan, reverb: 0.3 });
+      this.noise(t, 0.12, 0.3, { type: 'bandpass', freq: 5000, freqEnd: 1200, q: 3, pan });
+      this.osc('sine', 180, t, 0.12, 0.3, { freqEnd: 70, pan });
       return;
     }
 
@@ -158,9 +159,9 @@ class ArcadeAudio {
       return;
     }
 
-    this.noise(t, 0.07, 0.34, { type: 'bandpass', freq: 3200, freqEnd: 700, q: 1.1, pan });
-    this.osc('square', 920, t, 0.05, 0.08, { freqEnd: 210, pan });
-    this.osc('sine', 170, t, 0.09, 0.32, { freqEnd: 55, pan });
+    this.noise(t, 0.07, 0.5, { type: 'bandpass', freq: 3200, freqEnd: 700, q: 1.1, pan });
+    this.osc('square', 920, t, 0.05, 0.1, { freqEnd: 210, pan, filter: 4000 });
+    this.osc('sine', 170, t, 0.09, 0.42, { freqEnd: 55, pan });
   }
 
   playHit(enemyId: EnemyId, pan = 0): void {
@@ -184,34 +185,36 @@ class ArcadeAudio {
     }
 
     if (enemyId === 'shield') {
-      this.osc('sawtooth', 980, t, 0.1, 0.07, { freqEnd: 1600, filter: 3200, pan });
-      this.noise(t, 0.06, 0.12, { type: 'bandpass', freq: 3600, q: 4, pan });
+      this.osc('sawtooth', 980, t, 0.1, 0.18, { freqEnd: 1600, filter: 3200, pan });
+      this.noise(t, 0.06, 0.34, { type: 'bandpass', freq: 3600, q: 4, pan });
+      this.osc('sine', 240, t, 0.08, 0.22, { freqEnd: 120, pan });
       return;
     }
 
-    this.noise(t, 0.06, 0.26, { type: 'bandpass', freq: 1500, freqEnd: 600, q: 1.4, pan });
-    this.osc('triangle', 560, t, 0.06, 0.1, { freqEnd: 300, pan });
+    this.noise(t, 0.07, 0.6, { type: 'bandpass', freq: 1500, freqEnd: 600, q: 1.4, pan });
+    this.osc('triangle', 560, t, 0.07, 0.24, { freqEnd: 300, pan });
+    this.osc('sine', 200, t, 0.08, 0.3, { freqEnd: 90, pan });
   }
 
   playMiss(pan = 0): void {
     const t = this.now();
     if (t === undefined) return;
-    this.noise(t, 0.14, 0.12, { type: 'bandpass', freq: 700, freqEnd: 260, q: 1.5, pan });
+    this.noise(t, 0.14, 0.32, { type: 'bandpass', freq: 700, freqEnd: 260, q: 1.5, pan });
   }
 
   playRecharge(): void {
     const t = this.now();
     if (t === undefined) return;
-    this.osc('square', 118, t, 0.05, 0.05, { filter: 800 });
-    this.osc('square', 98, t + 0.05, 0.05, 0.04, { filter: 800 });
+    this.osc('square', 118, t, 0.05, 0.08, { filter: 800 });
+    this.osc('square', 98, t + 0.05, 0.05, 0.07, { filter: 800 });
   }
 
   playEscape(): void {
     const t = this.now();
     if (t === undefined) return;
-    this.osc('sawtooth', 340, t, 0.32, 0.12, { freqEnd: 110, filter: 1200 });
-    this.osc('square', 880, t, 0.06, 0.05);
-    this.osc('square', 660, t + 0.08, 0.08, 0.05);
+    this.osc('sawtooth', 340, t, 0.32, 0.22, { freqEnd: 110, filter: 1200 });
+    this.osc('square', 880, t, 0.06, 0.08, { filter: 4000 });
+    this.osc('square', 660, t + 0.08, 0.08, 0.08, { filter: 4000 });
   }
 
   playEnemyDestroyed(enemyId: EnemyId, comboMultiplier: number, pan = 0): void {
@@ -240,8 +243,8 @@ class ArcadeAudio {
     if (!this.throttle('coin', 60)) return;
     const t = this.now();
     if (t === undefined) return;
-    this.osc('square', 988, t, 0.06, 0.05, { pan });
-    this.osc('square', 1319, t + 0.06, 0.18, 0.05, { pan, reverb: 0.25 });
+    this.osc('square', 988, t, 0.06, 0.1, { pan, filter: 6000 });
+    this.osc('square', 1319, t + 0.06, 0.18, 0.1, { pan, reverb: 0.25, filter: 6000 });
   }
 
   playShieldBreak(pan = 0): void {
@@ -276,7 +279,7 @@ class ArcadeAudio {
     if (t === undefined) return;
     const base = 440 * 2 ** ((tier * 2) / 12);
     [0, 4, 7, 12].forEach((interval, index) => {
-      this.osc('square', base * 2 ** (interval / 12), t + index * 0.045, 0.09, 0.06, { filter: 5000, reverb: 0.3 });
+      this.osc('square', base * 2 ** (interval / 12), t + index * 0.045, 0.09, 0.12, { filter: 5000, reverb: 0.3 });
     });
     this.noise(t, 0.2, 0.08, { type: 'highpass', freq: 6000, freqEnd: 9000 });
   }
@@ -328,9 +331,9 @@ class ArcadeAudio {
     const t = this.now();
     if (t === undefined) return;
     const pan = Math.random() * 1.2 - 0.6;
-    this.noise(t, 0.12, 0.12, { type: 'lowpass', freq: 1800, freqEnd: 300, pan, reverb: 0.4 });
+    this.noise(t, 0.12, 0.22, { type: 'lowpass', freq: 1800, freqEnd: 300, pan, reverb: 0.4 });
     for (let index = 0; index < 6; index++) {
-      this.noise(t + 0.3 + Math.random() * 0.4, 0.02, 0.06, { type: 'highpass', freq: 5000, pan });
+      this.noise(t + 0.3 + Math.random() * 0.4, 0.02, 0.12, { type: 'highpass', freq: 5000, pan });
     }
   }
 
@@ -584,12 +587,14 @@ class ArcadeAudio {
     return true;
   }
 
+  // Measured with an offline render: SFX need to sit clearly above the music
+  // bed, so the buses are weighted rather than mapped 1:1 to the sliders.
   private get musicGain(): number {
-    return this.settings.musicVolume * 0.9;
+    return this.settings.musicVolume * 0.58;
   }
 
   private get sfxGain(): number {
-    return this.settings.sfxVolume;
+    return this.settings.sfxVolume * 1.45;
   }
 
   private ensureContext(): AudioContext | undefined {
@@ -605,12 +610,12 @@ class ArcadeAudio {
       this.buildGraph(this.context);
       document.addEventListener('visibilitychange', () => {
         if (!this.context) return;
-        if (document.hidden) void this.context.suspend();
-        else void this.context.resume();
+        if (document.hidden) void this.context.suspend().catch(() => undefined);
+        else void this.context.resume().catch(() => undefined);
       });
     }
     if (this.context.state === 'suspended' && !document.hidden) {
-      void this.context.resume();
+      void this.context.resume().catch(() => undefined);
     }
     return this.context;
   }
@@ -622,7 +627,15 @@ class ArcadeAudio {
     compressor.ratio.value = 4;
     compressor.attack.value = 0.004;
     compressor.release.value = 0.2;
-    compressor.connect(context.destination);
+    // Brickwall-style limiter so a full scattergun volley over boss music
+    // cannot clip the output.
+    const limiter = context.createDynamicsCompressor();
+    limiter.threshold.value = -3;
+    limiter.knee.value = 0;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.001;
+    limiter.release.value = 0.08;
+    compressor.connect(limiter).connect(context.destination);
 
     this.master = context.createGain();
     this.master.gain.value = 0.9;

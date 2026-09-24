@@ -10,6 +10,7 @@ import type {
   UpgradeDefinition,
   WeaponDefinition,
 } from '../game/types';
+import { ravenPortraits } from '../game/fx/TextureFactory';
 import { describeQuality } from '../game/systems/Quality';
 import { dispatchCommand, onUiState, type UiState } from './events';
 
@@ -122,7 +123,8 @@ function render(state: UiState): void {
 
     uiRoot.innerHTML = renderHud(state);
     hudRefs = bindHudRefs(uiRoot);
-    hudStarCount = state.stage.bonus ? -1 : state.snapshot.stageGrade.gradeEligibleSpawned > 0 ? state.snapshot.stageGrade.starCount : 0;
+    const initialGrade = state.snapshot.liveGrade ?? state.snapshot.stageGrade;
+    hudStarCount = state.stage.bonus ? -1 : initialGrade.gradeEligibleSpawned > 0 ? initialGrade.starCount : 5;
     hudPowerupSignature = powerupSignature(state.snapshot.activePowerups);
     hudScoreShown = state.snapshot.score;
     hudScoreTarget = state.snapshot.score;
@@ -261,10 +263,15 @@ function renderRavenBountyCard(enemy: EnemyDefinition): string {
   const tint = enemy.tint ? `#${enemy.tint.toString(16).padStart(6, '0')}` : '#050711';
   const chipStyle = `--raven-tint:${tint}; --raven-scale:${getDemoScale(enemy)}; --raven-sprite:url('./assets/raven.png')`;
 
+  const portrait = ravenPortraits[enemy.id];
+  const art = portrait
+    ? `<img class="raven-portrait" src="${portrait}" alt="" aria-hidden="true" />`
+    : '<span class="raven-frame" aria-hidden="true"></span>';
+
   return `
     <article class="raven-bounty-card raven-${enemy.id} raven-behavior-${enemy.behavior}">
       <div class="raven-chip" style="${chipStyle}">
-        <span class="raven-frame" aria-hidden="true"></span>
+        ${art}
         ${renderEnemyEffectMarks(enemy)}
       </div>
       <div>
@@ -520,7 +527,9 @@ function renderCredits(): string {
       </header>
       <div class="credits-copy">
         <p><strong>Knotz Raven Mayhem</strong> is built from the original raven click-target prototype and expanded into a Phaser-powered arcade run game.</p>
-        <p>Original seed assets: raven sprite, explosion sheet, and boom audio. Current build: Phaser runtime, roguelite progression, DOM arcade UI, procedural cabinet audio, and local save progression.</p>
+        <p>Original seed assets: raven sprite, explosion sheet, and boom audio. Every raven variant, stage backdrop, particle and light is painted procedurally at load time from that seed art, and all music and sound effects are synthesized live with WebAudio.</p>
+        <p>Desktop builds add a GPU cabinet-glass pass (bloom, scanlines, chromatic kick); phones get a lighter tuned tier. Change it any time under Options &gt; Graphics.</p>
+        <p>Fonts: <strong>Bungee</strong> (The Bungee Project Authors) and <strong>Chakra Petch</strong> (The Chakra Petch Project Authors), both under the SIL Open Font License 1.1 (<a href="./licenses/OFL-Bungee.txt">Bungee license</a> / <a href="./licenses/OFL-Chakra-Petch.txt">Chakra Petch license</a>).</p>
         <p class="platform-copy"><a href="${ARCADE_HOME_URL}" rel="home">KnotEnvy Arcade home</a> / <a href="${RAVEN_MAYHEM_URL}">Raven Mayhem release page</a></p>
       </div>
     </section>
@@ -667,6 +676,7 @@ function renderHud(state: Extract<UiState, { screen: 'hud' }>): string {
   const progress = Math.min(100, (snapshot.stageSpawns / snapshot.stageTargetKills) * 100);
   const comboProgress = snapshot.comboWindowMs > 0 ? Math.max(0, (snapshot.comboTimerMs / snapshot.comboWindowMs) * 100) : 0;
   const grade = snapshot.stageGrade;
+  const liveGrade = snapshot.liveGrade ?? grade;
 
   return `
     <div class="hud">
@@ -684,8 +694,8 @@ function renderHud(state: Extract<UiState, { screen: 'hud' }>): string {
         <section class="hud-cluster grade-cluster">
           <div class="grade-readout">
             <span data-hud="grade-kicker">${hudGradeKicker(stage)}</span>
-            <strong data-hud="grade-value">${hudGradeValue(stage, grade)}</strong>
-            <div class="star-row mini-stars" data-hud="stars">${renderHudStars(stage, grade)}</div>
+            <strong data-hud="grade-value">${hudGradeValue(stage, liveGrade)}</strong>
+            <div class="star-row mini-stars" data-hud="stars">${renderHudStars(stage, liveGrade)}</div>
           </div>
           <button data-action="pause">Pause</button>
         </section>
@@ -755,6 +765,7 @@ function patchHud(state: Extract<UiState, { screen: 'hud' }>): void {
 
   const { snapshot, stage, weapon, crosshair } = state;
   const grade = snapshot.stageGrade;
+  const liveGrade = snapshot.liveGrade ?? grade;
   const progress = Math.min(100, (snapshot.stageSpawns / snapshot.stageTargetKills) * 100);
   const comboProgress = snapshot.comboWindowMs > 0 ? Math.max(0, (snapshot.comboTimerMs / snapshot.comboWindowMs) * 100) : 0;
 
@@ -773,12 +784,13 @@ function patchHud(state: Extract<UiState, { screen: 'hud' }>): void {
   setHudText(hudRefs.stageTitle, stage.title);
   setHudWidth(hudRefs.stageMeter, progress);
   setHudText(hudRefs.gradeKicker, hudGradeKicker(stage));
-  setHudText(hudRefs.gradeValue, hudGradeValue(stage, grade));
+  setHudText(hudRefs.gradeValue, hudGradeValue(stage, liveGrade));
 
-  const starKey = stage.bonus ? -1 : grade.gradeEligibleSpawned > 0 ? grade.starCount : 0;
+  const starKey = stage.bonus ? -1 : liveGrade.gradeEligibleSpawned > 0 ? liveGrade.starCount : 5;
   if (starKey !== hudStarCount) {
+    if (starKey < hudStarCount) bumpHud(hudRefs.stars, 1.25);
     hudStarCount = starKey;
-    hudRefs.stars.innerHTML = renderHudStars(stage, grade);
+    hudRefs.stars.innerHTML = renderHudStars(stage, liveGrade);
   }
 
   if (snapshot.comboMultiplier !== hudComboShown) {
@@ -963,16 +975,17 @@ function hudGradeKicker(stage: StageDefinition): string {
   return stage.bonus ? 'Bonus' : 'Grade';
 }
 
+// Nothing has escaped before the first raven spawns, so a graded stage
+// opens at a perfect 100% / five stars rather than the bonus placeholder.
 function hudGradeValue(stage: StageDefinition, grade: StageGrade): string {
   if (stage.bonus) return 'Jackpot';
-  if (grade.gradeEligibleSpawned <= 0) return '--';
+  if (grade.gradeEligibleSpawned <= 0) return '100%';
   return `${grade.gradePercent}%`;
 }
 
 function renderHudStars(stage: StageDefinition, grade: StageGrade): string {
   if (stage.bonus) return renderStars(0);
-  if (grade.gradeEligibleSpawned <= 0) return Array.from({ length: 5 }, () => '<i></i>').join('');
-  return renderStars(grade.starCount);
+  return renderStars(grade.gradeEligibleSpawned <= 0 ? 5 : grade.starCount);
 }
 
 function renderStars(starCount: number): string {

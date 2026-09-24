@@ -389,7 +389,7 @@ a:hover {
   margin: 0;
   color: var(--text);
   font-size: clamp(16px, 2vw, 23px);
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.7);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.7), 0 0 14px rgba(5, 3, 12, 0.95);
 }
 
 .demo-title {
@@ -753,6 +753,15 @@ a:hover {
   filter:
     drop-shadow(0 0 7px color-mix(in srgb, var(--raven-tint) 85%, white))
     saturate(1.2);
+}
+
+.raven-portrait {
+  display: block;
+  width: 62px;
+  height: auto;
+  transform: scale(var(--raven-scale));
+  transform-origin: center;
+  pointer-events: none;
 }
 
 .raven-normal .raven-frame {

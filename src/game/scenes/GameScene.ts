@@ -203,7 +203,10 @@ export class GameScene extends Phaser.Scene {
   update(time: number, delta: number): void {
     this.updateCrosshair(delta);
     this.updateBossBar(delta);
-    if (this.gameEnded || this.pausedByUi) return;
+    if (this.gameEnded || this.pausedByUi) {
+      this.backdrop.maintain(delta);
+      return;
+    }
 
     // Hit-stop freezes the flock for a few frames on heavy impacts so kills
     // land with weight; timers, HUD and VFX keep running at full speed.
@@ -943,7 +946,7 @@ export class GameScene extends Phaser.Scene {
     this.playEnemyDefeatSignature(actor, x, y);
     const isBonusStage = this.stage.bonus === true;
     if (earnedCoins > 1 || isBonusStage) {
-      this.floatText(x + Math.min(72, radius), y + radius * 0.32, `+${earnedCoins} COIN`, '#ffd447', 17, true);
+      this.floatText(x + Math.min(80, radius * 1.2), y + Math.max(26, radius * 0.7), `+${earnedCoins} COIN`, '#ffd447', 16, true);
       this.playCoinBurst(x, y, earnedCoins, isBonusStage);
       arcadeAudio.playCoin(pan);
     }
@@ -985,6 +988,8 @@ export class GameScene extends Phaser.Scene {
       this.bossKills++;
       this.bossDefeated = true;
       arcadeAudio.playBossDefeated();
+      arcadeAudio.startMusic('run', this.save.settings, this.stage.id);
+      arcadeAudio.setIntensity(this.run.comboMultiplier);
       this.playBossDefeatSetPiece(x, y);
       this.hitStop(280);
       this.dismissBossBar();
@@ -1294,6 +1299,7 @@ export class GameScene extends Phaser.Scene {
       stroke: warning ? '#3a0010' : '#090510',
       strokeThickness: Math.max(4, titleSize * 0.12),
       align: 'center',
+      padding: glowPadding(titleSize * 0.4),
     });
     titleText.setOrigin(0.5);
     titleText.setShadow(0, 0, accent, titleSize * 0.4, true, true);
@@ -1477,10 +1483,7 @@ export class GameScene extends Phaser.Scene {
     const sparkCount = actor.boss ? 36 : Math.min(22, 8 + combo + Math.floor(points / 90));
     this.emitSparkBurst(x, y, color, sparkCount, 78, actor.boss ? 180 : 118);
 
-    if (combo >= 3) {
-      this.floatText(x, y + radius * 0.55, `x${combo} CHAIN`, '#20f2ff', 18 + Math.min(combo, 10));
-      if (combo >= 4) this.playComboSurge(x, y, combo, color);
-    }
+    if (combo >= 4) this.playComboSurge(x, y, combo, color);
   }
 
   private playComboSurge(x: number, y: number, combo: number, color: number): void {
@@ -2359,7 +2362,11 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  // Popups are pooled; style, shadow and text are applied with a single
+  // canvas re-rasterization (setStyle/setShadow/setText each redraw on their
+  // own, which tripled the per-kill text cost on phones).
   private acquireFloatText(x: number, y: number, text: string, color: string, size: number, fontFamily: string): Phaser.GameObjects.Text {
+    const glow = this.quality.tier === 'high' ? 10 : 0;
     const style: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily,
       fontStyle: fontFamily === UI_FONT ? '700' : 'normal',
@@ -2367,11 +2374,17 @@ export class GameScene extends Phaser.Scene {
       color,
       stroke: '#070510',
       strokeThickness: Math.max(4, Math.round(size * 0.2)),
+      padding: glowPadding(10),
+      shadow: { offsetX: 0, offsetY: 0, color, blur: glow, stroke: false, fill: glow > 0 },
     };
-    const label = this.textPool.pop() ?? this.add.text(0, 0, '', style);
-    label.setStyle(style);
-    label.setText(text);
-    label.setShadow(0, 0, color, this.quality.tier === 'high' ? 10 : 0, false, true);
+    let label = this.textPool.pop();
+    if (label) {
+      label.style.setStyle(style, false);
+      if (label.text !== text) label.setText(text);
+      else label.updateText();
+    } else {
+      label = this.add.text(0, 0, text, style);
+    }
     label.setPosition(x, y);
     label.setActive(true);
     label.setVisible(true);
@@ -2411,6 +2424,7 @@ export class GameScene extends Phaser.Scene {
       stroke: '#05030a',
       strokeThickness: 8,
       align: 'center',
+      padding: glowPadding(24),
     });
     title.setOrigin(0.5);
     title.setDepth(310);
@@ -2519,6 +2533,7 @@ export class GameScene extends Phaser.Scene {
       color: '#ff8fa3',
       stroke: '#1a0008',
       strokeThickness: 4,
+      padding: glowPadding(10),
     });
     label.setOrigin(0, 1);
     label.setShadow(0, 0, '#ff214f', 10, true, true);
@@ -2592,6 +2607,7 @@ export class GameScene extends Phaser.Scene {
       color,
       stroke: '#070510',
       strokeThickness: 7,
+      padding: glowPadding(18),
     });
     text.setOrigin(0.5).setDepth(205).setScale(2.2).setAlpha(0);
     text.setShadow(0, 0, color, 18, true, true);
@@ -2652,10 +2668,6 @@ export class GameScene extends Phaser.Scene {
     return Phaser.Math.Clamp(y, this.bossMinY(actor), this.bossMaxY(actor));
   }
 
-  private get stageBaseId(): string {
-    return this.stage.id.replace(/-\d+$/, '');
-  }
-
   private isCompactPlayfield(): boolean {
     return this.scale.width <= INPUT_TUNING.compactViewportWidth || this.scale.height <= INPUT_TUNING.compactViewportHeight;
   }
@@ -2701,6 +2713,13 @@ function powerupGlyph(id: PowerupId): string {
     case 'coinRush':
       return '$';
   }
+}
+
+// Phaser sizes the text canvas to the glyphs only, so a blurred glow shadow
+// gets clipped into a visible box unless the canvas is padded for it.
+function glowPadding(blur: number): Phaser.Types.GameObjects.Text.TextPadding {
+  const pad = Math.ceil(blur * 1.2);
+  return { left: pad, right: pad, top: pad, bottom: pad };
 }
 
 // Dev-only QA hook: ?stage=N starts the run on stage N (1-based).

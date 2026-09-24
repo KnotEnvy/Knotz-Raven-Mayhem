@@ -152,6 +152,7 @@ export interface RunSnapshot {
   stageHits: number;
   stageAccuracy: number;
   stageGrade: StageGrade;
+  liveGrade?: StageGrade;
   combo: number;
   comboMultiplier: number;
   comboTimerMs: number;

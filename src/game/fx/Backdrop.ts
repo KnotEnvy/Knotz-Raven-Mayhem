@@ -73,7 +73,6 @@ export class StageBackdrop {
   private wheelLights?: Phaser.GameObjects.Image;
   private beacon?: Phaser.GameObjects.Image;
   private train?: Phaser.GameObjects.Image;
-  private vignette?: Phaser.GameObjects.Image;
   private clockCenter?: { x: number; y: number; radius: number };
   private nextEventAt = 0;
   private trainActiveUntil = 0;
@@ -114,13 +113,20 @@ export class StageBackdrop {
     this.pendingResizeAt = this.elapsed + 140;
   }
 
-  update(time: number, delta: number, speedScale = 1): void {
+  // Resize rebuilds are debounced; this runs even while the game is paused so
+  // a rotated phone never shows stale edges behind the pause menu.
+  maintain(delta: number): boolean {
     this.elapsed += delta;
     if (this.pendingResizeAt && this.elapsed >= this.pendingResizeAt) {
       this.pendingResizeAt = 0;
       this.rebuild();
-      return;
+      return true;
     }
+    return false;
+  }
+
+  update(time: number, delta: number, speedScale = 1): void {
+    if (this.maintain(delta)) return;
     if (!this.theme) return;
 
     const motion = this.reducedMotion ? 0.25 : 1;
@@ -207,7 +213,6 @@ export class StageBackdrop {
     this.wheelLights = undefined;
     this.beacon = undefined;
     this.train = undefined;
-    this.vignette = undefined;
     this.clockCenter = undefined;
   }
 
@@ -349,9 +354,7 @@ export class StageBackdrop {
     this.buildEventObjects(width, height, horizon, u, scale);
 
     if (!this.quality.postFx) {
-      this.vignette = this.track(
-        this.scene.add.image(0, 0, FX.vignette).setOrigin(0).setDisplaySize(width, height).setDepth(DEPTH.vignette).setAlpha(0.9),
-      );
+      this.track(this.scene.add.image(0, 0, FX.vignette).setOrigin(0).setDisplaySize(width, height).setDepth(DEPTH.vignette).setAlpha(0.9));
     }
 
     this.nextEventAt = this.elapsed + 2500;

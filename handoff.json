@@ -2,7 +2,7 @@
   "project": {
     "name": "Knotz Raven Mayhem",
     "repo": "KnotEnvy/Knotz-Raven-Mayhem",
-    "handoffDate": "2026-05-28",
+    "handoffDate": "2026-09-24",
     "currentBranch": "master",
     "productGoal": "Make Knotz Raven Mayhem feel better than expected for a free GitHub Pages arcade game, especially for players testing on phones and installed PWA-style launches.",
     "v1ScopeDecision": "Local records and local progression only. Online leaderboards, databases, backend accounts, cloud saves, and service-worker/offline caching remain deferred beyond v1 unless explicitly approved."
@@ -11,9 +11,10 @@
     "completedBaseline": "The game is currently playable as a stage-grading arcade campaign with stage retry, dramatic grade reveals, S-rank confetti on the grading screen, run reports, armory upgrades, bosses, Jackpot Alley, local records, release shell assets, and GitHub Pages build support.",
     "nextTeamMission": "Return to the mobile/PWA-first track. The next pass should make phone landscape, tablet, installed-app, and GitHub Pages testing feel deliberate, polished, responsive, and reliable rather than merely functional.",
     "qualityBar": "A first-time tester opening the GitHub Pages link on a phone should understand orientation, start the game quickly, read the HUD, use touch controls comfortably, clear stages without layout overlap, and trust that the game is a real arcade build.",
-    "latestKnownGate": "npm.cmd run release:verify passed on 2026-05-28. It ran balance:report, build, release:check, and release:smoke. Release check signal: linkedAssets=3 seedAssets=4 releaseShellAssets=10 pwaManifest=ok. Dist smoke signal: basePath=/Knotz-Raven-Mayhem/ linkedAssets=3 seedAssets=4 releaseShellAssets=10 pwaManifest=ok.",
+    "latestKnownGate": "npm run release:verify passed on 2026-09-24 (balance:report, build, release:check linkedAssets=3 seedAssets=4 releaseShellAssets=10 pwaManifest=ok, release:smoke). npm run audit:mobile reported 0 issues across all six sizes. Headless sweeps across Low+Reduced Motion, Balanced and High on stages 3/5/7/8 and the continue/retry/pause-resize/quit/restart flow logged zero runtime errors.",
     "devServer": "A Vite dev server has been used at http://127.0.0.1:5173/ for manual playtesting. Use npm run dev for local desktop checks, or npm.cmd run dev -- --host 0.0.0.0 --port 5173 for same-network phone testing.",
-    "handoffWarning": "CI verification does not publish the live game. The GitHub Pages site updates only after the Deploy GitHub Pages workflow is manually run with workflow_dispatch on master."
+    "handoffWarning": "CI verification does not publish the live game. The GitHub Pages site updates only after the Deploy GitHub Pages workflow is manually run with workflow_dispatch on master.",
+    "latestPresentationPass": "Presentation overhaul on branch claude/practical-gauss-uz2684: boot-baked lit raven variants with per-type silhouettes, Canvas-painted parallax backdrops for all nine stages and the title screen (ambient particles, lightning, fireworks, train, searchlights, Ferris wheel, live clock), desktop CabinetPipeline post process, emitter-based VFX with hit-stop and corpses, lock-on reticle, boss health bar, combo announcer, left-edge escape warnings, rebuilt procedural audio engine, bundled OFL fonts, glass HUD with score roll-up, and an Options > Graphics tier setting with FPS-based auto step-down."
   },
   "currentPlayableBaseline": {
     "campaign": "Nine authored stages are in place, including boss stages and Jackpot Alley. The player advances through the arc using grade and star pressure instead of lives-based failure.",
@@ -22,7 +23,9 @@
     "gradePresentation": "Stage transition presentation now emphasizes the grade more than the percent. S-grade clears trigger the DOM-overlay S RANK text and confetti on the grading screen itself.",
     "runReport": "Quitting from pause or stage clear banks rewards and shows total stars, average grade, perfect stages, coins, and armory recommendations.",
     "progression": "Recovery Matrix preserves the internal thickJacket save id and adds a small grade buffer per rank. Grade Shield preserves the extraLife powerup id but now forgives one grade-eligible escape per charge.",
-    "localPersistence": "Save version remains 1. Existing local saves should keep working, including prior thickJacket ranks."
+    "localPersistence": "Save version remains 1. Existing local saves should keep working, including prior thickJacket ranks.",
+    "presentation": "Quality tiers resolve through src/game/systems/Quality.ts; ?quality= overrides for QA. Only the seed raven/boom art ships; everything else is generated in src/game/fx at load. The HUD grade shows snapshot.liveGrade (resolved ravens only); final stage grading is unchanged.",
+    "audio": "ArcadeAudio uses sfx/music buses into a compressor and limiter with a convolver reverb send. Music is a lookahead step sequencer on the AudioContext clock; setIntensity follows the combo multiplier. Reduced Motion no longer mutes music. Levels were balanced with offline renders."
   },
   "mobilePwaBaseline": {
     "currentDirection": "Landscape-first mobile remains the accepted direction for v1. Portrait currently acts as an orientation gate rather than a full portrait gameplay layout.",
@@ -42,6 +45,11 @@
     "offlineCaching": "No service worker or offline caching is currently approved for v1. Do not add caching semantics without an explicit product decision and a stale-asset invalidation plan."
   },
   "nextTeamPrimaryFocus": [
+    {
+      "priority": 0,
+      "name": "Real-GPU and real-device presentation QA",
+      "goal": "Verify the High tier (bloom/CRT pass) on integrated and discrete laptop GPUs and Balanced on iOS/Android phones at 60fps; listen to the new music and SFX mix on speakers and headphones; tune backdrop brightness per stage if any raven variant loses contrast."
+    },
     {
       "priority": 1,
       "name": "Real-device phone landscape fit and touch feel",
@@ -140,6 +148,7 @@
     "Should installed PWA launch hide any browser-only instructions or add a dedicated first-run touch calibration prompt?",
     "Do the current touch controls need larger zones, configurable sensitivity, or a different phone layout?",
     "Should S-rank confetti and heavy VFX automatically scale down on low-end phones?",
-    "Should the final Stage 9 clear receive a special end-of-arc recap before any future overflow or endless-stage work?"
+    "Should the final Stage 9 clear receive a special end-of-arc recap before any future overflow or endless-stage work?",
+    "Should the social preview capsule be regenerated from real High-tier gameplay now that ravens and stages have new art?"
   ]
 }

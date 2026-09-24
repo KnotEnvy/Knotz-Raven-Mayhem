@@ -36,7 +36,7 @@ export interface LayerSpec {
 }
 
 export type AmbientKind = 'fireflies' | 'rain' | 'embers' | 'confetti' | 'ash' | 'coins' | 'snow' | 'motes';
-export type ThemeEvent = 'lightning' | 'fireworks' | 'train' | 'searchlight' | 'clock' | 'wheel' | 'eclipse' | 'marquee' | 'beacon';
+export type ThemeEvent = 'lightning' | 'fireworks' | 'train' | 'searchlight' | 'clock' | 'wheel' | 'beacon';
 
 export interface CelestialGlow {
   x: number;
@@ -897,7 +897,6 @@ const nest: ThemeSpec = {
   horizonGlow: 0xff1e3d,
   ambient: 'ash',
   ambientColors: [0xff5a6e, 0x9c2dff, 0x5a3a4a],
-  events: ['eclipse'],
   fog: { color: 0xa0142e, alpha: 0.2, y: 0.62, speed: 0.016 },
   celestial: { x: 0.24, y: 0.22, radius: 0.5, color: 0xff1e3d, pulse: 0.22 },
   sky: (ctx, p) => {
@@ -1025,7 +1024,6 @@ const jackpot: ThemeSpec = {
   horizonGlow: 0xff7a1f,
   ambient: 'coins',
   ambientColors: [0xffd447, 0xffffff],
-  events: ['marquee'],
   sky: (ctx, p) => {
     verticalGradient(ctx, 0, 0, p.w, p.horizon, [[0, '#12051e'], [0.5, '#2e0c34'], [0.85, '#6a2a1c'], [1, '#b2561c']]);
     drawStars(ctx, p.w, p.horizon * 0.5, Math.round((p.w * p.h) / 5000), p.rand, ['#ffe9a0', '#ffffff']);
@@ -1509,26 +1507,4 @@ export function paintStormTower(ctx: Ctx, width: number, height: number): void {
   ctx.beginPath();
   ctx.arc(center, height * 0.04, width * 0.08, 0, Math.PI * 2);
   ctx.fill();
-}
-
-export function paintMarquee(ctx: Ctx, width: number, height: number): void {
-  const radius = height * 0.2;
-  ctx.fillStyle = '#12060c';
-  roundRect(ctx, 0, 0, width, height, radius);
-  ctx.fill();
-  ctx.strokeStyle = '#ffd447';
-  ctx.lineWidth = Math.max(2, height * 0.05);
-  roundRect(ctx, height * 0.08, height * 0.08, width - height * 0.16, height - height * 0.16, radius * 0.8);
-  ctx.stroke();
-  neonText(ctx, 'JACKPOT ALLEY', width / 2, height / 2, height * 0.34, '#ffd447');
-}
-
-function roundRect(ctx: Ctx, x: number, y: number, width: number, height: number, radius: number): void {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + width, y, x + width, y + height, radius);
-  ctx.arcTo(x + width, y + height, x, y + height, radius);
-  ctx.arcTo(x, y + height, x, y, radius);
-  ctx.arcTo(x, y, x + width, y, radius);
-  ctx.closePath();
 }

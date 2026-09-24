@@ -292,6 +292,21 @@ export class RunState {
       bonusStage,
     });
 
+    // HUD-only view: grade over ravens already resolved (killed or escaped),
+    // so birds still on screen do not read as failures. At stage end every
+    // spawn is resolved, so this converges on the real stage grade.
+    const resolved = this.gradeEligibleKilled + this.escapedGradeEligible + this.shieldedEscapes;
+    const liveGrade = calculateStageGrade({
+      gradeEligibleSpawned: resolved,
+      gradeEligibleKilled: this.gradeEligibleKilled,
+      escapedGradeEligible: this.escapedGradeEligible,
+      shieldedEscapes: this.shieldedEscapes,
+      optionalKills: this.optionalKills,
+      stageAccuracy: this.stageAccuracy,
+      gradeBufferPercent: this.stats.gradeBufferPercent,
+      bonusStage,
+    });
+
     return {
       score: this.score,
       stageIndex: this.stageIndex,
@@ -305,6 +320,7 @@ export class RunState {
       stageHits: this.stageHits,
       stageAccuracy: this.stageAccuracy,
       stageGrade,
+      liveGrade,
       combo: this.combo,
       comboMultiplier: this.comboMultiplier,
       comboTimerMs: this.comboTimerMs,

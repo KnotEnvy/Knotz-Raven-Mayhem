@@ -191,6 +191,10 @@ const RAVEN_STYLES: Record<EnemyId, RavenStyle> = {
 
 const bakeScales = new Map<EnemyId, number>();
 
+// Small PNG portraits of each baked variant for the DOM bounty board, so the
+// attract-mode guide shows the same lit art as gameplay.
+export const ravenPortraits: Partial<Record<EnemyId, string>> = {};
+
 export function ravenTextureKey(id: EnemyId): string {
   return `raven-${id}`;
 }
@@ -246,6 +250,8 @@ export function bakeRavenVariants(scene: Phaser.Scene, quality: QualityProfile):
       sheetCtx.restore();
     }
 
+    ravenPortraits[id] = makePortrait(sheet, cellWidth, cellHeight, bake);
+
     const key = ravenTextureKey(id);
     const texture = replaceCanvasTexture(scene, key, sheet);
     for (let frame = 0; frame < SOURCE_FRAME_COUNT; frame++) {
@@ -262,6 +268,21 @@ export function bakeRavenVariants(scene: Phaser.Scene, quality: QualityProfile):
       frameRate: id === 'fast' || id === 'mini' || id === 'dive' ? 16 : id === 'brute' || id === 'boss' ? 9 : 12,
       repeat: -1,
     });
+  }
+}
+
+function makePortrait(sheet: HTMLCanvasElement, cellWidth: number, cellHeight: number, bake: number): string {
+  const inset = (RAVEN_PAD - 10) * bake;
+  const width = 128;
+  const height = Math.round((width * (cellHeight - inset * 2)) / (cellWidth - inset * 2));
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+  ctx.drawImage(sheet, inset, inset, cellWidth - inset * 2, cellHeight - inset * 2, 0, 0, width, height);
+  try {
+    return canvas.toDataURL('image/png');
+  } catch {
+    return '';
   }
 }
 

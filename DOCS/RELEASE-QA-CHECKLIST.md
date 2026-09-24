@@ -65,6 +65,23 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 - [ ] Run It Back starts a fresh run from the run-report screen.
 - [ ] Open Armory routes directly to the Armory from the run-report screen, and Menu returns to the attract screen.
 
+## Presentation, Graphics Tiers, And Audio
+
+- [ ] Options > Graphics cycles Auto / High / Balanced / Low; Auto shows the resolved tier in brackets (for example "Auto (High)").
+- [ ] Changing Graphics on the Options screen rebuilds the title backdrop immediately and the next run uses the new tier.
+- [ ] Desktop High shows the cabinet-glass post pass: bloom on neon and explosions, faint scanlines, vignette, and a brief chromatic kick on big hits. Nothing is bent or offset, and shots still land exactly under the reticle at the screen edges.
+- [ ] Phones default to Balanced: no bloom pass, static vignette, lighter particles, and every gameplay cue (reticle lock, escape chevrons, boss bar, combo banner) still present.
+- [ ] On a weaker laptop in Auto, a sustained frame-rate drop steps the tier down (console logs `[knotz] auto graphics stepped down ...`) instead of stuttering.
+- [ ] Each of the nine stages shows its own painted parallax backdrop and ambient effect: graveyard fireflies, boardwalk water and searchlights, storm rain and lightning, junkyard embers and fire barrels, carnival Ferris wheel and fireworks, Raven King eclipse and ash, Jackpot Alley coin rain, Cinder Viaduct train, Clocktower Apex live clock and snow.
+- [ ] Every raven type is distinguishable by color and silhouette cue (crown, horns, armor plates, split seam, speed stripes, hex shield bubble, wraith wisps) without relying on the HUD.
+- [ ] Hovering or tapping over a raven snaps red lock-on brackets around the target the next shot would hit.
+- [ ] Ravens drifting into the left 20% of the screen show pulsing red chevrons on the left edge before they escape.
+- [ ] Kills show a flash, shockwave ring, embers, feathers and a falling corpse; armored and brute kills add hit-stop and metal shards; golden kills add a lens flare and coin shower.
+- [ ] Boss entry shows the hazard banner and a top-center health bar with a damage trail and a 42% rage marker; the bar clears when the boss dies.
+- [ ] Combo multiplier increases show a COMBO xN banner and stinger, and the music adds layers (arp, lead, extra hats) as the combo climbs, then drops back after a miss or escape.
+- [ ] Reduced Motion keeps music playing, removes lightning flashes, fireworks and hit-stop, and slows backdrop scrolling.
+- [ ] Credits link to both bundled font licenses under `./licenses/`.
+
 ## Automated Mobile Layout Audit
 
 `npm run audit:mobile` (with `npm run dev` serving; set `AUDIT_URL` if the port differs) drives headless Chrome/Edge through home, armory, records, options, credits, live HUD, pause, a synthetic S-rank stage clear, and the run report at 667x375, 740x360, 844x390, 932x430, 1180x820, and 1440x900. It screenshots every surface into `audit-shots/` and flags unreachable, clipped, or sub-36px tap targets.
@@ -73,6 +90,8 @@ Use this checklist for the final manual release pass before publishing `dist/` t
 - [ ] Spot-check the `audit-shots/` screenshots for visual regressions the probe cannot catch (overlap, contrast, truncation).
 
 Last run 2026-06-11: 0 issues flagged across all six sizes after the HUD bar restructure, persistent-HUD patching fix, attract-shell scroll fix, and stage-clear/run-report compact tightening.
+
+Last run 2026-09-24: 0 issues flagged across all six sizes after the presentation overhaul (bundled Bungee/Chakra Petch fonts, glass HUD, Graphics option, four-column home stats).
 
 ## Mobile And Accessibility
 

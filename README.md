@@ -19,7 +19,9 @@ Knotz Raven Mayhem is now a Phaser + TypeScript + Vite arcade shooter built from
 - TypeScript for game data, save state, progression, and scene code.
 - Vite for local development and static production builds.
 - DOM overlays for the arcade landing page, HUD, stage-clear flow, pause menu, armory, records, options, credits, and run-report GUI.
-- Procedural WebAudio cabinet music and sound effects layered with the original boom sample.
+- Procedural WebAudio cabinet music and sound effects layered with the original boom sample: a clock-scheduled drum/bass/arp/pad/lead sequencer per stage that adds layers as your combo climbs, noise-based weapon and impact SFX, stereo panning, reverb, and a compressor/limiter master bus.
+- Boot-time art pipeline: rim-lit, color-coded raven variants with per-type silhouettes, and Canvas-painted multi-layer parallax backdrops for every stage.
+- Graphics tiers (Auto / High / Balanced / Low). Desktop High adds a GPU cabinet-glass pass (threshold bloom, scanlines, chromatic kicks, grain) and denser effects; phones default to a tuned Balanced tier, and Auto steps down if the frame rate drops.
 
 ## Project Structure
 
@@ -82,7 +84,8 @@ The Vite config uses `base: './'`, so `dist/` can be deployed as static GitHub P
 - 4 permanent upgrades: cooldown, combo window, grade buffer, and payout scaling.
 - 6 powerups: slow-mo, multi-shot, score boost, grade shield, overdrive, and coin rush.
 - Local records for high score, best stage, best run stars, best run grade, best combo, stage medals, lifetime kills, unlocked gear, and coins.
-- Persistent options for music volume, SFX volume, screen shake, and reduced motion.
+- Persistent options for music volume, SFX volume, screen shake, reduced motion, and graphics quality.
+- Game feel: lock-on reticle, hit-stop on heavy impacts, falling raven corpses, feathers/embers/shards/coin showers, shield bubbles that shatter, left-edge escape warnings, a Raven King health bar with damage trail, and COMBO xN announcer banners.
 - Procedural arcade audio with stage-aware music motifs, weapon-specific shots, enemy-specific hits, powerup cues, boss warning/defeat stings, stage clear, and run reports.
 - Between-stage summaries with a dramatic grade reveal, stars, grade percentage, escapes, grade-adjusted rewards, combo highlights, retry-stage action, next-stage preview, bonus warnings, and new enemy warnings.
 - Run report sequence with banked coins, total stars, average grade, and armory recommendations.
@@ -90,4 +93,4 @@ The Vite config uses `base: './'`, so `dist/` can be deployed as static GitHub P
 
 ## Asset Direction
 
-The original `raven.png`, `boom.png`, `boom.wav`, and `boom.mp3` are copied into `public/assets/` and used as the seed visual/audio set. The release shell also includes generated favicon/app-icon files and `public/social-preview.png` for link sharing. The current release candidate adds procedural stage set dressing in Phaser, cabinet-style HUD framing in CSS, stage-aware procedural music, and dedicated procedural event SFX. Future production asset work should add normalized sprite sheets, dedicated boss art, richer UI cabinet art, and optional recorded sound/music through the manifest/data layer instead of hardcoding filenames in scenes.
+The original `raven.png`, `boom.png`, `boom.wav`, and `boom.mp3` are copied into `public/assets/` and used as the seed visual/audio set. Every other visual is generated from code at load time (`src/game/fx/`), and all music and SFX are synthesized. Display type uses the bundled SIL OFL fonts Bungee and Chakra Petch; their licenses ship in `public/licenses/`. The release shell also includes generated favicon/app-icon files and `public/social-preview.png` for link sharing. The current release candidate adds procedural stage set dressing in Phaser, cabinet-style HUD framing in CSS, stage-aware procedural music, and dedicated procedural event SFX. Future production asset work should add normalized sprite sheets, dedicated boss art, richer UI cabinet art, and optional recorded sound/music through the manifest/data layer instead of hardcoding filenames in scenes.
